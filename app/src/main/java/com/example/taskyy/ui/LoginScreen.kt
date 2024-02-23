@@ -33,9 +33,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taskyy.R
+import com.example.taskyy.ui.events.LoginEvents
+import kotlin.reflect.KFunction1
 
 @Composable
-fun MainScreen() {
+fun MainScreen(state: String, onEvent: KFunction1<LoginEvents, Unit>) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceAround,
@@ -43,7 +45,7 @@ fun MainScreen() {
             .fillMaxHeight()
             .background(Color.Black)
     ) {
-        AddWelcomeBackText()
+        WelcomeBackText()
         Surface(
             modifier = Modifier
                 .fillMaxHeight(.80F),
@@ -56,7 +58,7 @@ fun MainScreen() {
                     .fillMaxHeight(.75f)
                     .padding(30.dp)
             ) {
-                CreateUserNameField()
+                CreateUserNameField(state, onEvent)
                 Spacer(modifier = Modifier.height(10.dp))
                 CreatePasswordField()
                 Spacer(modifier = Modifier.height(10.dp))
@@ -72,7 +74,7 @@ fun MainScreen() {
 }
 
 @Composable
-private fun AddWelcomeBackText() {
+private fun WelcomeBackText() {
     Text(
         text = "Welcome Back!",
         color = Color.White,
@@ -82,14 +84,10 @@ private fun AddWelcomeBackText() {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateUserNameField() {
-    var textFieldState by remember {
-        mutableStateOf("")
-    }
-
+fun CreateUserNameField(state: String, onEvent: (LoginEvents) -> Unit) {
     TextField(
-        value = textFieldState,
-        onValueChange = { textFieldState = it },
+        value = state,
+        onValueChange = { onEvent(LoginEvents.textChanged())},
         placeholder = {
             Text(text = "Email Address", color = Color.LightGray)
         },
