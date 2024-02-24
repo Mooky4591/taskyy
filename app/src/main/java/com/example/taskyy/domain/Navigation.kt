@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.taskyy.ui.LoginScreen
+import com.example.taskyy.ui.RegisterScreen
 import com.example.taskyy.ui.viewmodels.LoginViewModel
 import com.example.taskyy.ui.viewmodels.RegisterViewModel
 
@@ -26,8 +27,9 @@ fun Nav() {
                 LoginScreen(state, viewModel::onEvent)
         }
             composable(route = "register") {
-                val viewModel = hiltViewModel<RegisterViewModel>()
-                val state = viewModel.state
+                val registerViewModel = hiltViewModel<RegisterViewModel>()
+                val state = registerViewModel.state
+                RegisterScreen(state = state, onEvent = registerViewModel::onEvent)
             }
 
         }

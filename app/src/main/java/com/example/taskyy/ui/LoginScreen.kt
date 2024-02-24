@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -43,7 +44,7 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
             .fillMaxHeight()
             .background(Color.Black)
     ) {
-        WelcomeBackText()
+        TopText(stringResource(R.string.welcome_back))
         Surface(
             modifier = Modifier
                 .fillMaxHeight(.80F),
@@ -56,7 +57,7 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
                     .fillMaxHeight(.75f)
                     .padding(30.dp)
             ) {
-                CreateUserNameField(state, onEvent)
+                CreateEmailField(state, onEvent)
                 Spacer(modifier = Modifier.height(10.dp))
                 CreatePasswordField(state, onEvent)
                 Spacer(modifier = Modifier.height(10.dp))
@@ -72,9 +73,9 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
 }
 
 @Composable
-private fun WelcomeBackText() {
+fun TopText(text: String) {
     Text(
-        text = "Welcome Back!",
+        text = text,
         color = Color.White,
         fontSize = 30.sp,
         fontWeight = FontWeight.Bold
@@ -82,7 +83,7 @@ private fun WelcomeBackText() {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateUserNameField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
+fun CreateEmailField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
     TextField(
         value = state.email,
         onValueChange = {
