@@ -22,7 +22,9 @@ class LoginViewModel @Inject constructor(
             is LoginEvent.OnLoginClick -> login()
             is LoginEvent.OnPasswordChanged -> state = state.copy(password = event.password)
             is LoginEvent.OnTogglePasswordVisibility -> state = state.copy(isPasswordVisible = event.isPasswordVisible)
-            is LoginEvent.OnSignUpClick -> register()
+            is LoginEvent.OnSignUpClick -> state = state.copy(email = state.email)
+            is LoginEvent.OnNameChanged -> state = state.copy(name = event.name)
+            is LoginEvent.OnRegisterClick -> register()
         }
     }
 
@@ -38,9 +40,10 @@ class LoginViewModel @Inject constructor(
 
 data class LoginState(
     var email: String = "",
-    val password: String = "",
-    val isLogginIn: Boolean = false,
-    val isEmailValid: Boolean = false,
-    val isPasswordVisible: Boolean = false
+    var password: String = "",
+    var name: String = "",
+    var isLogginIn: Boolean = false,
+    var isEmailValid: Boolean = false,
+    var isPasswordVisible: Boolean = false
 ) {}
 
