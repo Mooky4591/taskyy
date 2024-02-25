@@ -1,8 +1,5 @@
 <resources>
     <string name="app_name">Taskyy</string>
-    <string name="title_activity_main">MainActivity</string>
-    <string name="tab_text_1">Tab 1</string>
-    <string name="tab_text_2">Tab 2</string>
     <string name="welcome_back">Welcome Back!</string>
     <string name="create_your_account">Create your account</string>
     <string name="login">LOG IN</string>

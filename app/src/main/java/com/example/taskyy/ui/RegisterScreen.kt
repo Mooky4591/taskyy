@@ -74,5 +74,6 @@ fun CreateNameField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
         },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
+        shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
     )
 }
