@@ -64,7 +64,9 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                 CreateEmailField(isEmailValid = state.isEmailValid, onValueChange =  { email -> onEvent(LoginEvent.OnEmailChanged(email)) }, email =  state.email)
                 Spacer(modifier = Modifier.height(10.dp))
                 CreatePasswordField(password = state.password, onValueChange = {password -> onEvent(LoginEvent.OnPasswordChanged(password))},
-                    isPasswordVisible =  state.isPasswordVisible)
+                    isPasswordVisible =  state.isPasswordVisible,
+                    onClick = {isPasswordVisible -> onEvent(LoginEvent.OnTogglePasswordVisibility(isPasswordVisible))}
+                )
                 Spacer(modifier = Modifier.height(10.dp))
                 CreateLoginButton(onClick = {onEvent(LoginEvent.OnLoginClick)}, navController = navController, text = stringResource(
                     id = R.string.login
@@ -94,7 +96,7 @@ fun CreateEmailField(isEmailValid: Boolean, onValueChange: (String) -> Unit, ema
     TextField(
         value = email,
         onValueChange = {
-            LoginEvent.OnEmailChanged(email)
+                        onValueChange(it)
         },
         placeholder = {
             Text(text = stringResource(R.string.email_address), color = Color.LightGray)
@@ -119,12 +121,12 @@ fun CreateEmailField(isEmailValid: Boolean, onValueChange: (String) -> Unit, ema
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePasswordField(password: String, onValueChange: (String) -> Unit, isPasswordVisible: Boolean) {
+fun CreatePasswordField(password: String, onValueChange: (String) -> Unit, isPasswordVisible: Boolean, onClick: (Boolean) -> Unit) {
 
     TextField(
         value = password,
         onValueChange = { 
-                      password -> LoginEvent.OnPasswordChanged(password)
+                      onValueChange(it)
         },
         placeholder = {
             Text(text = stringResource(R.string.password), color = Color.LightGray)
@@ -134,7 +136,7 @@ fun CreatePasswordField(password: String, onValueChange: (String) -> Unit, isPas
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
         trailingIcon = {
-            CreateHidePasswordToggle(isPasswordVisible = isPasswordVisible)
+            CreateHidePasswordToggle(isPasswordVisible = isPasswordVisible, onClick = {isPasswordVisible -> onClick(isPasswordVisible)})
         }
     )
 }
@@ -149,7 +151,7 @@ fun showOrHidePassword(isPasswordVisible: Boolean): VisualTransformation {
 
 
 @Composable
-fun CreateHidePasswordToggle(isPasswordVisible: Boolean) {
+fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onClick: (Boolean) -> Unit) {
     val image = if (isPasswordVisible)
         R.drawable.show_password
     else R.drawable.hide_password
@@ -162,8 +164,8 @@ fun CreateHidePasswordToggle(isPasswordVisible: Boolean) {
     // Toggle button to hide or display password
     IconButton(onClick = {
             if (isPasswordVisible) {
-                LoginEvent.OnTogglePasswordVisibility(false)
-            } else LoginEvent.OnTogglePasswordVisibility(true)
+                onClick(false)
+            } else onClick(true)
     })
     {
         Icon(
@@ -178,8 +180,9 @@ fun CreateLoginButton(onClick: () -> Unit, navController: NavController, text: S
         onClick = {
                   if(text == "LOG IN") {
                     //onLoginEvent(LoginEvent.OnLoginClick)
+                      onClick(LoginEvent.OnLoginClick)
                   } else {
-                     //onRegisterEvent(RegisterEvent.OnGetStartedClick)
+                     onClick(RegisterEvent.OnGetStartedClick)
                   }
         },
         colors = ButtonDefaults.buttonColors(
