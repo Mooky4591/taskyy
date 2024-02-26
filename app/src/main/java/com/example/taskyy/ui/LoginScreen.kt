@@ -61,7 +61,7 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                     .fillMaxHeight(.75f)
                     .padding(30.dp)
             ) {
-                CreateEmailField(state.isEmailValid, onEvent, state.email)
+                CreateEmailField(state.isEmailValid, (String) -> Unit,  state.email)
                 Spacer(modifier = Modifier.height(10.dp))
                 CreatePasswordField(state.password, onEvent, state.isPasswordVisible)
                 Spacer(modifier = Modifier.height(10.dp))
@@ -87,11 +87,14 @@ fun TopText(text: String) {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateEmailField(isEmailValid: Boolean, onEvent: (LoginEvent) -> Unit, email: String) {
+fun CreateEmailField(isEmailValid: Boolean, onValueChange: (String) -> Unit, email: String) {
     TextField(
         value = email,
         onValueChange = {
-            onEvent(LoginEvent.OnEmailChanged(it))
+            onValueChange(
+                email ->
+            )
+
         },
         placeholder = {
             Text(text = stringResource(R.string.email_address), color = Color.LightGray)
@@ -116,12 +119,12 @@ fun CreateEmailField(isEmailValid: Boolean, onEvent: (LoginEvent) -> Unit, email
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePasswordField(password: String, onEvent: (LoginEvent) -> Unit, isPasswordVisible: Boolean) {
+fun CreatePasswordField(password: String, onEvent: () -> Unit, isPasswordVisible: Boolean) {
 
     TextField(
         value = password,
         onValueChange = { 
-                        onEvent(LoginEvent.OnPasswordChanged(it))
+                        onEvent()
         },
         placeholder = {
             Text(text = stringResource(R.string.password), color = Color.LightGray)
@@ -146,7 +149,7 @@ fun showOrHidePassword(isPasswordVisible: Boolean): VisualTransformation {
 
 
 @Composable
-fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onEvent: (LoginEvent) -> Unit) {
+fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onEvent: () -> Unit) {
     val image = if (isPasswordVisible)
         R.drawable.show_password
     else R.drawable.hide_password
