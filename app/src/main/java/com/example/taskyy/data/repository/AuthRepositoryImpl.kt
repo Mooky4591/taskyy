@@ -7,8 +7,11 @@ class AuthRepositoryImpl(
 
 ): AuthRepository {
     override fun isEmailValid(email: String): Boolean {
-        //super.isEmailValid(email)
         return Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
 
+    //this is a place holder, I may not need this. Need to determine how to validate the name
+    override fun isNameValid(name: String): Boolean {
+        return true
     }
 }

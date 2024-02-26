@@ -1,6 +1,7 @@
 package com.example.taskyy.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,18 +25,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.taskyy.R
+import com.example.taskyy.domain.navigation.Screen
 import com.example.taskyy.ui.events.LoginEvent
+import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.viewmodels.LoginState
 
 @Composable
-fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
+fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController: NavController) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceAround,
@@ -43,7 +48,7 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
             .fillMaxHeight()
             .background(Color.Black)
     ) {
-        WelcomeBackText()
+        TopText(stringResource(R.string.welcome_back))
         Surface(
             modifier = Modifier
                 .fillMaxHeight(.80F),
@@ -56,15 +61,15 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
                     .fillMaxHeight(.75f)
                     .padding(30.dp)
             ) {
-                CreateUserNameField(state, onEvent)
+                CreateEmailField(state.isEmailValid, onEvent, state.email)
                 Spacer(modifier = Modifier.height(10.dp))
-                CreatePasswordField(state, onEvent)
+                CreatePasswordField(state.password, onEvent, state.isPasswordVisible)
                 Spacer(modifier = Modifier.height(10.dp))
-                CreateLoginButton()
+                CreateLoginButton(onEvent, null, navController, stringResource(R.string.login))
                 Row(
                 ) {
                     CreateBottomText()
-                    CreateSignUpLink()
+                    CreateSignUpLink(navController)
                 }
             }
         }
@@ -72,9 +77,9 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
 }
 
 @Composable
-private fun WelcomeBackText() {
+fun TopText(text: String) {
     Text(
-        text = "Welcome Back!",
+        text = text,
         color = Color.White,
         fontSize = 30.sp,
         fontWeight = FontWeight.Bold
@@ -82,49 +87,57 @@ private fun WelcomeBackText() {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateUserNameField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
+fun CreateEmailField(isEmailValid: Boolean, onEvent: (LoginEvent) -> Unit, email: String) {
     TextField(
-        value = state.email,
+        value = email,
         onValueChange = {
-            onEvent(LoginEvent.OnEmailChanged(it)) 
+            onEvent(LoginEvent.OnEmailChanged(it))
         },
         placeholder = {
-            Text(text = "Email Address", color = Color.LightGray)
+            Text(text = stringResource(R.string.email_address), color = Color.LightGray)
         },
         trailingIcon = {
-            val isEmailValid = state.isEmailValid
-            val image = if (isEmailValid) R.drawable.check_mark else R.drawable.not_valid
+            val image = R.drawable.check_mark
             val description = if (isEmailValid) "Email is valid checkmark" else "email not valid"
-            Icon(painter = painterResource(id = image), contentDescription = description)
+            if (isEmailValid) {
+                Icon(painter = painterResource(id = image), contentDescription = description)
+            }
         },
         singleLine = true,
-        modifier = Modifier.fillMaxWidth()
+        modifier = if (isEmailValid || email.isNotEmpty())
+            Modifier
+            .fillMaxWidth()
+        else Modifier
+            .fillMaxWidth()
+            .border(width = 1.5.dp, color = Color.Red),
+        shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePasswordField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
+fun CreatePasswordField(password: String, onEvent: (LoginEvent) -> Unit, isPasswordVisible: Boolean) {
 
     TextField(
-        value = state.password,
+        value = password,
         onValueChange = { 
                         onEvent(LoginEvent.OnPasswordChanged(it))
         },
         placeholder = {
-            Text(text = "Password", color = Color.LightGray)
+            Text(text = stringResource(R.string.password), color = Color.LightGray)
         },
-        visualTransformation = showOrHidePassword(state = state),
+        shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp),
+        visualTransformation = showOrHidePassword(isPasswordVisible = isPasswordVisible),
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
         trailingIcon = {
-            CreateHidePasswordToggle(state = state, onEvent = onEvent)
+            CreateHidePasswordToggle(isPasswordVisible = isPasswordVisible, onEvent = onEvent)
         }
     )
 }
 @Composable
-fun showOrHidePassword(state: LoginState): VisualTransformation {
-    return if (state.isPasswordVisible) {
+fun showOrHidePassword(isPasswordVisible: Boolean): VisualTransformation {
+    return if (!isPasswordVisible) {
         PasswordVisualTransformation()
     } else {
         VisualTransformation.None
@@ -133,14 +146,15 @@ fun showOrHidePassword(state: LoginState): VisualTransformation {
 
 
 @Composable
-fun CreateHidePasswordToggle(state: LoginState, onEvent: (LoginEvent) -> Unit) {
-    val isPasswordVisible = state.isPasswordVisible
+fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onEvent: (LoginEvent) -> Unit) {
     val image = if (isPasswordVisible)
         R.drawable.show_password
     else R.drawable.hide_password
 
     // Localized description for accessibility services
-    val description = if (isPasswordVisible) "Hide password" else "Show password"
+    val description = if (isPasswordVisible) stringResource(R.string.hide_password) else stringResource(
+        R.string.show_password
+    )
 
     // Toggle button to hide or display password
     IconButton(onClick = {
@@ -158,15 +172,21 @@ fun CreateHidePasswordToggle(state: LoginState, onEvent: (LoginEvent) -> Unit) {
 }
 
 @Composable
-fun CreateLoginButton() {
+fun CreateLoginButton(onLoginEvent: ((LoginEvent) -> Unit)?, onRegisterEvent: ((RegisterEvent) -> Unit)?, navController: NavController, text: String) {
     Button(
-        onClick = { /*TODO*/ },
+        onClick = {
+                  if(onLoginEvent != null) {
+                    //onLoginEvent(LoginEvent.OnLoginClick)
+                  } else {
+                     //onRegisterEvent(RegisterEvent.OnGetStartedClick)
+                  }
+        },
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Black
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text(text = "Login", color = Color.White)
+        Text(text = text, color = Color.White)
     }
 }
 
@@ -176,10 +196,12 @@ fun CreateBottomText() {
 }
 
 @Composable
-fun CreateSignUpLink() {
+fun CreateSignUpLink(navController: NavController) {
     return Text(
         text = "SIGN UP",
-        modifier = Modifier.clickable { /*TODO*/},
+        modifier = Modifier.clickable {
+            navController.navigate(Screen.Register.route)
+        },
         color = Color.Blue,
         fontStyle = FontStyle.Italic)
 }

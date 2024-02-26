@@ -22,25 +22,22 @@ class LoginViewModel @Inject constructor(
             is LoginEvent.OnLoginClick -> login()
             is LoginEvent.OnPasswordChanged -> state = state.copy(password = event.password)
             is LoginEvent.OnTogglePasswordVisibility -> state = state.copy(isPasswordVisible = event.isPasswordVisible)
-            is LoginEvent.OnSignUpClick -> register()
+            is LoginEvent.OnNameChanged -> state = state.copy(name = event.name)
         }
     }
 
-    private fun register() {
-        TODO("Not yet implemented")
-    }
-
     private fun login() {
-        TODO("Not yet implemented")
+        //make API call
     }
 
 }
 
 data class LoginState(
     var email: String = "",
-    val password: String = "",
-    val isLogginIn: Boolean = false,
-    val isEmailValid: Boolean = false,
-    val isPasswordVisible: Boolean = false
+    var password: String = "",
+    var name: String = "",
+    var isLogginIn: Boolean = false,
+    var isEmailValid: Boolean = false,
+    var isPasswordVisible: Boolean = false,
 ) {}
 

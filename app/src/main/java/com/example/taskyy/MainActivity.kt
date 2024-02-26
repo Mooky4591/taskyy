@@ -3,7 +3,7 @@ package com.example.taskyy
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.taskyy.domain.Nav
+import com.example.taskyy.domain.navigation.Nav
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
