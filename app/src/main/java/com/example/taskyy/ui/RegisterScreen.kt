@@ -19,13 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.taskyy.R
 import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.viewmodels.RegisterState
 
 @Composable
-fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit, navController: NavController) {
+fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
 Column(
 horizontalAlignment = Alignment.CenterHorizontally,
 verticalArrangement = Arrangement.SpaceAround,
@@ -50,9 +49,11 @@ modifier = Modifier
             Spacer(modifier = Modifier.height(10.dp))
             CreateEmailField(isEmailValid = state.isEmailValid, onValueChange = {email -> onEvent(RegisterEvent.OnEmailChanged(email = email))}, email = state.email)
             Spacer(modifier = Modifier.height(10.dp))
-            CreatePasswordField(password = state.password, onValueChange = {password -> onEvent(RegisterEvent.OnPasswordChanged(password))}, isPasswordVisible = state.isPasswordVisible,)
+            CreatePasswordField(password = state.password, onValueChange = {password -> onEvent(RegisterEvent.OnPasswordChanged(password))},
+                isPasswordVisible = state.isPasswordVisible,
+                onClick = {isPasswordVisible -> onEvent(RegisterEvent.OnTogglePasswordVisibility(isPasswordVisible))})
             Spacer(modifier = Modifier.height(50.dp))
-            CreateLoginButton(navController = navController, onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
+            CreateLoginButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
                 id = R.string.get_started
             )
             )
@@ -67,7 +68,7 @@ fun CreateNameField(name: String, onValueChange: (String) -> Unit) {
     TextField(
         value = name,
         onValueChange = {
-            name -> RegisterEvent.OnNameChanged(name)
+                        onValueChange(it)
         },
         placeholder = {
             Text(text = "Name", color = Color.LightGray)

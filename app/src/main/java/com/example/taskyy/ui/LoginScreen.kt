@@ -36,7 +36,6 @@ import androidx.navigation.NavController
 import com.example.taskyy.R
 import com.example.taskyy.domain.navigation.Screen
 import com.example.taskyy.ui.events.LoginEvent
-import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.viewmodels.LoginState
 
 @Composable
@@ -68,7 +67,7 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                     onClick = {isPasswordVisible -> onEvent(LoginEvent.OnTogglePasswordVisibility(isPasswordVisible))}
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                CreateLoginButton(onClick = {onEvent(LoginEvent.OnLoginClick)}, navController = navController, text = stringResource(
+                CreateLoginButton(onClick = {onEvent(LoginEvent.OnLoginClick)}, text = stringResource(
                     id = R.string.login
                 ) )
                 Row(
@@ -109,12 +108,12 @@ fun CreateEmailField(isEmailValid: Boolean, onValueChange: (String) -> Unit, ema
             }
         },
         singleLine = true,
-        modifier = if (isEmailValid || email.isNotEmpty())
+        modifier = if (isEmailValid || email.isEmpty())
             Modifier
             .fillMaxWidth()
         else Modifier
             .fillMaxWidth()
-            .border(width = 1.5.dp, color = Color.Red),
+            .border(width = 1.5.dp, color = Color.Red, shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)),
         shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
     )
 }
@@ -175,14 +174,13 @@ fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onClick: (Boolean) -> U
 }
 
 @Composable
-fun CreateLoginButton(onClick: () -> Unit, navController: NavController, text: String) {
+fun CreateLoginButton(onClick: () -> Unit, text: String) {
     Button(
         onClick = {
                   if(text == "LOG IN") {
-                    //onLoginEvent(LoginEvent.OnLoginClick)
-                      onClick(LoginEvent.OnLoginClick)
+                      onClick()
                   } else {
-                     onClick(RegisterEvent.OnGetStartedClick)
+                     onClick()
                   }
         },
         colors = ButtonDefaults.buttonColors(
