@@ -22,18 +22,12 @@ class LoginViewModel @Inject constructor(
             is LoginEvent.OnLoginClick -> login()
             is LoginEvent.OnPasswordChanged -> state = state.copy(password = event.password)
             is LoginEvent.OnTogglePasswordVisibility -> state = state.copy(isPasswordVisible = event.isPasswordVisible)
-            is LoginEvent.OnSignUpClick -> state = state.copy(email = state.email)
             is LoginEvent.OnNameChanged -> state = state.copy(name = event.name)
-            is LoginEvent.OnRegisterClick -> register()
         }
     }
 
-    private fun register() {
-        TODO("Not yet implemented")
-    }
-
     private fun login() {
-        TODO("Not yet implemented")
+        //make API call
     }
 
 }
@@ -44,6 +38,6 @@ data class LoginState(
     var name: String = "",
     var isLogginIn: Boolean = false,
     var isEmailValid: Boolean = false,
-    var isPasswordVisible: Boolean = false
+    var isPasswordVisible: Boolean = false,
 ) {}
 

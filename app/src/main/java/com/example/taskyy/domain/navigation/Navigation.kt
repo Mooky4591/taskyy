@@ -13,6 +13,7 @@ import androidx.navigation.navigation
 import com.example.taskyy.ui.LoginScreen
 import com.example.taskyy.ui.RegisterScreen
 import com.example.taskyy.ui.viewmodels.LoginViewModel
+import com.example.taskyy.ui.viewmodels.RegisterViewModel
 
 
 @Composable
@@ -25,16 +26,16 @@ fun Nav() {
             route = "login_screen"
         ) {
             composable(route = Screen.Login.route) {
-                val viewModel = hiltViewModel<LoginViewModel>()
-                val state = viewModel.state
-                LoginScreen(state, viewModel::onEvent, navController)
-            }
-            composable(route = Screen.Register.route) { entry ->
-                val loginViewModel = entry.loginViewModel<LoginViewModel>(navController = navController)
+                val loginViewModel = hiltViewModel<LoginViewModel>()
                 val state = loginViewModel.state
+                LoginScreen(state, loginViewModel::onEvent, navController)
+            }
+            composable(route = Screen.Register.route) {
+                val registerViewModel = hiltViewModel<RegisterViewModel>()
+                val state = registerViewModel.state
                 RegisterScreen(
                     state = state,
-                    onEvent = loginViewModel::onEvent,
+                    onEvent = registerViewModel::onEvent,
                     navController = navController
                 )
             }

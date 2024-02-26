@@ -21,11 +21,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.taskyy.R
-import com.example.taskyy.ui.events.LoginEvent
-import com.example.taskyy.ui.viewmodels.LoginState
+import com.example.taskyy.ui.events.RegisterEvent
+import com.example.taskyy.ui.viewmodels.RegisterState
 
 @Composable
-fun RegisterScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController: NavController) {
+fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit, navController: NavController) {
 Column(
 horizontalAlignment = Alignment.CenterHorizontally,
 verticalArrangement = Arrangement.SpaceAround,
@@ -48,11 +48,11 @@ modifier = Modifier
         ) {
             CreateNameField(state, onEvent)
             Spacer(modifier = Modifier.height(10.dp))
-            CreateEmailField(state, onEvent)
+            CreateEmailField(state.isEmailValid, onEvent, state.email)
             Spacer(modifier = Modifier.height(10.dp))
-            CreatePasswordField(state, onEvent)
+            CreatePasswordField(state.password, onEvent, state.isPasswordVisible)
             Spacer(modifier = Modifier.height(50.dp))
-            CreateLoginButton(navController = navController, onEvent = onEvent, state = state, text = stringResource(
+            CreateLoginButton(navController = navController, onLoginEvent = null, onRegisterEvent =  onEvent, text = stringResource(
                 R.string.get_started
             )
             )
@@ -63,11 +63,11 @@ modifier = Modifier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateNameField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
+fun CreateNameField(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
     TextField(
         value = state.name,
         onValueChange = {
-            onEvent(LoginEvent.OnNameChanged(it))
+            onEvent(RegisterEvent.OnNameChanged(it))
         },
         placeholder = {
             Text(text = "Name", color = Color.LightGray)

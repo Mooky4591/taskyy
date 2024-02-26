@@ -36,6 +36,7 @@ import androidx.navigation.NavController
 import com.example.taskyy.R
 import com.example.taskyy.domain.navigation.Screen
 import com.example.taskyy.ui.events.LoginEvent
+import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.viewmodels.LoginState
 
 @Composable
@@ -60,11 +61,11 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                     .fillMaxHeight(.75f)
                     .padding(30.dp)
             ) {
-                CreateEmailField(state, onEvent)
+                CreateEmailField(state.isEmailValid, onEvent, state.email)
                 Spacer(modifier = Modifier.height(10.dp))
-                CreatePasswordField(state, onEvent)
+                CreatePasswordField(state.password, onEvent, state.isPasswordVisible)
                 Spacer(modifier = Modifier.height(10.dp))
-                CreateLoginButton(state, onEvent, navController, stringResource(R.string.login))
+                CreateLoginButton(onEvent, null, navController, stringResource(R.string.login))
                 Row(
                 ) {
                     CreateBottomText()
@@ -86,10 +87,9 @@ fun TopText(text: String) {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateEmailField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
-    val isEmailValid = state.isEmailValid
+fun CreateEmailField(isEmailValid: Boolean, onEvent: (LoginEvent) -> Unit, email: String) {
     TextField(
-        value = state.email,
+        value = email,
         onValueChange = {
             onEvent(LoginEvent.OnEmailChanged(it))
         },
@@ -104,7 +104,7 @@ fun CreateEmailField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
             }
         },
         singleLine = true,
-        modifier = if (isEmailValid || state.email.isEmpty())
+        modifier = if (isEmailValid || email.isNotEmpty())
             Modifier
             .fillMaxWidth()
         else Modifier
@@ -116,10 +116,10 @@ fun CreateEmailField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePasswordField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
+fun CreatePasswordField(password: String, onEvent: (LoginEvent) -> Unit, isPasswordVisible: Boolean) {
 
     TextField(
-        value = state.password,
+        value = password,
         onValueChange = { 
                         onEvent(LoginEvent.OnPasswordChanged(it))
         },
@@ -127,17 +127,17 @@ fun CreatePasswordField(state: LoginState, onEvent: (LoginEvent) -> Unit) {
             Text(text = stringResource(R.string.password), color = Color.LightGray)
         },
         shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp),
-        visualTransformation = showOrHidePassword(state = state),
+        visualTransformation = showOrHidePassword(isPasswordVisible = isPasswordVisible),
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
         trailingIcon = {
-            CreateHidePasswordToggle(state = state, onEvent = onEvent)
+            CreateHidePasswordToggle(isPasswordVisible = isPasswordVisible, onEvent = onEvent)
         }
     )
 }
 @Composable
-fun showOrHidePassword(state: LoginState): VisualTransformation {
-    return if (!state.isPasswordVisible) {
+fun showOrHidePassword(isPasswordVisible: Boolean): VisualTransformation {
+    return if (!isPasswordVisible) {
         PasswordVisualTransformation()
     } else {
         VisualTransformation.None
@@ -146,8 +146,7 @@ fun showOrHidePassword(state: LoginState): VisualTransformation {
 
 
 @Composable
-fun CreateHidePasswordToggle(state: LoginState, onEvent: (LoginEvent) -> Unit) {
-    val isPasswordVisible = state.isPasswordVisible
+fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onEvent: (LoginEvent) -> Unit) {
     val image = if (isPasswordVisible)
         R.drawable.show_password
     else R.drawable.hide_password
@@ -173,13 +172,13 @@ fun CreateHidePasswordToggle(state: LoginState, onEvent: (LoginEvent) -> Unit) {
 }
 
 @Composable
-fun CreateLoginButton(state: LoginState, onEvent: (LoginEvent) -> Unit, navController: NavController, text: String) {
+fun CreateLoginButton(onLoginEvent: ((LoginEvent) -> Unit)?, onRegisterEvent: ((RegisterEvent) -> Unit)?, navController: NavController, text: String) {
     Button(
         onClick = {
-                  if(text == "Login") {
-                    //onEvent(LoginEvent.OnLoginClick)
+                  if(onLoginEvent != null) {
+                    //onLoginEvent(LoginEvent.OnLoginClick)
                   } else {
-                      //onEvent(LoginEvent.OnRegisterClick)
+                     //onRegisterEvent(RegisterEvent.OnGetStartedClick)
                   }
         },
         colors = ButtonDefaults.buttonColors(
