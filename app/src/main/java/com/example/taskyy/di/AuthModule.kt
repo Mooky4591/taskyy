@@ -17,5 +17,4 @@ object AuthModule {
     fun provideAuthRepository() : AuthRepository {
         return AuthRepositoryImpl()
     }
-
 }

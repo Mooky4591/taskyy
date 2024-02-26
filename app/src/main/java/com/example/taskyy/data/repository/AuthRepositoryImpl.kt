@@ -6,9 +6,8 @@ import com.example.taskyy.domain.repository.AuthRepository
 class AuthRepositoryImpl(
 
 ): AuthRepository {
-    override fun isEmailValid(email: String): Boolean {
-        //super.isEmailValid(email)
-        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
+    override fun registerUser(name: String, email: String, password: String) {
+        TODO("Not yet implemented")
     }
 }

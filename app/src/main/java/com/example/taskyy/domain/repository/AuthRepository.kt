@@ -1,6 +1,5 @@
 package com.example.taskyy.domain.repository
 
 interface AuthRepository {
-
-    fun isEmailValid(email: String): Boolean
+    fun registerUser(name: String, email: String, password: String)
 }
