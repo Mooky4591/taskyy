@@ -61,11 +61,14 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                     .fillMaxHeight(.75f)
                     .padding(30.dp)
             ) {
-                CreateEmailField(state.isEmailValid, (String) -> Unit,  state.email)
+                CreateEmailField(isEmailValid = state.isEmailValid, onValueChange =  { email -> onEvent(LoginEvent.OnEmailChanged(email)) }, email =  state.email)
                 Spacer(modifier = Modifier.height(10.dp))
-                CreatePasswordField(state.password, onEvent, state.isPasswordVisible)
+                CreatePasswordField(password = state.password, onValueChange = {password -> onEvent(LoginEvent.OnPasswordChanged(password))},
+                    isPasswordVisible =  state.isPasswordVisible)
                 Spacer(modifier = Modifier.height(10.dp))
-                CreateLoginButton(onEvent, null, navController, stringResource(R.string.login))
+                CreateLoginButton(onClick = {onEvent(LoginEvent.OnLoginClick)}, navController = navController, text = stringResource(
+                    id = R.string.login
+                ) )
                 Row(
                 ) {
                     CreateBottomText()
@@ -91,10 +94,7 @@ fun CreateEmailField(isEmailValid: Boolean, onValueChange: (String) -> Unit, ema
     TextField(
         value = email,
         onValueChange = {
-            onValueChange(
-                email ->
-            )
-
+            LoginEvent.OnEmailChanged(email)
         },
         placeholder = {
             Text(text = stringResource(R.string.email_address), color = Color.LightGray)
@@ -119,12 +119,12 @@ fun CreateEmailField(isEmailValid: Boolean, onValueChange: (String) -> Unit, ema
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePasswordField(password: String, onEvent: () -> Unit, isPasswordVisible: Boolean) {
+fun CreatePasswordField(password: String, onValueChange: (String) -> Unit, isPasswordVisible: Boolean) {
 
     TextField(
         value = password,
         onValueChange = { 
-                        onEvent()
+                      password -> LoginEvent.OnPasswordChanged(password)
         },
         placeholder = {
             Text(text = stringResource(R.string.password), color = Color.LightGray)
@@ -134,7 +134,7 @@ fun CreatePasswordField(password: String, onEvent: () -> Unit, isPasswordVisible
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
         trailingIcon = {
-            CreateHidePasswordToggle(isPasswordVisible = isPasswordVisible, onEvent = onEvent)
+            CreateHidePasswordToggle(isPasswordVisible = isPasswordVisible)
         }
     )
 }
@@ -149,7 +149,7 @@ fun showOrHidePassword(isPasswordVisible: Boolean): VisualTransformation {
 
 
 @Composable
-fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onEvent: () -> Unit) {
+fun CreateHidePasswordToggle(isPasswordVisible: Boolean) {
     val image = if (isPasswordVisible)
         R.drawable.show_password
     else R.drawable.hide_password
@@ -161,11 +161,9 @@ fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onEvent: () -> Unit) {
 
     // Toggle button to hide or display password
     IconButton(onClick = {
-        onEvent(
             if (isPasswordVisible) {
                 LoginEvent.OnTogglePasswordVisibility(false)
             } else LoginEvent.OnTogglePasswordVisibility(true)
-        )
     })
     {
         Icon(
@@ -175,10 +173,10 @@ fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onEvent: () -> Unit) {
 }
 
 @Composable
-fun CreateLoginButton(onLoginEvent: ((LoginEvent) -> Unit)?, onRegisterEvent: ((RegisterEvent) -> Unit)?, navController: NavController, text: String) {
+fun CreateLoginButton(onClick: () -> Unit, navController: NavController, text: String) {
     Button(
         onClick = {
-                  if(onLoginEvent != null) {
+                  if(text == "LOG IN") {
                     //onLoginEvent(LoginEvent.OnLoginClick)
                   } else {
                      //onRegisterEvent(RegisterEvent.OnGetStartedClick)

@@ -46,14 +46,14 @@ modifier = Modifier
                 .fillMaxHeight(.75f)
                 .padding(30.dp)
         ) {
-            CreateNameField(state, onEvent)
+            CreateNameField(name = state.name, onValueChange = { name -> onEvent(RegisterEvent.OnNameChanged(name))})
             Spacer(modifier = Modifier.height(10.dp))
-            CreateEmailField(state.isEmailValid, onEvent, state.email)
+            CreateEmailField(isEmailValid = state.isEmailValid, onValueChange = {email -> onEvent(RegisterEvent.OnEmailChanged(email = email))}, email = state.email)
             Spacer(modifier = Modifier.height(10.dp))
-            CreatePasswordField(state.password, onEvent, state.isPasswordVisible)
+            CreatePasswordField(password = state.password, onValueChange = {password -> onEvent(RegisterEvent.OnPasswordChanged(password))}, isPasswordVisible = state.isPasswordVisible,)
             Spacer(modifier = Modifier.height(50.dp))
-            CreateLoginButton(navController = navController, onLoginEvent = null, onRegisterEvent =  onEvent, text = stringResource(
-                R.string.get_started
+            CreateLoginButton(navController = navController, onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
+                id = R.string.get_started
             )
             )
         }
@@ -63,11 +63,11 @@ modifier = Modifier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateNameField(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
+fun CreateNameField(name: String, onValueChange: (String) -> Unit) {
     TextField(
-        value = state.name,
+        value = name,
         onValueChange = {
-            onEvent(RegisterEvent.OnNameChanged(it))
+            name -> RegisterEvent.OnNameChanged(name)
         },
         placeholder = {
             Text(text = "Name", color = Color.LightGray)
