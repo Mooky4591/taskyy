@@ -1,5 +1,6 @@
 package com.example.taskyy.ui
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,7 +25,7 @@ import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.viewmodels.RegisterState
 
 @Composable
-fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
+fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit, context: Context) {
 Column(
 horizontalAlignment = Alignment.CenterHorizontally,
 verticalArrangement = Arrangement.SpaceAround,
@@ -53,7 +54,7 @@ modifier = Modifier
                 isPasswordVisible = state.isPasswordVisible,
                 onClick = {isPasswordVisible -> onEvent(RegisterEvent.OnTogglePasswordVisibility(isPasswordVisible))})
             Spacer(modifier = Modifier.height(50.dp))
-            CreateLoginButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
+            TaskyyActionButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick(context))}, text = stringResource(
                 id = R.string.get_started
             )
             )

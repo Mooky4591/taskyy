@@ -1,13 +1,17 @@
 package com.example.taskyy.data.repository
 
-import android.util.Patterns
+import com.example.taskyy.data.data_access_objects.UserDao
+import com.example.taskyy.domain.User
 import com.example.taskyy.domain.repository.AuthRepository
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-class AuthRepositoryImpl(
+class AuthRepositoryImpl(): AuthRepository {
 
-): AuthRepository {
-
-    override fun registerUser(name: String, email: String, password: String) {
-        TODO("Not yet implemented")
+    override fun registerUser(user: User, userDao: UserDao) {
+        runBlocking { launch {
+            userDao.insertUser(user)
+             }
+        }
     }
 }

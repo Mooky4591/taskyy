@@ -1,5 +1,6 @@
 package com.example.taskyy.domain.navigation
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -17,7 +18,7 @@ import com.example.taskyy.ui.viewmodels.RegisterViewModel
 
 
 @Composable
-fun Nav() {
+fun Nav(context: Context) {
 
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "login_screen" ) {
@@ -36,14 +37,14 @@ fun Nav() {
                 RegisterScreen(
                     state = state,
                     onEvent = registerViewModel::onEvent,
-                    navController = navController
+                    context = context
                 )
             }
         }
     }
 }
 @Composable
-inline fun <reified T : ViewModel> NavBackStackEntry.loginViewModel(
+inline fun <reified T : ViewModel> NavBackStackEntry.sharedViewModel(
     navController: NavController,
 ): T {
     val navGraphRoute = destination.parent?.route ?: return hiltViewModel()
