@@ -22,6 +22,7 @@ class RegisterViewModel @Inject constructor(
             is RegisterEvent.OnEmailChanged -> state = state.copy(email = event.email)
             is RegisterEvent.OnPasswordChanged -> state = state.copy(password = event.password)
             is RegisterEvent.OnGetStartedClick -> register()
+            is RegisterEvent.OnTogglePasswordVisibility -> state = state.copy(isPasswordVisible = event.isPasswordVisible)
                    }
     }
 

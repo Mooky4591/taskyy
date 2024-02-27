@@ -1,6 +1,7 @@
 package com.example.taskyy.di
 
 import com.example.taskyy.data.repository.AuthRepositoryImpl
+import com.example.taskyy.domain.LoginUseCase
 import com.example.taskyy.domain.repository.AuthRepository
 import dagger.Module
 import dagger.Provides
@@ -16,5 +17,11 @@ object AuthModule {
     @Singleton
     fun provideAuthRepository() : AuthRepository {
         return AuthRepositoryImpl()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLoginUseCase(): LoginUseCase {
+        return LoginUseCase()
     }
 }
