@@ -19,13 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.taskyy.R
 import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.viewmodels.RegisterState
 
 @Composable
-fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit, navController: NavController) {
+fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
 Column(
 horizontalAlignment = Alignment.CenterHorizontally,
 verticalArrangement = Arrangement.SpaceAround,
@@ -46,14 +45,16 @@ modifier = Modifier
                 .fillMaxHeight(.75f)
                 .padding(30.dp)
         ) {
-            CreateNameField(state, onEvent)
+            CreateNameField(name = state.name, onValueChange = { name -> onEvent(RegisterEvent.OnNameChanged(name))})
             Spacer(modifier = Modifier.height(10.dp))
-            CreateEmailField(state.isEmailValid, onEvent, state.email)
+            CreateEmailField(isEmailValid = state.isEmailValid, onValueChange = {email -> onEvent(RegisterEvent.OnEmailChanged(email = email))}, email = state.email)
             Spacer(modifier = Modifier.height(10.dp))
-            CreatePasswordField(state.password, onEvent, state.isPasswordVisible)
+            CreatePasswordField(password = state.password, onValueChange = {password -> onEvent(RegisterEvent.OnPasswordChanged(password))},
+                isPasswordVisible = state.isPasswordVisible,
+                onClick = {isPasswordVisible -> onEvent(RegisterEvent.OnTogglePasswordVisibility(isPasswordVisible))})
             Spacer(modifier = Modifier.height(50.dp))
-            CreateLoginButton(navController = navController, onLoginEvent = null, onRegisterEvent =  onEvent, text = stringResource(
-                R.string.get_started
+            CreateLoginButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
+                id = R.string.get_started
             )
             )
         }
@@ -63,11 +64,11 @@ modifier = Modifier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateNameField(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
+fun CreateNameField(name: String, onValueChange: (String) -> Unit) {
     TextField(
-        value = state.name,
+        value = name,
         onValueChange = {
-            onEvent(RegisterEvent.OnNameChanged(it))
+                        onValueChange(it)
         },
         placeholder = {
             Text(text = "Name", color = Color.LightGray)
