@@ -16,14 +16,14 @@ abstract class TaskyyDatabase: RoomDatabase() {
 
         @Volatile
         private var INSTANCE: RoomDatabase? = null
-        fun getDatabase(context: Context): RoomDatabase{
+        fun getDatabase(context: Context): TaskyyDatabase{
             if(INSTANCE != null) {
-                return INSTANCE as RoomDatabase
+                return INSTANCE as TaskyyDatabase
             }
             synchronized(this){
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    RoomDatabase::class.java,
+                    TaskyyDatabase::class.java,
                     "database"
                 ).build()
                 INSTANCE = instance

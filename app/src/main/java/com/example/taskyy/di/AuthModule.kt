@@ -12,8 +12,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-
 @Module
+
 @InstallIn(SingletonComponent::class)
 object AuthModule {
 
@@ -33,6 +33,7 @@ object AuthModule {
     @Provides
     @Singleton
     fun provideUserDao(): UserDao {
+        //this doesn't work since it needs the composable annotation. How to get the context here?
         return TaskyyDatabase.getDatabase(LocalContext.current).userDao()
     }
 }
