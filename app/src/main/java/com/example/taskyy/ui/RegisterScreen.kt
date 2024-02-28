@@ -53,7 +53,7 @@ modifier = Modifier
                 isPasswordVisible = state.isPasswordVisible,
                 onClick = {isPasswordVisible -> onEvent(RegisterEvent.OnTogglePasswordVisibility(isPasswordVisible))})
             Spacer(modifier = Modifier.height(50.dp))
-            CreateLoginButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
+            TaskyyActionButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
                 id = R.string.get_started
             )
             )

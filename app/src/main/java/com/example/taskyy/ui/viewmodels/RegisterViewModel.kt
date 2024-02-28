@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.taskyy.data.data_access_objects.UserDao
+import com.example.taskyy.domain.User
 import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.ui.events.RegisterEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val userDao: UserDao
 ):ViewModel() {
     var state by mutableStateOf(RegisterState())
         private set
@@ -23,19 +26,20 @@ class RegisterViewModel @Inject constructor(
             is RegisterEvent.OnPasswordChanged -> state = state.copy(password = event.password)
             is RegisterEvent.OnGetStartedClick -> register()
             is RegisterEvent.OnTogglePasswordVisibility -> state = state.copy(isPasswordVisible = event.isPasswordVisible)
-                   }
+        }
     }
 
     private fun register() {
-        authRepository.registerUser(name = state.name, password = state.password, email = state.email)
+        val user = User(name = state.name, password = state.password, email = state.email)
+        authRepository.registerUser(user, userDao)
     }
 }
 
-    data class RegisterState(
+data class RegisterState(
         var email: String = "",
         var password: String = "",
         var name: String = "",
         var isEmailValid: Boolean = false,
-        var isPasswordVisible: Boolean = false
+        var isPasswordVisible: Boolean = false,
     ) {}
 

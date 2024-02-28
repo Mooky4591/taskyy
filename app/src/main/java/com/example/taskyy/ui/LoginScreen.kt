@@ -67,7 +67,7 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                     onClick = {isPasswordVisible -> onEvent(LoginEvent.OnTogglePasswordVisibility(isPasswordVisible))}
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                CreateLoginButton(onClick = {onEvent(LoginEvent.OnLoginClick)}, text = stringResource(
+                TaskyyActionButton(onClick = {onEvent(LoginEvent.OnLoginClick)}, text = stringResource(
                     id = R.string.login
                 ) )
                 Row(
@@ -162,9 +162,7 @@ fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onClick: (Boolean) -> U
 
     // Toggle button to hide or display password
     IconButton(onClick = {
-            if (isPasswordVisible) {
-                onClick(false)
-            } else onClick(true)
+            onClick(!isPasswordVisible)
     })
     {
         Icon(
@@ -174,14 +172,10 @@ fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onClick: (Boolean) -> U
 }
 
 @Composable
-fun CreateLoginButton(onClick: () -> Unit, text: String) {
+fun TaskyyActionButton(onClick: () -> Unit, text: String) {
     Button(
         onClick = {
-                  if(text == "LOG IN") {
-                      onClick()
-                  } else {
-                     onClick()
-                  }
+                  onClick()
         },
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Black
