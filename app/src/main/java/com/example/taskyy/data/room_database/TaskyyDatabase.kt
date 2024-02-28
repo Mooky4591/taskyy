@@ -17,9 +17,8 @@ abstract class TaskyyDatabase: RoomDatabase() {
         @Volatile
         private var INSTANCE: RoomDatabase? = null
         fun getDatabase(context: Context): RoomDatabase{
-            val tempInstance = INSTANCE
-            if(tempInstance != null) {
-                return tempInstance
+            if(INSTANCE != null) {
+                return INSTANCE as RoomDatabase
             }
             synchronized(this){
                 val instance = Room.databaseBuilder(

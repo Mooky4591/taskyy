@@ -1,6 +1,5 @@
 package com.example.taskyy.ui.events
 
-import android.content.Context
 
 
 sealed interface RegisterEvent{
@@ -9,6 +8,6 @@ sealed interface RegisterEvent{
     data class OnPasswordChanged(val password: String): RegisterEvent
     data class OnTogglePasswordVisibility(val isPasswordVisible: Boolean): RegisterEvent
 
-    data class OnGetStartedClick(val applicationContext: Context) : RegisterEvent
+    data object OnGetStartedClick : RegisterEvent
 
 }

@@ -7,7 +7,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class AuthRepositoryImpl(): AuthRepository {
-
     override fun registerUser(user: User, userDao: UserDao) {
         runBlocking { launch {
             userDao.insertUser(user)

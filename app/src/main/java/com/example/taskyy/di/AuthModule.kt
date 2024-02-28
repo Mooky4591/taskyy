@@ -1,6 +1,10 @@
 package com.example.taskyy.di
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import com.example.taskyy.data.data_access_objects.UserDao
 import com.example.taskyy.data.repository.AuthRepositoryImpl
+import com.example.taskyy.data.room_database.TaskyyDatabase
 import com.example.taskyy.domain.LoginUseCase
 import com.example.taskyy.domain.repository.AuthRepository
 import dagger.Module
@@ -23,5 +27,12 @@ object AuthModule {
     @Singleton
     fun provideLoginUseCase(): LoginUseCase {
         return LoginUseCase()
+    }
+
+    @Composable
+    @Provides
+    @Singleton
+    fun provideUserDao(): UserDao {
+        return TaskyyDatabase.getDatabase(LocalContext.current).userDao()
     }
 }
