@@ -15,7 +15,7 @@ abstract class TaskyyDatabase: RoomDatabase() {
     companion object {
 
         @Volatile
-        private var INSTANCE: RoomDatabase? = null
+        private var INSTANCE: TaskyyDatabase? = null
         fun getDatabase(context: Context): TaskyyDatabase{
             if(INSTANCE != null) {
                 return INSTANCE as TaskyyDatabase
