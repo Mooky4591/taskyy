@@ -1,9 +1,9 @@
 package com.example.taskyy.di
 
 import android.content.Context
-import com.example.taskyy.data.data_access_objects.UserDao
-import com.example.taskyy.data.repository.AuthRepositoryImpl
-import com.example.taskyy.data.room_database.TaskyyDatabase
+import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.room_database.TaskyyDatabase
+import com.example.taskyy.data.repositories.AuthRepositoryImpl
 import com.example.taskyy.domain.LoginUseCase
 import com.example.taskyy.domain.repository.AuthRepository
 import dagger.Module
@@ -19,7 +19,7 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository() : AuthRepository {
+    fun provideAuthRepository(@ApplicationContext context: Context) : AuthRepository {
         return AuthRepositoryImpl()
     }
 
@@ -32,6 +32,6 @@ object AuthModule {
     @Provides
     @Singleton
     fun provideUserDao(@ApplicationContext context: Context): UserDao {
-        return TaskyyDatabase.getDatabase(context = context).userDao()
+        return TaskyyDatabase.getDatabase(context).userDao()
     }
 }

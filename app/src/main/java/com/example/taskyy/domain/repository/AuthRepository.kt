@@ -1,8 +1,9 @@
 package com.example.taskyy.domain.repository
 
-import com.example.taskyy.data.data_access_objects.UserDao
-import com.example.taskyy.data.room_entity.UserEntity
+import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.room_entity.UserEntity
 
 interface AuthRepository {
-    fun registerUser(userEntity: UserEntity, userDao: UserDao)
+    fun addUserToDatabase(userEntity: UserEntity, userDao: UserDao)
+    fun registerUser(userEntity: UserEntity)
 }
