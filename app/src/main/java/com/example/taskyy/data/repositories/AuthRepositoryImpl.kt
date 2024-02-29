@@ -19,6 +19,7 @@ class AuthRepositoryImpl(): AuthRepository {
     override fun registerUser(userEntity: UserEntity) {
         runBlocking { launch {
             val response = try {
+                //how to get context here
                 RetrofitInstance.api.registerUser()
             } catch (E: Exception){}
         } }
