@@ -14,7 +14,6 @@ import javax.inject.Inject
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val userDao: UserDao
 ):ViewModel() {
     var state by mutableStateOf(RegisterState())
         private set
