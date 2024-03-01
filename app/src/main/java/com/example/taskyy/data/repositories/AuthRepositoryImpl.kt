@@ -1,5 +1,6 @@
 package com.example.taskyy.data.repositories
 
+import android.util.Log
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_entity.UserEntity
 import com.example.taskyy.data.remote.RetrofitInstance
@@ -7,12 +8,14 @@ import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.domain.repository.AuthRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import retrofit2.HttpException
+import retrofit2.Retrofit
 import java.lang.Exception
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
-    private val taskyyApi: TaskyyApi
+    private val retrofit: TaskyyApi
 ): AuthRepository {
 
     override fun addUserToDatabase(userEntity: UserEntity) {
@@ -26,8 +29,11 @@ class AuthRepositoryImpl @Inject constructor(
         runBlocking { launch {
             val response = try {
                 //how to use the provideOkHttp and provideAuthApi here?
-                taskyyApi.registerUser()
-            } catch (E: Exception){}
+                retrofit.registerUser()
+            } catch (e: HttpException){
+                Log.e("TAG", "HttpException, unexpected response")
+            }
+            Log.e("TAG", response.toString())
         } }
     }
 

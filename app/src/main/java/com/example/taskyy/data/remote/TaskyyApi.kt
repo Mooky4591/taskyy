@@ -13,10 +13,10 @@ import retrofit2.http.Query
 interface TaskyyApi {
 
     @POST("/register")
-    fun registerUser(@Query("key") key: String)
+    suspend fun registerUser()
 
     @POST("/login")
-    fun loginUser(@Query("key") key: String): retrofit2.Response<LoginUserResponse>
+    fun loginUser(): retrofit2.Response<LoginUserResponse>
 
   //  @GET("/authenticate")
    // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>
