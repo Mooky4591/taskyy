@@ -25,7 +25,7 @@ class AuthRepositoryImpl @Inject constructor(
     override fun registerUser(userEntity: UserEntity) {
         runBlocking { launch {
             val response = try {
-                //how to use the provideOkHttp and provideAuthApi here?
+                Log.e("TAG", retrofit.toString())
                 retrofit.registerUser()
             } catch (e: HttpException){
                 Log.e("TAG", "HttpException, unexpected response")

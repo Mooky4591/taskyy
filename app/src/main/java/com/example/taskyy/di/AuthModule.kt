@@ -44,14 +44,13 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideRetrofitInstance(@ApplicationContext context: Context, client: OkHttpClient): TaskyyApi {
+    fun provideRetrofitInstance(@ApplicationContext context: Context): TaskyyApi {
            return Retrofit.Builder()
                 .baseUrl("https://tasky.pl-coding.com/")
                 .addConverterFactory(MoshiConverterFactory.create())
                 .client(provideOkHttpClient(context))
                 .build()
                 .create(TaskyyApi::class.java)
-
     }
 
     @Provides
