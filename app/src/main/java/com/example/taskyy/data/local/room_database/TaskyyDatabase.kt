@@ -1,11 +1,11 @@
-package com.example.taskyy.data.room_database
+package com.example.taskyy.data.local.room_database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.taskyy.data.data_access_objects.UserDao
-import com.example.taskyy.data.room_entity.UserEntity
+import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.room_entity.UserEntity
 
 @Database(entities = [UserEntity::class], version = 1, exportSchema = false)
 abstract class TaskyyDatabase: RoomDatabase() {
@@ -16,7 +16,7 @@ abstract class TaskyyDatabase: RoomDatabase() {
 
         @Volatile
         private var INSTANCE: TaskyyDatabase? = null
-        fun getDatabase(context: Context): TaskyyDatabase{
+        fun getDatabase(context: Context): TaskyyDatabase {
             if(INSTANCE != null) {
                 return INSTANCE as TaskyyDatabase
             }
