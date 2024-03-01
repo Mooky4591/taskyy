@@ -31,7 +31,7 @@ class RegisterViewModel @Inject constructor(
 
     private fun register() {
         val userEntity = UserEntity(name = state.name, password = state.password, email = state.email)
-        authRepository.addUserToDatabase(userEntity, userDao)
+        authRepository.addUserToDatabase(userEntity)
         authRepository.registerUser(userEntity)
     }
 }
