@@ -3,9 +3,9 @@ package com.example.taskyy.data.remote
 import com.example.taskyy.data.local.room_entity.EventEntity
 import com.example.taskyy.data.local.room_entity.ReminderEntity
 import com.example.taskyy.data.local.room_entity.TaskEntity
+import com.example.taskyy.data.local.room_entity.UserEntity
+import retrofit2.http.Body
 import retrofit2.http.DELETE
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -13,13 +13,8 @@ import retrofit2.http.PUT
 import retrofit2.http.Query
 
 interface TaskyyApi {
-    @FormUrlEncoded
     @POST("/register")
-    suspend fun registerUser(
-        @Field("fullName") fullName: String,
-        @Field("email") email: String,
-        @Field("password") password: String
-    )
+    suspend fun registerUser(@Body body: UserEntity)
 
     @POST("/login")
     fun loginUser(): retrofit2.Response<LoginUserResponse>

@@ -8,8 +8,9 @@ import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.ApiKeyInterceptor
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AuthRepositoryImpl
-import com.example.taskyy.domain.LoginUseCase
+import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.domain.repository.AuthRepository
+import com.example.taskyy.domain.usecases.RegisterUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,7 +18,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 @Module
 
@@ -26,7 +27,7 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(userDao: UserDao, api: TaskyyApi,): AuthRepository {
+    fun provideAuthRepository(userDao: UserDao, api: TaskyyApi): AuthRepository {
         return AuthRepositoryImpl(userDao, api)
     }
 
@@ -34,6 +35,12 @@ object AuthModule {
     @Singleton
     fun provideLoginUseCase(): LoginUseCase {
         return LoginUseCase()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRegisterUseCase(@ApplicationContext context: Context): RegisterUseCase {
+        return RegisterUseCase(provideAuthRepository(provideUserDao(context), provideRetrofitInstance(context)))
     }
 
     @Provides
@@ -47,7 +54,7 @@ object AuthModule {
     fun provideRetrofitInstance(@ApplicationContext context: Context): TaskyyApi {
            return Retrofit.Builder()
                 .baseUrl("https://tasky.pl-coding.com/")
-                .addConverterFactory(MoshiConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
                 .client(provideOkHttpClient(context))
                 .build()
                 .create(TaskyyApi::class.java)
