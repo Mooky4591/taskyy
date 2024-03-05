@@ -1,4 +1,4 @@
-package com.example.taskyy.domain
+package com.example.taskyy.domain.usecases
 
 import android.util.Patterns
 

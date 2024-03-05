@@ -3,6 +3,8 @@ package com.example.taskyy.data.remote
 import com.example.taskyy.data.local.room_entity.EventEntity
 import com.example.taskyy.data.local.room_entity.ReminderEntity
 import com.example.taskyy.data.local.room_entity.TaskEntity
+import com.example.taskyy.data.local.room_entity.UserEntity
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -11,12 +13,11 @@ import retrofit2.http.PUT
 import retrofit2.http.Query
 
 interface TaskyyApi {
-
     @POST("/register")
-    fun registerUser(@Query("key") key: String)
+    suspend fun registerUser(@Body body: UserEntity)
 
     @POST("/login")
-    fun loginUser(@Query("key") key: String): retrofit2.Response<LoginUserResponse>
+    fun loginUser(): retrofit2.Response<LoginUserResponse>
 
   //  @GET("/authenticate")
    // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>
