@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.taskyy.domain.objects.RegisterUser
+import com.example.taskyy.domain.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.domain.usecases.RegisterUseCase
 import com.example.taskyy.ui.events.RegisterEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,8 +29,8 @@ class RegisterViewModel @Inject constructor(
 
     private fun register() {
 
-        val registerUser = RegisterUser(fullName = state.name, password = state.password, email = state.email)
-        registerUseCase.registerUser(registerUser)
+        val registerUserDTO = RegisterUserDTO(fullName = state.name, password = state.password, email = state.email)
+        registerUseCase.registerUser(registerUserDTO)
     }
 }
 
