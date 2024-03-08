@@ -3,9 +3,8 @@ package com.example.taskyy.data.repositories
 import android.util.Log
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_entity.UserEntity
-import com.example.taskyy.data.mappers.RegisterUserToUserEntityMapper
 import com.example.taskyy.data.remote.TaskyyApi
-import com.example.taskyy.domain.objects.RegisterUser
+import com.example.taskyy.domain.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.domain.repository.AuthRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -24,11 +23,10 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun registerUser(registerUser: RegisterUser) {
-        val registerUserMapper = RegisterUserToUserEntityMapper()
+    override fun registerUser(registerUserDTO: RegisterUserDTO) {
         runBlocking { launch {
             val response = try {
-                retrofit.registerUser(registerUserMapper.mapRegisterUserToUserEntity(registerUser))
+                retrofit.registerUser(registerUserDTO)
             } catch (e: HttpException){
                 Log.e("TAG", "HttpException, " + e.printStackTrace())
             }

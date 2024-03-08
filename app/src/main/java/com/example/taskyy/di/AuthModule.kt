@@ -51,6 +51,14 @@ object AuthModule {
 
     @Provides
     @Singleton
+    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(ApiKeyInterceptor(context.getString(R.string.apiKey)))
+            .build()
+    }
+
+    @Provides
+    @Singleton
     fun provideRetrofitInstance(@ApplicationContext context: Context): TaskyyApi {
            return Retrofit.Builder()
                 .baseUrl("https://tasky.pl-coding.com/")
@@ -73,11 +81,4 @@ object AuthModule {
         }
     }
 
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(ApiKeyInterceptor(context.getString(R.string.apiKey)))
-            .build()
-    }
 }
