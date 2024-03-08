@@ -3,7 +3,7 @@ package com.example.taskyy.data.remote
 import com.example.taskyy.data.local.room_entity.EventEntity
 import com.example.taskyy.data.local.room_entity.ReminderEntity
 import com.example.taskyy.data.local.room_entity.TaskEntity
-import com.example.taskyy.domain.data_transfer_objects.RegisterUserDTO
+import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET

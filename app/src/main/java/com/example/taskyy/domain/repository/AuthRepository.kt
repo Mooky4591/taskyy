@@ -1,9 +1,9 @@
 package com.example.taskyy.domain.repository
 
 import com.example.taskyy.data.local.room_entity.UserEntity
-import com.example.taskyy.domain.data_transfer_objects.RegisterUserDTO
+import com.example.taskyy.domain.objects.User
 
 interface AuthRepository {
     fun addUserToDatabase(userEntity: UserEntity)
-    fun registerUser(registerUserDTO: RegisterUserDTO)
+    fun registerUser(user: User)
 }
