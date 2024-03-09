@@ -11,4 +11,8 @@ class RegisterUseCase @Inject constructor(
     fun registerUser(user: User) {
         authRepository.registerUser(user)
     }
+
+    fun isPasswordValid(password: String): Boolean {
+        return authRepository.validatePassword(password)
+    }
 }

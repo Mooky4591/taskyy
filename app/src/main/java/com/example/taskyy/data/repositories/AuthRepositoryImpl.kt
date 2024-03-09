@@ -35,4 +35,9 @@ class AuthRepositoryImpl @Inject constructor(
             Log.e("TAG", response.toString())
         } }
     }
+
+    override fun validatePassword(password: String): Boolean {
+        val passwordRegex = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{9,}$"
+        return passwordRegex.toRegex().matches(password)
+    }
 }

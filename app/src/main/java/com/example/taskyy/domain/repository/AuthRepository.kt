@@ -6,4 +6,5 @@ import com.example.taskyy.domain.objects.User
 interface AuthRepository {
     fun addUserToDatabase(userEntity: UserEntity)
     fun registerUser(user: User)
+    fun validatePassword(password: String): Boolean
 }
