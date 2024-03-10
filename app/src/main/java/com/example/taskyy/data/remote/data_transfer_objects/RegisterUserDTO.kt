@@ -1,4 +1,4 @@
-package com.example.taskyy.domain.data_transfer_objects
+package com.example.taskyy.data.remote.data_transfer_objects
 
 data class RegisterUserDTO(
     val fullName: String,

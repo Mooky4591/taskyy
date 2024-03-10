@@ -1,10 +1,11 @@
 package com.example.taskyy.ui.viewmodels
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.taskyy.domain.data_transfer_objects.RegisterUserDTO
+import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.usecases.RegisterUseCase
 import com.example.taskyy.ui.events.RegisterEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,9 +29,12 @@ class RegisterViewModel @Inject constructor(
     }
 
     private fun register() {
-
-        val registerUserDTO = RegisterUserDTO(fullName = state.name, password = state.password, email = state.email)
-        registerUseCase.registerUser(registerUserDTO)
+        val user = User(fullName = state.name, password = state.password, email = state.email)
+        if (registerUseCase.isPasswordValid(user.password)) {
+            registerUseCase.registerUser(user)
+        } else {
+            Log.e("TAG", "Password in invalid")
+        }
     }
 }
 
@@ -40,5 +44,4 @@ data class RegisterState(
         var name: String = "",
         var isEmailValid: Boolean = false,
         var isPasswordVisible: Boolean = false,
-    ) {}
-
+    )
