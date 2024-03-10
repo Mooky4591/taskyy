@@ -32,6 +32,7 @@ fun Nav() {
                 RegisterScreen(
                     state = state,
                     onEvent = registerViewModel::onEvent,
+                    navController = navController
                 )
             }
         }

@@ -11,6 +11,8 @@ import com.example.taskyy.data.repositories.AuthRepositoryImpl
 import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.domain.usecases.RegisterUseCase
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,7 +20,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Singleton
 @Module
 
@@ -33,8 +35,8 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideLoginUseCase(): LoginUseCase {
-        return LoginUseCase()
+    fun provideLoginUseCase(@ApplicationContext context: Context): LoginUseCase {
+        return LoginUseCase(provideAuthRepository(provideUserDao(context), provideRetrofitInstance(context)))
     }
 
     @Provides
@@ -62,7 +64,7 @@ object AuthModule {
     fun provideRetrofitInstance(@ApplicationContext context: Context): TaskyyApi {
            return Retrofit.Builder()
                 .baseUrl("https://tasky.pl-coding.com/")
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(MoshiConverterFactory.create(Moshi.Builder().add(KotlinJsonAdapterFactory()).build()))
                 .client(provideOkHttpClient(context))
                 .build()
                 .create(TaskyyApi::class.java)
@@ -80,5 +82,4 @@ object AuthModule {
             return instance
         }
     }
-
 }

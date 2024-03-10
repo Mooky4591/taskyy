@@ -1,15 +1,19 @@
 package com.example.taskyy.data.repositories
 
-import android.util.Log
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_entity.UserEntity
-import com.example.taskyy.data.mappers.UserToUserDTOMapper
+import com.example.taskyy.data.remote.LoginUserResponse
 import com.example.taskyy.data.remote.TaskyyApi
+import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
+import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.repository.AuthRepository
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import retrofit2.HttpException
+import retrofit2.Call
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
@@ -17,27 +21,45 @@ class AuthRepositoryImpl @Inject constructor(
     private val retrofit: TaskyyApi,
 ): AuthRepository {
 
-    override fun addUserToDatabase(userEntity: UserEntity) {
+    override fun addUserToDatabase(user: User) {
         runBlocking { launch {
-            userDao.insertUser(userEntity)
+            userDao.insertUser(user.mapToUserEntity())
              }
         }
     }
 
-    override fun registerUser(user: User) {
-        val mapper = UserToUserDTOMapper()
+    override fun addTokenAndIdToDatabase(response: LoginUserResponse, email: String) {
         runBlocking { launch {
-            val response = try {
-                retrofit.registerUser(mapper.mapUserToUserDTO(user = user))
-            } catch (e: HttpException){
-                Log.e("TAG", "HttpException, " + e.printStackTrace())
+            userDao.update(response.token, response.userId, email)
             }
-            Log.e("TAG", response.toString())
-        } }
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun registerUser(user: User) {
+        val userDto = user.mapToUserDTO()
+        GlobalScope.launch(Dispatchers.IO) {
+            var response = retrofit.registerUser(userDto)
+        }
+    }
+
+    private fun User.mapToUserEntity(): UserEntity {
+        return UserEntity(null, fullName, email, null)
+    }
+    private fun User.mapToUserDTO(): RegisterUserDTO {
+        return RegisterUserDTO(fullName, email, password)
     }
 
     override fun validatePassword(password: String): Boolean {
-        val passwordRegex = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{9,}$"
-        return passwordRegex.toRegex().matches(password)
+        val hasLowerCase = password.any { it.isLowerCase() }
+        val hasUpperCase = password.any { it.isUpperCase() }
+        val hasDigit = password.any { it.isDigit() }
+        val hasValidLength = password.length in 8..20
+
+        return hasLowerCase && hasUpperCase && hasDigit && hasValidLength
+    }
+
+    override fun login(login: Login): Call<LoginUserResponse> {
+        return retrofit.loginUser(login)
     }
 }

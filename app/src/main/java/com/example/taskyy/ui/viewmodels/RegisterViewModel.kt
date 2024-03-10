@@ -44,4 +44,5 @@ data class RegisterState(
         var name: String = "",
         var isEmailValid: Boolean = false,
         var isPasswordVisible: Boolean = false,
+        var isLoginSuccessful: Boolean = false
     )
