@@ -5,10 +5,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.usecases.RegisterUseCase
 import com.example.taskyy.ui.events.RegisterEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,7 +33,9 @@ class RegisterViewModel @Inject constructor(
     private fun register() {
         val user = User(fullName = state.name, password = state.password, email = state.email)
         if (registerUseCase.isPasswordValid(user.password)) {
-            registerUseCase.registerUser(user)
+            viewModelScope.launch {
+                registerUseCase.registerUser(user)
+            }
         } else {
             Log.e("TAG", "Password in invalid")
         }
@@ -44,5 +48,6 @@ data class RegisterState(
         var name: String = "",
         var isEmailValid: Boolean = false,
         var isPasswordVisible: Boolean = false,
-        var isLoginSuccessful: Boolean = false
+        var isLoginSuccessful: Boolean = false,
+        var isLoading: Boolean = false
     )

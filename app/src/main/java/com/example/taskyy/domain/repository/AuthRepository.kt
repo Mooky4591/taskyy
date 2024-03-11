@@ -8,7 +8,7 @@ import retrofit2.Call
 interface AuthRepository {
     fun addUserToDatabase(user: User)
     fun addTokenAndIdToDatabase(response: LoginUserResponse, email: String)
-    fun registerUser(user: User)
+    suspend fun registerUser(user: User)
     fun validatePassword(password: String): Boolean
-    fun login(login: Login): Call<LoginUserResponse>
+    fun login(login: Login): Result<LoginUserResponse>
 }
