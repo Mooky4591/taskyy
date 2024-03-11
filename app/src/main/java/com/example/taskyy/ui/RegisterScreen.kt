@@ -19,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.taskyy.R
+import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.viewmodels.RegisterState
 
 @Composable
-fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
+fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit, navController: NavController) {
 Column(
 horizontalAlignment = Alignment.CenterHorizontally,
 verticalArrangement = Arrangement.SpaceAround,
@@ -53,9 +55,10 @@ modifier = Modifier
                 isPasswordVisible = state.isPasswordVisible,
                 onClick = {isPasswordVisible -> onEvent(RegisterEvent.OnTogglePasswordVisibility(isPasswordVisible))})
             Spacer(modifier = Modifier.height(50.dp))
-            TaskyyActionButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
+            val loginObject = Login(state.email, state.password)
+            TaskyyActionButton(isLoginSuccessful = state.isLoginSuccessful, onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
                 id = R.string.get_started
-            )
+            ), navController = navController, login = loginObject
             )
         }
     }

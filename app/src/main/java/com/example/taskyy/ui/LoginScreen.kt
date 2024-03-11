@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.taskyy.R
 import com.example.taskyy.domain.navigation.Screen
+import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.ui.events.LoginEvent
 import com.example.taskyy.ui.viewmodels.LoginState
 
@@ -67,9 +68,10 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                     onClick = {isPasswordVisible -> onEvent(LoginEvent.OnTogglePasswordVisibility(isPasswordVisible))}
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                TaskyyActionButton(onClick = {onEvent(LoginEvent.OnLoginClick)}, text = stringResource(
+                val loginObject = Login(state.email, state.password)
+                TaskyyActionButton(isLoginSuccessful = state.isLoginSuccessful, onClick = {onEvent(LoginEvent.OnLoginClick(loginObject))}, text = stringResource(
                     id = R.string.login
-                ) )
+                ), navController = navController, login = loginObject)
                 Row(
                 ) {
                     CreateBottomText()
@@ -172,10 +174,13 @@ fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onClick: (Boolean) -> U
 }
 
 @Composable
-fun TaskyyActionButton(onClick: () -> Unit, text: String) {
+fun TaskyyActionButton(isLoginSuccessful: Boolean, onClick: (Login) -> Unit, text: String, navController: NavController, login: Login) {
     Button(
         onClick = {
-                  onClick()
+                  onClick(login)
+            if (isLoginSuccessful){
+                navController.navigate(Screen.Agenda.route)
+            }
         },
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Black

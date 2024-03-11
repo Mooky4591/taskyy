@@ -21,17 +21,12 @@ class LoginViewModel @Inject constructor(
     fun onEvent(event: LoginEvent) {
         when(event) {
             is LoginEvent.OnEmailChanged -> state = state.copy(email = event.email, isEmailValid = loginUseCase.isEmailValid(event.email))
-            is LoginEvent.OnLoginClick -> login()
+            is LoginEvent.OnLoginClick -> state = state.copy(isLoginSuccessful = loginUseCase.loginUser(event.login))
             is LoginEvent.OnPasswordChanged -> state = state.copy(password = event.password)
             is LoginEvent.OnTogglePasswordVisibility -> state = state.copy(isPasswordVisible = event.isPasswordVisible)
             is LoginEvent.OnNameChanged -> state = state.copy(name = event.name)
         }
     }
-
-    private fun login() {
-        //make API call
-    }
-
 }
 
 data class LoginState(
@@ -41,5 +36,6 @@ data class LoginState(
     var isLogginIn: Boolean = false,
     var isEmailValid: Boolean = false,
     var isPasswordVisible: Boolean = false,
-) {}
+    var isLoginSuccessful: Boolean = false
+)
 

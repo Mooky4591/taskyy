@@ -4,6 +4,7 @@ import com.example.taskyy.data.local.room_entity.EventEntity
 import com.example.taskyy.data.local.room_entity.ReminderEntity
 import com.example.taskyy.data.local.room_entity.TaskEntity
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
+import com.example.taskyy.domain.objects.Login
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -17,7 +18,7 @@ interface TaskyyApi {
     suspend fun registerUser(@Body body: RegisterUserDTO)
 
     @POST("/login")
-    fun loginUser(): retrofit2.Response<LoginUserResponse>
+    fun loginUser(@Body body: Login): retrofit2.Call<LoginUserResponse>
 
   //  @GET("/authenticate")
    // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>
