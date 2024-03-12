@@ -13,7 +13,7 @@ class LoginUseCase @Inject constructor(
         return Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 
-    fun loginUser(login: Login): Boolean {
+    suspend fun loginUser(login: Login): Boolean {
         val response = authRepository.login(login)
         return response.isSuccess
     }

@@ -16,9 +16,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import retrofit2.Call
 import retrofit2.Callback
+import retrofit2.HttpException
 import retrofit2.Response
 import retrofit2.await
 import retrofit2.awaitResponse
+import java.io.IOException
 import javax.inject.Inject
 import kotlin.math.log
 
@@ -27,12 +29,8 @@ class AuthRepositoryImpl @Inject constructor(
     private val retrofit: TaskyyApi,
 ): AuthRepository {
 
-    override fun addUserToDatabase(user: User) {
-        runBlocking {
-            launch {
-                userDao.insertUser(user.mapToUserEntity())
-            }
-        }
+    override suspend fun addUserToDatabase(user: User) {
+        userDao.insertUser(user.mapToUserEntity())
     }
 
     override fun addTokenAndIdToDatabase(response: LoginUserResponse, email: String) {
@@ -65,26 +63,14 @@ class AuthRepositoryImpl @Inject constructor(
         return hasLowerCase && hasUpperCase && hasDigit && hasValidLength
     }
 
-    override fun login(login: Login): Result<LoginUserResponse> {
-        val loginUser = retrofit.loginUser(login)
-        var returnStatement: Result<LoginUserResponse>
-        loginUser.enqueue(object : Callback<LoginUserResponse> {
-            override fun onResponse(
-                call: Call<LoginUserResponse>,
-                response: Response<LoginUserResponse>
-            ) {
-                val responseInfo: LoginUserResponse = response.body() as LoginUserResponse
-                addTokenAndIdToDatabase(responseInfo, login.email)
-                if(response.isSuccessful){
-                    returnStatement = Result.success()
-                } else {
-                    returnStatement = Result.failure(exception = Throwable())
-                }
-            }
-
-            override fun onFailure(call: Call<LoginUserResponse>, t: Throwable) {
-            }
-        })
-        return returnStatement
+    override suspend fun login(login: Login): Result<LoginUserResponse> {
+        return try {
+            val user = retrofit.loginUser(login)
+            Result.success(user)
+        } catch(e: HttpException) {
+            Result.failure(e)
+        } catch(e: IOException) {
+            Result.failure(e)
+        }
     }
 }

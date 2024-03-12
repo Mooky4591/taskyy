@@ -32,11 +32,11 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login(event: Login){
-        state = state.copy(isLogginIn = true)
         viewModelScope.launch {
+            state = state.copy(isLogginIn = true)
             state = state.copy(isLoginSuccessful = loginUseCase.loginUser(event))
+            state = state.copy(isLogginIn = false)
         }
-        state = state.copy(isLogginIn = false)
     }
 }
 
