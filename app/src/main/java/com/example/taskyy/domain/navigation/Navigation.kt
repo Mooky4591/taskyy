@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import com.example.taskyy.ui.AgendaScreen
 import com.example.taskyy.ui.LoginScreen
 import com.example.taskyy.ui.RegisterScreen
 import com.example.taskyy.ui.viewmodels.LoginViewModel
@@ -34,6 +35,10 @@ fun Nav() {
                     onEvent = registerViewModel::onEvent,
                     navController = navController
                 )
+            }
+            composable(route = Screen.Agenda.route) {
+                AgendaScreen()
+                //val agendaViewModel = hiltViewModel()
             }
         }
     }

@@ -8,7 +8,7 @@ class RegisterUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {
 
-    fun registerUser(user: User) {
+     suspend fun registerUser(user: User) {
         authRepository.registerUser(user)
         authRepository.addUserToDatabase(user)
     }

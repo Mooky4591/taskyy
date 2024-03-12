@@ -18,7 +18,7 @@ interface TaskyyApi {
     suspend fun registerUser(@Body body: RegisterUserDTO)
 
     @POST("/login")
-    fun loginUser(@Body body: Login): retrofit2.Call<LoginUserResponse>
+    suspend fun loginUser(@Body body: Login): LoginUserResponse
 
   //  @GET("/authenticate")
    // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>

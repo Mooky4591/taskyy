@@ -1,5 +1,6 @@
 package com.example.taskyy.data.repositories
 
+import android.util.Log
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_entity.UserEntity
 import com.example.taskyy.data.remote.LoginUserResponse
@@ -14,38 +15,41 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.HttpException
+import retrofit2.Response
+import retrofit2.await
+import retrofit2.awaitResponse
+import java.io.IOException
 import javax.inject.Inject
+import kotlin.math.log
 
 class AuthRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     private val retrofit: TaskyyApi,
 ): AuthRepository {
 
-    override fun addUserToDatabase(user: User) {
-        runBlocking { launch {
-            userDao.insertUser(user.mapToUserEntity())
-             }
-        }
+    override suspend fun addUserToDatabase(user: User) {
+        userDao.insertUser(user.mapToUserEntity())
     }
 
     override fun addTokenAndIdToDatabase(response: LoginUserResponse, email: String) {
-        runBlocking { launch {
-            userDao.update(response.token, response.userId, email)
+        runBlocking {
+            launch {
+                userDao.update(response.token, response.userId, email)
             }
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    override fun registerUser(user: User) {
+    override suspend fun registerUser(user: User) {
         val userDto = user.mapToUserDTO()
-        GlobalScope.launch(Dispatchers.IO) {
-            var response = retrofit.registerUser(userDto)
-        }
+        retrofit.registerUser(userDto)
     }
 
     private fun User.mapToUserEntity(): UserEntity {
         return UserEntity(null, fullName, email, null)
     }
+
     private fun User.mapToUserDTO(): RegisterUserDTO {
         return RegisterUserDTO(fullName, email, password)
     }
@@ -59,7 +63,14 @@ class AuthRepositoryImpl @Inject constructor(
         return hasLowerCase && hasUpperCase && hasDigit && hasValidLength
     }
 
-    override fun login(login: Login): Call<LoginUserResponse> {
-        return retrofit.loginUser(login)
+    override suspend fun login(login: Login): Result<LoginUserResponse> {
+        return try {
+            val user = retrofit.loginUser(login)
+            Result.success(user)
+        } catch(e: HttpException) {
+            Result.failure(e)
+        } catch(e: IOException) {
+            Result.failure(e)
+        }
     }
 }
