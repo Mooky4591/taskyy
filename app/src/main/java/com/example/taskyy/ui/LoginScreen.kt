@@ -69,9 +69,9 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 val loginObject = Login(state.email, state.password)
-                TaskyyActionButton(isLoginSuccessful = state.isLoginSuccessful, onClick = {onEvent(LoginEvent.OnLoginClick(loginObject))}, text = stringResource(
+                TaskyyActionButton(onClick = {onEvent(LoginEvent.OnLoginClick(loginObject))}, text = stringResource(
                     id = R.string.login
-                ), navController = navController, login = loginObject)
+                ), login = loginObject)
                 Row(
                 ) {
                     CreateBottomText()
@@ -79,6 +79,9 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                 }
             }
         }
+    }
+    if(state.isLoginSuccessful){
+        navController.navigate(Screen.Agenda.route)
     }
 }
 
@@ -91,7 +94,6 @@ fun TopText(text: String) {
         fontWeight = FontWeight.Bold
     )
 }
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateEmailField(isEmailValid: Boolean, onValueChange: (String) -> Unit, email: String) {
     TextField(
@@ -174,13 +176,10 @@ fun CreateHidePasswordToggle(isPasswordVisible: Boolean, onClick: (Boolean) -> U
 }
 
 @Composable
-fun TaskyyActionButton(isLoginSuccessful: Boolean, onClick: (Login) -> Unit, text: String, navController: NavController, login: Login) {
+fun TaskyyActionButton(onClick: (Login) -> Unit, text: String, login: Login) {
     Button(
         onClick = {
                   onClick(login)
-            if (isLoginSuccessful){
-                navController.navigate(Screen.Agenda.route)
-            }
         },
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Black

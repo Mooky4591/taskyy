@@ -56,13 +56,16 @@ modifier = Modifier
                 onClick = {isPasswordVisible -> onEvent(RegisterEvent.OnTogglePasswordVisibility(isPasswordVisible))})
             Spacer(modifier = Modifier.height(50.dp))
             val loginObject = Login(state.email, state.password)
-            TaskyyActionButton(isLoginSuccessful = state.isLoginSuccessful, onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
+            TaskyyActionButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
                 id = R.string.get_started
-            ), navController = navController, login = loginObject
+            ), login = loginObject
             )
         }
     }
 }
+    if(state.isRegistrationSuccessful){
+            navController.navigate(com.example.taskyy.domain.navigation.Screen.Agenda.route)
+        }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

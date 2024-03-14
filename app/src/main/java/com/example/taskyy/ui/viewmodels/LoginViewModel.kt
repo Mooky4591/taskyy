@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.usecases.LoginUseCase
-import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.ui.events.LoginEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -15,8 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
 ) : ViewModel() {
     var state by mutableStateOf(LoginState())
         private set

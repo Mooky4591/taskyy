@@ -9,6 +9,7 @@ import androidx.navigation.navigation
 import com.example.taskyy.ui.AgendaScreen
 import com.example.taskyy.ui.LoginScreen
 import com.example.taskyy.ui.RegisterScreen
+import com.example.taskyy.ui.viewmodels.AgendaViewModel
 import com.example.taskyy.ui.viewmodels.LoginViewModel
 import com.example.taskyy.ui.viewmodels.RegisterViewModel
 
@@ -37,8 +38,13 @@ fun Nav() {
                 )
             }
             composable(route = Screen.Agenda.route) {
-                AgendaScreen()
-                //val agendaViewModel = hiltViewModel()
+                val agendaViewModel = hiltViewModel<AgendaViewModel>()
+                val state = agendaViewModel.state
+                AgendaScreen(
+                    state = state,
+                    onEvent = agendaViewModel::onEvent,
+                    navController = navController
+                )
             }
         }
     }
