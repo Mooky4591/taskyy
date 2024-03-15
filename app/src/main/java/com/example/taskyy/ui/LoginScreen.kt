@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -32,15 +31,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.taskyy.R
-import com.example.taskyy.domain.navigation.Screen
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.ui.events.LoginEvent
 import com.example.taskyy.ui.viewmodels.LoginState
 
 @Composable
-fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController: NavController) {
+fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceAround,
@@ -75,13 +72,10 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit, navController:
                 Row(
                 ) {
                     CreateBottomText()
-                    CreateSignUpLink(navController)
+                    CreateSignUpLink(onEvent = { onEvent(LoginEvent.OnRegisterLinkClick) })
                 }
             }
         }
-    }
-    if(state.isLoginSuccessful){
-        navController.navigate(Screen.Agenda.route)
     }
 }
 
@@ -117,12 +111,15 @@ fun CreateEmailField(isEmailValid: Boolean, onValueChange: (String) -> Unit, ema
             .fillMaxWidth()
         else Modifier
             .fillMaxWidth()
-            .border(width = 1.5.dp, color = Color.Red, shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)),
+            .border(
+                width = 1.5.dp,
+                color = Color.Red,
+                shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
+            ),
         shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePasswordField(password: String, onValueChange: (String) -> Unit, isPasswordVisible: Boolean, onClick: (Boolean) -> Unit) {
 
@@ -196,12 +193,13 @@ fun CreateBottomText() {
 }
 
 @Composable
-fun CreateSignUpLink(navController: NavController) {
+fun CreateSignUpLink(onEvent: (LoginEvent) -> Unit) {
     return Text(
         text = "SIGN UP",
         modifier = Modifier.clickable {
-            navController.navigate(Screen.Register.route)
+            onEvent(LoginEvent.OnRegisterLinkClick)
         },
         color = Color.Blue,
-        fontStyle = FontStyle.Italic)
+        fontStyle = FontStyle.Italic
+    )
 }

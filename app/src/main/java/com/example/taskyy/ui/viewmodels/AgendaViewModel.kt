@@ -9,7 +9,10 @@ import com.example.taskyy.domain.usecases.LogoutUseCase
 import com.example.taskyy.ui.events.AgendaEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
@@ -30,9 +33,13 @@ class AgendaViewModel @Inject constructor(
     }
 
     private fun formatSelectedDate(date: Long) {
-        val monthDate = SimpleDateFormat("MMMM", Locale.US)
-        val monthName = monthDate.format(date)
-        state = state.copy(selectedMonth = monthName)
+        val instant = Instant.ofEpochMilli(date)
+        val localDateTime = LocalDateTime.ofInstant(
+            instant,
+            ZoneId.systemDefault()
+        ) // or specify your desired time zone
+        val formatter = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
+        state = state.copy(selectedMonth = formatter.format(localDateTime).uppercase())
     }
 
     private fun logout() {
