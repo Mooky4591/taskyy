@@ -23,7 +23,7 @@ class RegisterViewModel @Inject constructor(
     fun onEvent(event: RegisterEvent){
         when(event) {
             is RegisterEvent.OnNameChanged -> state = state.copy(name = event.name)
-            is RegisterEvent.OnEmailChanged -> state = state.copy(email = event.email)
+            is RegisterEvent.OnEmailChanged -> state = state.copy(email = event.email, isEmailValid = registerUseCase.isEmailValid(event.email))
             is RegisterEvent.OnPasswordChanged -> state = state.copy(password = event.password)
             is RegisterEvent.OnGetStartedClick -> register()
             is RegisterEvent.OnTogglePasswordVisibility -> state = state.copy(isPasswordVisible = event.isPasswordVisible)
@@ -34,7 +34,7 @@ class RegisterViewModel @Inject constructor(
         val user = User(fullName = state.name, password = state.password, email = state.email)
         if (registerUseCase.isPasswordValid(user.password)) {
             viewModelScope.launch {
-                registerUseCase.registerUser(user)
+                state = state.copy(isRegistrationSuccessful = registerUseCase.registerUser(user))
             }
         } else {
             Log.e("TAG", "Password in invalid")
@@ -48,6 +48,7 @@ data class RegisterState(
         var name: String = "",
         var isEmailValid: Boolean = false,
         var isPasswordVisible: Boolean = false,
+        var isRegistrationSuccessful: Boolean = false,
         var isLoginSuccessful: Boolean = false,
         var isLoading: Boolean = false
     )

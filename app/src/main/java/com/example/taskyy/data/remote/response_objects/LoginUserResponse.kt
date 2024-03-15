@@ -1,4 +1,4 @@
-package com.example.taskyy.data.remote
+package com.example.taskyy.data.remote.response_objects
 
 data class LoginUserResponse(
     val fullName: String,

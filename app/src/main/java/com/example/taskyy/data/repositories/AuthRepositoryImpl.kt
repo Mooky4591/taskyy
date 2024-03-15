@@ -1,28 +1,16 @@
 package com.example.taskyy.data.repositories
 
-import android.util.Log
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_entity.UserEntity
-import com.example.taskyy.data.remote.LoginUserResponse
+import com.example.taskyy.data.remote.response_objects.LoginUserResponse
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.repository.AuthRepository
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import retrofit2.Call
-import retrofit2.Callback
 import retrofit2.HttpException
-import retrofit2.Response
-import retrofit2.await
-import retrofit2.awaitResponse
 import java.io.IOException
 import javax.inject.Inject
-import kotlin.math.log
 
 class AuthRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
@@ -33,17 +21,19 @@ class AuthRepositoryImpl @Inject constructor(
         userDao.insertUser(user.mapToUserEntity())
     }
 
-    override fun addTokenAndIdToDatabase(response: LoginUserResponse, email: String) {
-        runBlocking {
-            launch {
-                userDao.update(response.token, response.userId, email)
-            }
-        }
+    override suspend fun addTokenAndIdToDatabase(token: String, userId: String, email: String) {
+        userDao.update(token, userId, email)
     }
 
-    override suspend fun registerUser(user: User) {
+    override suspend fun registerUser(user: User): Boolean {
         val userDto = user.mapToUserDTO()
-        retrofit.registerUser(userDto)
+        var wasRegistrationSuccessful = true
+        try {
+            retrofit.registerUser(userDto)
+        } catch (e: HttpException) {
+            wasRegistrationSuccessful = false
+        }
+        return wasRegistrationSuccessful
     }
 
     private fun User.mapToUserEntity(): UserEntity {
@@ -63,14 +53,20 @@ class AuthRepositoryImpl @Inject constructor(
         return hasLowerCase && hasUpperCase && hasDigit && hasValidLength
     }
 
-    override suspend fun login(login: Login): Result<LoginUserResponse> {
+    override suspend fun login(login: Login): Result<User> {
         return try {
             val user = retrofit.loginUser(login)
-            Result.success(user)
+            addTokenAndIdToDatabase(user.token, user.userId, login.email)
+            Result.success(user.toUser())
         } catch(e: HttpException) {
             Result.failure(e)
         } catch(e: IOException) {
             Result.failure(e)
         }
     }
+
+    private fun LoginUserResponse.toUser(): User {
+        return User(fullName, "", "")
+    }
+
 }

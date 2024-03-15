@@ -1,6 +1,7 @@
 package com.example.taskyy.di
 
 import android.content.Context
+import androidx.navigation.NavController
 import androidx.room.Room
 import com.example.taskyy.R
 import com.example.taskyy.data.local.data_access_objects.UserDao
@@ -23,7 +24,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Singleton
 @Module
-
 @InstallIn(SingletonComponent::class)
 object AuthModule {
 
@@ -31,6 +31,12 @@ object AuthModule {
     @Singleton
     fun provideAuthRepository(userDao: UserDao, api: TaskyyApi): AuthRepository {
         return AuthRepositoryImpl(userDao, api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNavController(@ApplicationContext context: Context): NavController {
+        return NavController(context = context)
     }
 
     @Provides

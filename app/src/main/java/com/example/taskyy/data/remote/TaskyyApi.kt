@@ -4,6 +4,7 @@ import com.example.taskyy.data.local.room_entity.EventEntity
 import com.example.taskyy.data.local.room_entity.ReminderEntity
 import com.example.taskyy.data.local.room_entity.TaskEntity
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
+import com.example.taskyy.data.remote.response_objects.LoginUserResponse
 import com.example.taskyy.domain.objects.Login
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -24,7 +25,7 @@ interface TaskyyApi {
    // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>
 
     @GET("/logout")
-    fun logoutUser(@Query("key") key: String)
+    suspend fun logoutUser()
 
     //@GET("/agenda")
     //fun getAgenda(@Query("key") key: String, @Query("timezone") timeZone: TimeZone, @Query("time") time: Time): retrofit2.Response<AgendaResponse>
