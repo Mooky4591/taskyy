@@ -1,5 +1,6 @@
 package com.example.taskyy.ui.viewmodels
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -26,14 +27,19 @@ class LoginViewModel @Inject constructor(
             is LoginEvent.OnPasswordChanged -> state = state.copy(password = event.password)
             is LoginEvent.OnTogglePasswordVisibility -> state = state.copy(isPasswordVisible = event.isPasswordVisible)
             is LoginEvent.OnNameChanged -> state = state.copy(name = event.name)
+            is LoginEvent.OnRegisterLinkClick -> {}
         }
     }
 
-    fun login(event: Login){
-        viewModelScope.launch {
-            state = state.copy(isLogginIn = true)
-            state = state.copy(isLoginSuccessful = loginUseCase.loginUser(event))
-            state = state.copy(isLogginIn = false)
+    fun login(event: Login) {
+        if (loginUseCase.isEmailValid(state.email) && loginUseCase.isPasswordValid(state.password)) {
+            viewModelScope.launch {
+                state = state.copy(isLogginIn = true)
+                state = state.copy(isLoginSuccessful = loginUseCase.loginUser(event))
+                state = state.copy(isLogginIn = false)
+            }
+        } else {
+            Log.e("TAG", "Password or Email was invalid")
         }
     }
 }

@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.domain.repository.AgendaRepository
 import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 class AgendaRepositoryImpl @Inject constructor(
@@ -11,14 +12,16 @@ class AgendaRepositoryImpl @Inject constructor(
     ): AgendaRepository {
 
     override suspend fun logout(): Boolean {
-        var wasLogoutSuccessful = true
-        try {
+        return try {
             retrofit.logoutUser()
+            true
         } catch (e: HttpException) {
             Log.e("Tag", e.code().toString())
-            wasLogoutSuccessful = false
+            false
+        } catch (i: IOException) {
+            Log.e("Tag", i.message.toString())
+            false
         }
-        return wasLogoutSuccessful
     }
 
 }

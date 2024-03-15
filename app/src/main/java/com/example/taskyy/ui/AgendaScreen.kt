@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DisplayMode
@@ -34,45 +36,36 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.taskyy.R
-import com.example.taskyy.domain.navigation.Screen
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.viewmodels.AgendaState
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 @Composable
-fun AgendaScreen(state: AgendaState, navController: NavController, onEvent: (AgendaEvent) -> Unit){
+fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
     Column(
         verticalArrangement = Arrangement.SpaceAround,
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        Row (
+        Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp)
+                .padding(horizontal = 15.dp),
         ) {
             Row(
-                horizontalArrangement = Arrangement.Start,
                 modifier = Modifier.clickable {
                     onEvent(AgendaEvent.OnMonthExpanded(!state.isMonthExpanded))
                 }
             ) {
-                MonthText(
-                    selectedMonth = state.selectedMonth
+                DateSelection(
+                    isMonthExpanded = state.isMonthExpanded,
+                    selectedMonth = state.selectedMonth,
+                    onEvent = onEvent
                 )
-                MonthDownArrow()
-                if (state.isMonthExpanded) {
-                    ShowDatePicker(
-                        onItemSelected = { selectedMonth ->
-                            onEvent(AgendaEvent.OnDateSelected(selectedMonth))
-                        },
-                    )
-                }
             }
             CircleWithInitials(
                 isUserDropDownExpanded = state.isUserDropDownExpanded,
@@ -86,23 +79,60 @@ fun AgendaScreen(state: AgendaState, navController: NavController, onEvent: (Age
         }
         Surface(
             modifier = Modifier
-                .fillMaxHeight(.85F)
+                .fillMaxHeight(.90F)
                 .fillMaxWidth(),
             shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top,
-                modifier = Modifier
-                    .fillMaxHeight(.75f)
-                    .padding(30.dp)
+                verticalArrangement = Arrangement.Bottom,
             ) {
-                Spacer(modifier = Modifier.height(10.dp))
+                //I know this is wrong but I don't know how to push this button to the bottom right of the screen
+                Spacer(modifier = Modifier.height(645.dp))
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp)
+                ) {
+                    AddAgendaItem(onEvent = onEvent)
+                }
             }
         }
     }
-    if(state.wasLogoutSuccessful){
-        navController.navigate(Screen.Login.route)
+}
+
+@Composable
+fun AddAgendaItem(onEvent: (AgendaEvent) -> Unit) {
+    Button(
+        onClick = {
+        },
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Black,
+            contentColor = Color.White
+        ),
+    ) {
+        Text(text = "+", fontSize = 25.sp)
+    }
+}
+
+@Composable
+fun DateSelection(selectedMonth: String, onEvent: (AgendaEvent) -> Unit, isMonthExpanded: Boolean) {
+    if (selectedMonth == "") {
+        MonthText(selectedMonth = LocalDateTime.now().month.toString())
+    } else {
+        MonthText(selectedMonth = selectedMonth)
+    }
+    Icon(
+        painter = painterResource(id = R.drawable.drop_down_arrow),
+        contentDescription = "", tint = Color.White
+    )
+    if (isMonthExpanded) {
+        ShowDatePicker(
+            onItemSelected = { selectedMonth ->
+                onEvent(AgendaEvent.OnDateSelected(selectedMonth))
+            },
+        )
     }
 }
 
@@ -165,14 +195,6 @@ fun MonthText(selectedMonth: String){
         color = Color.White,
         fontSize = 20.sp)
 }
-
-@Composable
-fun MonthDownArrow() {
-        Icon(
-            painter = painterResource(id = R.drawable.drop_down_arrow),
-            contentDescription = "", tint = Color.White
-        )
-    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

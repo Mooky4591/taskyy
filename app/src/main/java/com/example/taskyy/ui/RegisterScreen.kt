@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -19,24 +18,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.taskyy.R
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.viewmodels.RegisterState
 
 @Composable
-fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit, navController: NavController) {
-Column(
-horizontalAlignment = Alignment.CenterHorizontally,
-verticalArrangement = Arrangement.SpaceAround,
-modifier = Modifier
-    .fillMaxHeight()
-    .background(Color.Black)
-) {
-    TopText(stringResource(R.string.create_your_account))
-    Surface(
+fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround,
         modifier = Modifier
+            .fillMaxHeight()
+            .background(Color.Black)
+    ) {
+        TopText(stringResource(R.string.create_your_account))
+        Surface(
+            modifier = Modifier
             .fillMaxHeight(.80F),
         shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
     ) {
@@ -63,12 +61,8 @@ modifier = Modifier
         }
     }
 }
-    if(state.isRegistrationSuccessful){
-            navController.navigate(com.example.taskyy.domain.navigation.Screen.Agenda.route)
-        }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateNameField(name: String, onValueChange: (String) -> Unit) {
     TextField(
