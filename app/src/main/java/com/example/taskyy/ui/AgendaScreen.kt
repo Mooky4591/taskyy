@@ -160,27 +160,26 @@ fun AddAgendaItem(onEvent: (AgendaEvent) -> Unit, isAgendaItemExpanded: Boolean)
         contentColor = Color.White,
     ) {
         Text(text = "+", fontSize = 25.sp)
-    }
-
-    DropdownMenu(
-        expanded = isAgendaItemExpanded,
-        onDismissRequest = {
-            onEvent(AgendaEvent.AddAgendaItem(!isAgendaItemExpanded))
-        },
-        modifier = Modifier.background(Color.White),
-    ) {
-        DropdownMenuItem(
-            text = { Text(text = "Event") },
-            onClick = { /*TODO*/ }
-        )
-        DropdownMenuItem(
-            text = { Text(text = "Task") },
-            onClick = { /*TODO*/ }
-        )
-        DropdownMenuItem(
-            text = { Text(text = "Reminder") },
-            onClick = { /*TODO*/ }
-        )
+        DropdownMenu(
+            expanded = isAgendaItemExpanded,
+            onDismissRequest = {
+                onEvent(AgendaEvent.AddAgendaItem(!isAgendaItemExpanded))
+            },
+            modifier = Modifier.background(Color.White),
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = "Event") },
+                onClick = { /*TODO*/ }
+            )
+            DropdownMenuItem(
+                text = { Text(text = "Task") },
+                onClick = { /*TODO*/ }
+            )
+            DropdownMenuItem(
+                text = { Text(text = "Reminder") },
+                onClick = { /*TODO*/ }
+            )
+        }
     }
 }
 
