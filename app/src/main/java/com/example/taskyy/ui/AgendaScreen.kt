@@ -1,5 +1,7 @@
 package com.example.taskyy.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,15 +17,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
@@ -34,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taskyy.R
@@ -42,77 +45,141 @@ import com.example.taskyy.ui.viewmodels.AgendaState
 import java.time.LocalDateTime
 import java.time.ZoneId
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
-    Column(
-        verticalArrangement = Arrangement.SpaceAround,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 15.dp),
-        ) {
+    Scaffold(
+        topBar = {
             Row(
-                modifier = Modifier.clickable {
-                    onEvent(AgendaEvent.OnMonthExpanded(!state.isMonthExpanded))
-                }
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 15.dp, vertical = 10.dp)
+                    .background(Color.Black)
             ) {
-                DateSelection(
-                    isMonthExpanded = state.isMonthExpanded,
-                    selectedMonth = state.selectedMonth,
-                    onEvent = onEvent
+                Row(
+                    modifier = Modifier
+                        .clickable {
+                            onEvent(AgendaEvent.OnMonthExpanded(!state.isMonthExpanded))
+                        }
+                        .padding(vertical = 10.dp)
+                ) {
+                    DateSelection(
+                        isMonthExpanded = state.isMonthExpanded,
+                        selectedMonth = state.selectedMonth,
+                        onEvent = onEvent
+                    )
+                }
+                CircleWithInitials(
+                    isUserDropDownExpanded = state.isUserDropDownExpanded,
+                    onUserInitialsClicked = { isUserDropDownExpanded ->
+                        onEvent(
+                            AgendaEvent.OnUserInitialsClicked(
+                                isUserDropDownExpanded
+                            )
+                        )
+                    },
+                    onItemSelected = {
+                        onEvent(AgendaEvent.OnLogOutCLicked)
+                    },
                 )
             }
-            CircleWithInitials(
-                isUserDropDownExpanded = state.isUserDropDownExpanded,
-                onUserInitialsClicked = { isUserDropDownExpanded ->
-                    onEvent(AgendaEvent.OnUserInitialsClicked(isUserDropDownExpanded))
-                },
-                onItemSelected = {
-                    onEvent(AgendaEvent.OnLogOutCLicked)
-                },
-            )
-        }
-        Surface(
-            modifier = Modifier
-                .fillMaxHeight(.90F)
-                .fillMaxWidth(),
-            shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
-        ) {
+        },
+        content = { PaddingValues ->
+            PaddingValues.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr)
             Column(
-                verticalArrangement = Arrangement.Bottom,
+                verticalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
             ) {
-                //I know this is wrong but I don't know how to push this button to the bottom right of the screen
-                Spacer(modifier = Modifier.height(645.dp))
-                Row(
-                    horizontalArrangement = Arrangement.End,
+                Surface(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 10.dp)
+                        .fillMaxHeight(.85F)
+                        .fillMaxWidth(),
+                    shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
                 ) {
-                    AddAgendaItem(onEvent = onEvent)
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        if (state.selectedDay.isNotEmpty()) {
+                            for (day in state.selectedDay) {
+                                Box(
+                                    Modifier.padding(
+                                        horizontal = 15.dp,
+                                        vertical = 20.dp
+                                    ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        SelectedDaysOfTheWeek(dayOfTheWeek = day.dayOfTheWeek)
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        SelectedDaysOfTheMonth(dayOfTheMonth = day.dayOfTheMonth)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        }
+        },
+        floatingActionButton = {
+            AddAgendaItem(onEvent = onEvent, isAgendaItemExpanded = state.isAddAgendaItemExpanded)
+        },
+    )
+}
+
+@Composable
+fun SelectedDaysOfTheMonth(dayOfTheMonth: String) {
+    Text(text = dayOfTheMonth, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
+@Composable
+fun SelectedDaysOfTheWeek(dayOfTheWeek: String) {
+    if (dayOfTheWeek != "") {
+        Text(
+            text = dayOfTheWeek.substring(0, 1),
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            color = Color.LightGray
+        )
     }
 }
 
 @Composable
-fun AddAgendaItem(onEvent: (AgendaEvent) -> Unit) {
-    Button(
+fun AddAgendaItem(onEvent: (AgendaEvent) -> Unit, isAgendaItemExpanded: Boolean) {
+    FloatingActionButton(
         onClick = {
+            onEvent(AgendaEvent.AddAgendaItem(isAgendaItemExpanded = !isAgendaItemExpanded))
         },
-        shape = CircleShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Black,
-            contentColor = Color.White
-        ),
+        shape = AbsoluteRoundedCornerShape(10.dp, 10.dp, 10.dp, 10.dp),
+        containerColor = Color.Black,
+        contentColor = Color.White,
     ) {
         Text(text = "+", fontSize = 25.sp)
+        DropdownMenu(
+            expanded = isAgendaItemExpanded,
+            onDismissRequest = {
+                onEvent(AgendaEvent.AddAgendaItem(!isAgendaItemExpanded))
+            },
+            modifier = Modifier.background(Color.White),
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = "Event") },
+                onClick = { /*TODO*/ }
+            )
+            DropdownMenuItem(
+                text = { Text(text = "Task") },
+                onClick = { /*TODO*/ }
+            )
+            DropdownMenuItem(
+                text = { Text(text = "Reminder") },
+                onClick = { /*TODO*/ }
+            )
+        }
     }
 }
 
