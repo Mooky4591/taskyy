@@ -5,10 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.taskyy.domain.repository.AgendaRepository
 import com.example.taskyy.domain.usecases.LogoutUseCase
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.objects.Day
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
@@ -19,10 +22,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AgendaViewModel @Inject constructor(
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    private val agendaRepository: AgendaRepository
 ): ViewModel() {
     var state by mutableStateOf(AgendaState())
         private set
+
+    private val eventChannel = Channel<AgendaEvent>()
+    val events = eventChannel.receiveAsFlow()
 
     fun onEvent(event: AgendaEvent) {
         when (event) {
@@ -39,11 +46,14 @@ class AgendaViewModel @Inject constructor(
 
             is AgendaEvent.OnAgendaDaySelected -> state =
                 state.copy(selectedAgendaDay = event.agendaDaySelected)
+
+            is AgendaEvent.LogoutSuccessful -> {}
+            is AgendaEvent.SelectedDayIndex -> state =
+                state.copy(selectedIndex = event.index)
         }
     }
 
     private fun formatSelectedDate(date: Long) {
-
         val instant = Instant.ofEpochMilli(date)
         val localDateTime = LocalDateTime.ofInstant(
             instant,
@@ -54,34 +64,19 @@ class AgendaViewModel @Inject constructor(
         val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
         val dayOfTheWeekFormatter = DateTimeFormatter.ofPattern("E", Locale.ENGLISH)
 
-        val tempDateList: ArrayList<LocalDateTime> = java.util.ArrayList()
-        val dayList: ArrayList<Day> = ArrayList()
-
-        val dateList: ArrayList<LocalDateTime> = incrementDate(localDateTime, tempDateList)
-
-        for (date in dateList) {
-            val day = Day(
+        val days = (1..6).map {
+            val date = localDateTime.plusDays(it.toLong())
+            Day(
+                dayOfTheMonth = dayOfTheMonthFormatter.format(date),
                 dayOfTheWeek = dayOfTheWeekFormatter.format(date),
-                dayOfTheMonth = dayOfTheMonthFormatter.format(date)
+                index = it
             )
-            dayList.add(day)
         }
-
 
         state = state.copy(
             selectedMonth = monthFormatter.format(localDateTime).uppercase(),
-            selectedDay = dayList,
+            selectedDayList = days,
         )
-    }
-
-    private fun incrementDate(
-        localDateTime: LocalDateTime,
-        dateList: ArrayList<LocalDateTime>,
-    ): ArrayList<LocalDateTime> {
-        for (i in 0..6) {
-            dateList.add(localDateTime.plusDays(i.toLong()))
-        }
-        return dateList
     }
 
     private fun logout() {
@@ -89,17 +84,47 @@ class AgendaViewModel @Inject constructor(
             state = state.copy(isUserLoggingOut = true)
             state = state.copy(wasLogoutSuccessful = logoutUseCase.logout())
             state = state.copy(isUserLoggingOut = false)
+
+            if (state.wasLogoutSuccessful) {
+                eventChannel.send(AgendaEvent.LogoutSuccessful)
+            }
+        }
+    }
+
+    fun setUserInitials(email: String) {
+        viewModelScope.launch {
+            val name = agendaRepository.getUserName(email)
+            state = state.copy(name = name)
+            state = state.copy(initials = name
+                .split(' ')
+                .mapNotNull { it.firstOrNull()?.toString() }
+                .reduce { acc, s -> acc + s })
         }
     }
 }
 data class AgendaState(
     var name: String = "",
+    var initials: String = "",
     var isMonthExpanded: Boolean = false,
     var selectedMonth: String = "",
-    var selectedDay: java.util.ArrayList<Day> = java.util.ArrayList(),
+    var selectedDayList: List<Day> = getDefaultListOfDays(),
     var isUserDropDownExpanded: Boolean = false,
     var isUserLoggingOut: Boolean = false,
     var wasLogoutSuccessful: Boolean = false,
     var isAddAgendaItemExpanded: Boolean = false,
-    var selectedAgendaDay: Boolean = false
+    var selectedAgendaDay: Boolean = false,
+    var selectedIndex: Int = 0
 )
+
+fun getDefaultListOfDays(): List<Day> {
+    val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
+    val dayOfTheWeekFormatter = DateTimeFormatter.ofPattern("E", Locale.ENGLISH)
+    return (0..5).map {
+        val date = LocalDateTime.now().plusDays(it.toLong())
+        Day(
+            dayOfTheMonth = dayOfTheMonthFormatter.format(date),
+            dayOfTheWeek = dayOfTheWeekFormatter.format(date),
+            index = it
+        )
+    }
+}

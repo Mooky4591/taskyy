@@ -1,7 +1,5 @@
-package com.example.taskyy.ui
+package com.example.taskyy.ui.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +17,7 @@ import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -41,57 +40,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taskyy.R
 import com.example.taskyy.ui.events.AgendaEvent
+import com.example.taskyy.ui.objects.Day
 import com.example.taskyy.ui.viewmodels.AgendaState
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
     Scaffold(
         topBar = {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp, vertical = 10.dp)
-                    .background(Color.Black)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .clickable {
-                            onEvent(AgendaEvent.OnMonthExpanded(!state.isMonthExpanded))
-                        }
-                        .padding(vertical = 10.dp)
-                ) {
-                    DateSelection(
-                        isMonthExpanded = state.isMonthExpanded,
-                        selectedMonth = state.selectedMonth,
-                        onEvent = onEvent
-                    )
-                }
-                CircleWithInitials(
-                    isUserDropDownExpanded = state.isUserDropDownExpanded,
-                    onUserInitialsClicked = { isUserDropDownExpanded ->
-                        onEvent(
-                            AgendaEvent.OnUserInitialsClicked(
-                                isUserDropDownExpanded
-                            )
-                        )
-                    },
-                    onItemSelected = {
-                        onEvent(AgendaEvent.OnLogOutCLicked)
-                    },
-                )
-            }
+            DateSelectionAndUserInitialsButton(
+                isMonthExpanded = state.isMonthExpanded,
+                isUserDropDownExpanded = state.isUserDropDownExpanded,
+                onEvent = onEvent,
+                selectedMonth = state.selectedMonth,
+                initials = state.initials
+            )
         },
-        content = { PaddingValues ->
-            PaddingValues.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr)
+        content = {
             Column(
                 verticalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black)
+                    .padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
             ) {
                 Surface(
                     modifier = Modifier
@@ -100,35 +72,116 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
                     shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceEvenly,
                     ) {
-                        if (state.selectedDay.isNotEmpty()) {
-                            for (day in state.selectedDay) {
-                                Box(
-                                    Modifier.padding(
-                                        horizontal = 15.dp,
-                                        vertical = 20.dp
-                                    ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        SelectedDaysOfTheWeek(dayOfTheWeek = day.dayOfTheWeek)
-                                        Spacer(modifier = Modifier.height(10.dp))
-                                        SelectedDaysOfTheMonth(dayOfTheMonth = day.dayOfTheMonth)
-                                    }
-                                }
+                        RowOfDaysToDisplay(
+                            selectedDay = state.selectedDayList,
+                            selectedIndex = state.selectedIndex,
+                            selectedDayIndexOnClick = { index ->
+                                onEvent(AgendaEvent.SelectedDayIndex(index = index))
                             }
-                        }
+                        )
                     }
                 }
             }
         },
         floatingActionButton = {
-            AddAgendaItem(onEvent = onEvent, isAgendaItemExpanded = state.isAddAgendaItemExpanded)
+            AddAgendaItem(
+                onEvent = onEvent,
+                isAgendaItemExpanded = state.isAddAgendaItemExpanded
+            )
         },
     )
+}
+
+@Composable
+fun RowOfDaysToDisplay(
+    selectedDay: List<Day>,
+    selectedDayIndexOnClick: (Int) -> Unit,
+    selectedIndex: Int
+) {
+    if (selectedDay.isNotEmpty()) {
+        for (day in selectedDay) {
+            Surface(
+                modifier =
+                Modifier
+                    .padding(
+                        vertical = 20.dp
+                    )
+                    .size(
+                        height = 60.dp,
+                        width = 40.dp
+                    ),
+                shape = AbsoluteRoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp),
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .clickable {
+                            selectedDayIndexOnClick(day.index)
+                        }
+                        .background(
+                            color =
+                            if (day.index == selectedIndex) {
+                                Color(android.graphics.Color.parseColor("#feeea8"))
+                            } else {
+                                Color.Transparent
+                            }
+                        )
+                ) {
+                    SelectedDaysOfTheWeek(dayOfTheWeek = day.dayOfTheWeek)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    SelectedDaysOfTheMonth(dayOfTheMonth = day.dayOfTheMonth)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DateSelectionAndUserInitialsButton(
+    isMonthExpanded: Boolean,
+    onEvent: (AgendaEvent) -> Unit,
+    selectedMonth: String,
+    isUserDropDownExpanded: Boolean,
+    initials: String
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 15.dp, vertical = 10.dp)
+            .background(Color.Black)
+    ) {
+        Row(
+            modifier = Modifier
+                .clickable {
+                    onEvent(AgendaEvent.OnMonthExpanded(!isMonthExpanded))
+                }
+                .padding(vertical = 10.dp)
+        ) {
+            DateSelection(
+                isMonthExpanded = isMonthExpanded,
+                selectedMonth = selectedMonth,
+                onEvent = onEvent
+            )
+        }
+        CircleWithInitials(
+            isUserDropDownExpanded = isUserDropDownExpanded,
+            onUserInitialsClicked = { isUserDropDownExpanded ->
+                onEvent(
+                    AgendaEvent.OnUserInitialsClicked(
+                        isUserDropDownExpanded
+                    )
+                )
+            },
+            onItemSelected = {
+                onEvent(AgendaEvent.OnLogOutCLicked)
+            },
+            initials = initials
+        )
+    }
 }
 
 @Composable
@@ -136,7 +189,6 @@ fun SelectedDaysOfTheMonth(dayOfTheMonth: String) {
     Text(text = dayOfTheMonth, fontWeight = FontWeight.Bold, fontSize = 15.sp)
 }
 
-@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun SelectedDaysOfTheWeek(dayOfTheWeek: String) {
     if (dayOfTheWeek != "") {
@@ -199,6 +251,10 @@ fun DateSelection(selectedMonth: String, onEvent: (AgendaEvent) -> Unit, isMonth
             onItemSelected = { selectedMonth ->
                 onEvent(AgendaEvent.OnDateSelected(selectedMonth))
             },
+            cancelled = { isMonthExpanded ->
+                onEvent(AgendaEvent.OnMonthExpanded(isMonthExpanded))
+            },
+            isDatePickerExpanded = isMonthExpanded
         )
     }
 }
@@ -206,7 +262,12 @@ fun DateSelection(selectedMonth: String, onEvent: (AgendaEvent) -> Unit, isMonth
 fun LocalDateTime.toMillis() = this.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
 @Composable
-fun CircleWithInitials(isUserDropDownExpanded: Boolean, onUserInitialsClicked: (Boolean) -> Unit, onItemSelected: (AgendaEvent) -> Unit) {
+fun CircleWithInitials(
+    isUserDropDownExpanded: Boolean,
+    onUserInitialsClicked: (Boolean) -> Unit,
+    onItemSelected: (AgendaEvent) -> Unit,
+    initials: String
+) {
     Surface(
         shape = CircleShape,
         color = Color.Gray,
@@ -224,7 +285,7 @@ fun CircleWithInitials(isUserDropDownExpanded: Boolean, onUserInitialsClicked: (
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "SR",
+                text = initials,
                 fontSize = 16.sp,
                 lineHeight = 19.sp,
                 fontWeight = FontWeight.W700,
@@ -257,15 +318,21 @@ fun DropDownMenuItemText(logout: String) {
 }
 
 @Composable
-fun MonthText(selectedMonth: String){
-    Text(text = selectedMonth,
+fun MonthText(selectedMonth: String) {
+    Text(
+        text = selectedMonth,
         color = Color.White,
-        fontSize = 20.sp)
+        fontSize = 20.sp,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShowDatePicker(onItemSelected: (Long) -> Unit){
+fun ShowDatePicker(
+    onItemSelected: (Long) -> Unit,
+    cancelled: (Boolean) -> Unit,
+    isDatePickerExpanded: Boolean
+) {
 
     val dateTime = LocalDateTime.now()
     val datePickerState = rememberDatePickerState(
@@ -275,18 +342,36 @@ fun ShowDatePicker(onItemSelected: (Long) -> Unit){
         initialDisplayMode = DisplayMode.Picker
     )
 
-    DatePicker(
-        state = datePickerState,
-        modifier = Modifier.clickable {
-            onItemSelected(datePickerState.selectedDateMillis!!)
+    DatePickerDialog(
+        onDismissRequest = {
+            cancelled(!isDatePickerExpanded)
+        },
+        confirmButton = {
+            Text(
+                text = "Select",
+                modifier = Modifier
+                    .clickable {
+                        onItemSelected(datePickerState.selectedDateMillis!!)
+                        cancelled(!isDatePickerExpanded)
+                    }
+                    .padding(end = 15.dp, bottom = 15.dp),
+            )
+        },
+        content = {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    titleContentColor = Color.White,
+                    todayDateBorderColor = Color.Green,
+                    headlineContentColor = Color.White,
+                    weekdayContentColor = Color.White,
+                    dayContentColor = Color.White,
+                    navigationContentColor = Color.White
+                )
+            )
         },
         colors = DatePickerDefaults.colors(
-            titleContentColor = Color.White,
-            todayDateBorderColor = Color.Green,
-            headlineContentColor = Color.White,
-            weekdayContentColor = Color.White,
-            dayContentColor = Color.White
+            containerColor = Color.Black
         )
     )
-
 }
