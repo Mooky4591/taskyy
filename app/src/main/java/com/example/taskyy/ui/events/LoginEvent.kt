@@ -10,6 +10,6 @@ sealed interface LoginEvent {
     data class OnNameChanged(val name: String) : LoginEvent
     data class OnLoginClick(val login: Login) : LoginEvent
     data object OnRegisterLinkClick : LoginEvent
-    data object LoginSuccess : LoginEvent
     data object LoginFailed : LoginEvent
+    data class LoginSuccess(val email: String) : LoginEvent
 }
