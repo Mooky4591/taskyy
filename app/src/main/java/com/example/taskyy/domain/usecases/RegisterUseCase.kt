@@ -10,7 +10,6 @@ class RegisterUseCase @Inject constructor(
 ) {
 
      suspend fun registerUser(user: User): Boolean {
-         authRepository.addUserToDatabase(user)
          return authRepository.registerUser(user)
      }
 

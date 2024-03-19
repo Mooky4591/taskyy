@@ -1,4 +1,4 @@
-package com.example.taskyy.ui
+package com.example.taskyy.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

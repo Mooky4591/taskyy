@@ -74,12 +74,13 @@ object AuthModule {
     @Singleton
     fun provideRoomDatabase(@ApplicationContext context: Context): TaskyyDatabase {
         synchronized(this) {
-            val instance = Room.databaseBuilder(
+            return Room.databaseBuilder(
                 context.applicationContext,
                 TaskyyDatabase::class.java,
                 "database"
-            ).build()
-            return instance
+            )
+                .fallbackToDestructiveMigration()
+                .build()
         }
     }
 }

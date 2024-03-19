@@ -44,7 +44,6 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login(event: Login) {
-
         if (loginUseCase.isEmailValid(state.email) && loginUseCase.isPasswordValid(state.password)) {
             viewModelScope.launch {
                 state = state.copy(isLogginIn = true)
@@ -52,7 +51,7 @@ class LoginViewModel @Inject constructor(
                 state = state.copy(isLogginIn = false)
 
                 if (state.isLoginSuccessful) {
-                    eventChannel.send(LoginEvent.LoginSuccess)
+                    eventChannel.send(LoginEvent.LoginSuccess(state.email))
                 }
             }
         } else {

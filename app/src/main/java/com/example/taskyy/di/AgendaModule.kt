@@ -2,6 +2,7 @@ package com.example.taskyy.di
 
 import android.content.Context
 import com.example.taskyy.R
+import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.remote.ApiKeyInterceptor
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AgendaRepositoryImpl
@@ -26,7 +27,13 @@ object AgendaModule {
     @Provides
     @Singleton
     fun providesAgendaRepo(@ApplicationContext context: Context): AgendaRepository {
-        return AgendaRepositoryImpl(provideRetrofitInstance(context))
+        return AgendaRepositoryImpl(provideRetrofitInstance(context), provideUserDao(context))
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserDao(@ApplicationContext context: Context): UserDao {
+        return AuthModule.provideRoomDatabase(context).userDao()
     }
 
     @Provides
