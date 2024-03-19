@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DatePicker
@@ -48,15 +50,6 @@ import java.time.ZoneId
 @Composable
 fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
     Scaffold(
-        topBar = {
-            DateSelectionAndUserInitialsButton(
-                isMonthExpanded = state.isMonthExpanded,
-                isUserDropDownExpanded = state.isUserDropDownExpanded,
-                onEvent = onEvent,
-                selectedMonth = state.selectedMonth,
-                initials = state.initials
-            )
-        },
         content = {
             Column(
                 verticalArrangement = Arrangement.SpaceEvenly,
@@ -65,21 +58,45 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
                     .background(Color.Black)
                     .padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
             ) {
+                DateSelectionAndUserInitialsButton(
+                    isMonthExpanded = state.isMonthExpanded,
+                    isUserDropDownExpanded = state.isUserDropDownExpanded,
+                    onEvent = onEvent,
+                    selectedMonth = state.selectedMonth,
+                    initials = state.initials
+                )
                 Surface(
                     modifier = Modifier
-                        .fillMaxHeight(.85F)
+                        .fillMaxHeight()
                         .fillMaxWidth(),
                     shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.wrapContentHeight(align = Alignment.Top)
                     ) {
                         RowOfDaysToDisplay(
                             selectedDay = state.selectedDayList,
                             selectedIndex = state.selectedIndex,
                             selectedDayIndexOnClick = { index ->
                                 onEvent(AgendaEvent.SelectedDayIndex(index = index))
+                            },
+                            updateDateStringOnSelectedDayClick = { date ->
+                                onEvent(AgendaEvent.UpdateDateString(date))
                             }
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.padding(start = 20.dp)
+                    ) {
+                        Text(
+                            text = state.dateString,
+                            color = Color.Black,
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .height(250.dp)
+                                .wrapContentHeight(Alignment.CenterVertically)
                         )
                     }
                 }
@@ -98,7 +115,8 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
 fun RowOfDaysToDisplay(
     selectedDay: List<Day>,
     selectedDayIndexOnClick: (Int) -> Unit,
-    selectedIndex: Int
+    selectedIndex: Int,
+    updateDateStringOnSelectedDayClick: (String) -> Unit
 ) {
     if (selectedDay.isNotEmpty()) {
         for (day in selectedDay) {
@@ -120,6 +138,7 @@ fun RowOfDaysToDisplay(
                     modifier = Modifier
                         .clickable {
                             selectedDayIndexOnClick(day.index)
+                            updateDateStringOnSelectedDayClick(day.date)
                         }
                         .background(
                             color =
@@ -129,6 +148,7 @@ fun RowOfDaysToDisplay(
                                 Color.Transparent
                             }
                         )
+                        .wrapContentSize()
                 ) {
                     SelectedDaysOfTheWeek(dayOfTheWeek = day.dayOfTheWeek)
                     Spacer(modifier = Modifier.height(10.dp))
@@ -159,7 +179,7 @@ fun DateSelectionAndUserInitialsButton(
                 .clickable {
                     onEvent(AgendaEvent.OnMonthExpanded(!isMonthExpanded))
                 }
-                .padding(vertical = 10.dp)
+                .padding(top = 10.dp)
         ) {
             DateSelection(
                 isMonthExpanded = isMonthExpanded,
@@ -270,7 +290,7 @@ fun CircleWithInitials(
 ) {
     Surface(
         shape = CircleShape,
-        color = Color.Gray,
+        color = Color.LightGray,
         modifier =
         Modifier
             .size(40.dp)
@@ -289,7 +309,7 @@ fun CircleWithInitials(
                 fontSize = 16.sp,
                 lineHeight = 19.sp,
                 fontWeight = FontWeight.W700,
-                color = Color.LightGray
+                color = Color.Gray
             )
         }
 
@@ -323,6 +343,7 @@ fun MonthText(selectedMonth: String) {
         text = selectedMonth,
         color = Color.White,
         fontSize = 20.sp,
+        fontWeight = FontWeight.Bold
     )
 }
 

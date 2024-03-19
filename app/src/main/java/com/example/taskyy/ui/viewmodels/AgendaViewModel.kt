@@ -50,6 +50,9 @@ class AgendaViewModel @Inject constructor(
             is AgendaEvent.LogoutSuccessful -> {}
             is AgendaEvent.SelectedDayIndex -> state =
                 state.copy(selectedIndex = event.index)
+
+            is AgendaEvent.UpdateDateString -> state =
+                state.copy(dateString = event.date)
         }
     }
 
@@ -63,13 +66,17 @@ class AgendaViewModel @Inject constructor(
         val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
         val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
         val dayOfTheWeekFormatter = DateTimeFormatter.ofPattern("E", Locale.ENGLISH)
+        val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.ENGLISH)
+
+        state = state.copy(dateString = dateStringFormatter.format(localDateTime.plusDays(1)))
 
         val days = (1..6).map {
             val date = localDateTime.plusDays(it.toLong())
             Day(
                 dayOfTheMonth = dayOfTheMonthFormatter.format(date),
                 dayOfTheWeek = dayOfTheWeekFormatter.format(date),
-                index = it
+                index = it,
+                date = dateStringFormatter.format(date)
             )
         }
 
@@ -108,6 +115,7 @@ data class AgendaState(
     var isMonthExpanded: Boolean = false,
     var selectedMonth: String = "",
     var selectedDayList: List<Day> = getDefaultListOfDays(),
+    var dateString: String = getDefaultDateString(),
     var isUserDropDownExpanded: Boolean = false,
     var isUserLoggingOut: Boolean = false,
     var wasLogoutSuccessful: Boolean = false,
@@ -116,15 +124,24 @@ data class AgendaState(
     var selectedIndex: Int = 0
 )
 
+fun getDefaultDateString(): String {
+    val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu")
+    return dateStringFormatter.format(LocalDateTime.now())
+
+}
+
 fun getDefaultListOfDays(): List<Day> {
     val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
     val dayOfTheWeekFormatter = DateTimeFormatter.ofPattern("E", Locale.ENGLISH)
+    val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.ENGLISH)
+
     return (0..5).map {
         val date = LocalDateTime.now().plusDays(it.toLong())
         Day(
             dayOfTheMonth = dayOfTheMonthFormatter.format(date),
             dayOfTheWeek = dayOfTheWeekFormatter.format(date),
-            index = it
+            index = it,
+            date = dateStringFormatter.format(date)
         )
     }
 }

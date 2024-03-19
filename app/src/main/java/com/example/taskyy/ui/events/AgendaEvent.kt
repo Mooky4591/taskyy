@@ -10,4 +10,5 @@ sealed interface AgendaEvent {
     data class OnAgendaDaySelected(val agendaDaySelected: Boolean) : AgendaEvent
     data object LogoutSuccessful : AgendaEvent
     data class SelectedDayIndex(val index: Int) : AgendaEvent
+    data class UpdateDateString(val date: String) : AgendaEvent
 }
