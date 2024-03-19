@@ -1,6 +1,7 @@
 package com.example.taskyy.domain.usecases
 
 import android.util.Patterns
+import com.example.taskyy.domain.error.DataError
 import com.example.taskyy.domain.error.PasswordValidator
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.objects.User
@@ -12,8 +13,7 @@ class RegisterUseCase @Inject constructor(
     private val passwordValidator: PasswordValidator
 ) {
 
-    suspend fun registerUser(user: User): Boolean {
-        authRepository.addUserToDatabase(user)
+    suspend fun registerUser(user: User): Result<User, DataError.Network> {
         return authRepository.registerUser(user)
     }
 

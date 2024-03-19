@@ -5,6 +5,7 @@ import com.example.taskyy.data.local.room_entity.UserEntity
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
+import com.example.taskyy.domain.error.DataError
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.repository.AuthRepository
@@ -21,15 +22,20 @@ class AuthRepositoryImpl @Inject constructor(
         userDao.update(token, userId, email)
     }
 
-    override suspend fun registerUser(user: User): Boolean {
+    override suspend fun registerUser(user: User): com.example.taskyy.domain.error.Result<User, DataError.Network> {
         val userDto = user.toUserDTO()
         return try {
             retrofit.registerUser(userDto)
-            true
+            com.example.taskyy.domain.error.Result.Success(user)
         } catch (e: HttpException) {
-            false
-        } catch (e: IOException) {
-            false
+            when (e.code()) {
+                408 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                429 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERIALIZATION)
+                else -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN)
+            }
         }
     }
 
@@ -42,21 +48,28 @@ class AuthRepositoryImpl @Inject constructor(
         return hasLowerCase && hasUpperCase && hasDigit && hasValidLength
     }
 
-    override suspend fun login(login: Login): Result<User> {
+    override suspend fun login(login: Login): com.example.taskyy.domain.error.Result<User, DataError.Network> {
         return try {
-            val user = retrofit.loginUser(login)
-
-            if (!userDao.doesUserExist(user.userId)) {
-                val userEntity = user.toUserEntity(login.email, user.userId)
-                userDao.insertUser(userEntity)
-            }
-
-            addTokenAndIdToDatabase(user.token, user.userId, login.email)
-            Result.success(user.toUser())
+            val loginUser = retrofit.loginUser(login)
+            val user = loginUser.toUser()
+            val userEntity = loginUser.toUserEntity(login.email, loginUser.userId)
+            userDao.insertUser(userEntity)
+            addTokenAndIdToDatabase(loginUser.token, loginUser.userId, login.email)
+            com.example.taskyy.domain.error.Result.Success(user)
         } catch (e: HttpException) {
-            Result.failure(e)
+            when (e.code()) {
+                408 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                429 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERIALIZATION)
+                else -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN)
+            }
         } catch (e: IOException) {
-            Result.failure(e)
+            when (e.message) {
+                "UnknownHostException" -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN_HOST_EXCEPTION)
+                else -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN)
+            }
         }
     }
 
@@ -71,5 +84,4 @@ class AuthRepositoryImpl @Inject constructor(
     private fun LoginUserResponse.toUserEntity(email: String, userId: String): UserEntity {
         return UserEntity(id = userId, name = fullName, email = email, token = null)
     }
-
 }

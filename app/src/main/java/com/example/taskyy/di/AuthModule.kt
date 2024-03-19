@@ -36,25 +36,23 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideLoginUseCase(@ApplicationContext context: Context): LoginUseCase {
-        return LoginUseCase(provideAuthRepository(provideUserDao(context), provideRetrofitInstance(context)))
+    fun provideLoginUseCase(authRepository: AuthRepository): LoginUseCase {
+        return LoginUseCase(authRepository)
     }
 
     @Provides
     @Singleton
-    fun provideRegisterUseCase(@ApplicationContext context: Context): RegisterUseCase {
-        return RegisterUseCase(
-            provideAuthRepository(
-                provideUserDao(context),
-                provideRetrofitInstance(context)
-            ), providePasswordValidator()
-        )
+    fun provideRegisterUseCase(
+        authRepository: AuthRepository,
+        passwordValidator: PasswordValidator
+    ): RegisterUseCase {
+        return RegisterUseCase(authRepository, passwordValidator)
     }
 
     @Provides
     @Singleton
-    fun provideUserDao(@ApplicationContext context: Context): UserDao {
-        return provideRoomDatabase(context).userDao()
+    fun provideUserDao(db: TaskyyDatabase): UserDao {
+        return db.userDao()
     }
 
     @Provides
@@ -67,13 +65,17 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideRetrofitInstance(@ApplicationContext context: Context): TaskyyApi {
-           return Retrofit.Builder()
-                .baseUrl("https://tasky.pl-coding.com/")
-                .addConverterFactory(MoshiConverterFactory.create(Moshi.Builder().add(KotlinJsonAdapterFactory()).build()))
-                .client(provideOkHttpClient(context))
-                .build()
-                .create(TaskyyApi::class.java)
+    fun provideRetrofitInstance(httpClient: OkHttpClient): TaskyyApi {
+        return Retrofit.Builder()
+            .baseUrl("https://tasky.pl-coding.com/")
+            .addConverterFactory(
+                MoshiConverterFactory.create(
+                    Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+                )
+            )
+            .client(httpClient)
+            .build()
+            .create(TaskyyApi::class.java)
     }
 
     @Provides

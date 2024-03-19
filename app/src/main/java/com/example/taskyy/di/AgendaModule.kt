@@ -3,6 +3,7 @@ package com.example.taskyy.di
 import android.content.Context
 import com.example.taskyy.R
 import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.ApiKeyInterceptor
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AgendaRepositoryImpl
@@ -26,14 +27,14 @@ object AgendaModule {
 
     @Provides
     @Singleton
-    fun providesAgendaRepo(@ApplicationContext context: Context): AgendaRepository {
-        return AgendaRepositoryImpl(provideRetrofitInstance(context), provideUserDao(context))
+    fun providesAgendaRepo(api: TaskyyApi, userDao: UserDao): AgendaRepository {
+        return AgendaRepositoryImpl(api, userDao)
     }
 
     @Provides
     @Singleton
-    fun provideUserDao(@ApplicationContext context: Context): UserDao {
-        return AuthModule.provideRoomDatabase(context).userDao()
+    fun provideUserDao(db: TaskyyDatabase): UserDao {
+        return db.userDao()
     }
 
     @Provides
@@ -46,23 +47,25 @@ object AgendaModule {
 
     @Provides
     @Singleton
-    fun provideRetrofitInstance(@ApplicationContext context: Context): TaskyyApi {
+    fun provideRetrofitInstance(httpClient: OkHttpClient): TaskyyApi {
         return Retrofit.Builder()
             .baseUrl("https://tasky.pl-coding.com/")
             .addConverterFactory(
                 MoshiConverterFactory.create(
                     Moshi.Builder().add(
                         KotlinJsonAdapterFactory()
-                    ).build()))
-            .client(provideOkHttpClient(context))
+                    ).build()
+                )
+            )
+            .client(httpClient)
             .build()
             .create(TaskyyApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideLogoutUseCase(@ApplicationContext context: Context): LogoutUseCase {
-        return LogoutUseCase(providesAgendaRepo(context = context))
+    fun provideLogoutUseCase(agendaRepository: AgendaRepository): LogoutUseCase {
+        return LogoutUseCase(agendaRepository)
     }
 
 }

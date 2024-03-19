@@ -59,7 +59,7 @@ fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
                         )
                     )
                 })
-            Text(text = state.errorMessage, color = Color.Red)
+            Text(text = state.passwordInvalidErrorMessage, color = Color.Red)
             Spacer(modifier = Modifier.height(50.dp))
             val loginObject = Login(state.email, state.password)
             TaskyyActionButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(

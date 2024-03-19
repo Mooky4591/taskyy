@@ -1,11 +1,12 @@
 package com.example.taskyy.ui.viewmodels
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.taskyy.domain.error.Result
+import com.example.taskyy.domain.error.asUiText
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.ui.events.LoginEvent
@@ -45,21 +46,26 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login(event: Login) {
-        if (loginUseCase.isEmailValid(state.email) && loginUseCase.isPasswordValid(state.password)) {
+        if (loginUseCase.isEmailValid(state.email)) {
             viewModelScope.launch {
                 state = state.copy(isLogginIn = true)
-                state = state.copy(isLoginSuccessful = loginUseCase.loginUser(event))
-                state = state.copy(isLogginIn = false)
+                when (val login = loginUseCase.loginUser(event)) {
+                    is Result.Success -> {
+                        state = state.copy(isLogginIn = false)
+                        eventChannel.send(LoginEvent.LoginSuccess(state.email))
+                    }
 
-                if (state.isLoginSuccessful) {
-                    eventChannel.send(LoginEvent.LoginSuccess(state.email))
-                } else {
-                    eventChannel.send(LoginEvent.LoginFailed)
+                    is Result.Error -> {
+                        //I can't parse this here because the asString function requires a context. Where should this go?
+                        state = state.copy(loginErrorMessage = login.error.asUiText().asString())
+                        state = state.copy(isLogginIn = false)
+                        eventChannel.send(LoginEvent.LoginFailed)
+
+                    }
                 }
             }
-        } else {
-            Log.e("TAG", "Password or Email was invalid")
         }
+        TODO("Need to do the parsing the result error somewhere else")
     }
 }
 
@@ -71,5 +77,6 @@ data class LoginState(
     var isEmailValid: Boolean = false,
     var isPasswordVisible: Boolean = false,
     var isLoginSuccessful: Boolean = false,
+    var loginErrorMessage: String = ""
 )
 

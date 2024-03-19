@@ -3,6 +3,7 @@ package com.example.taskyy.ui.viewmodels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.repository.AgendaRepository
@@ -23,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AgendaViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
-    private val agendaRepository: AgendaRepository
+    private val agendaRepository: AgendaRepository,
+    private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
     var state by mutableStateOf(AgendaState())
         private set
@@ -98,15 +100,17 @@ class AgendaViewModel @Inject constructor(
         }
     }
 
-    fun setUserInitials(email: String) {
+    fun setUserInitials() {
+        val email = savedStateHandle.get<String>("email")
         viewModelScope.launch {
-            val name = agendaRepository.getUserName(email)
+            val name = agendaRepository.getUserName(email!!)
             state = state.copy(name = name)
             state = state.copy(initials = name
                 .split(' ')
                 .mapNotNull { it.firstOrNull()?.toString() }
                 .reduce { acc, s -> acc + s })
         }
+        //TODO("edit the logic to handle a middle name")
     }
 }
 data class AgendaState(
