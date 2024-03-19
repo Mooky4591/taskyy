@@ -1,11 +1,12 @@
 package com.example.taskyy.ui.viewmodels
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.taskyy.domain.error.Result
+import com.example.taskyy.domain.error.asErrorUiText
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.usecases.RegisterUseCase
 import com.example.taskyy.ui.events.RegisterEvent
@@ -17,7 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val registerUseCase: RegisterUseCase
+    private val registerUseCase: RegisterUseCase,
 ):ViewModel() {
     var state by mutableStateOf(RegisterState())
         private set
@@ -38,31 +39,45 @@ class RegisterViewModel @Inject constructor(
                 state.copy(isPasswordVisible = event.isPasswordVisible)
 
             is RegisterEvent.RegistrationSuccessful -> {}
+            is RegisterEvent.RegistrationFailed -> {}
         }
     }
 
     private fun register() {
         val user = User(fullName = state.name, password = state.password, email = state.email)
-        if (registerUseCase.isPasswordValid(user.password)) {
-            viewModelScope.launch {
-                state = state.copy(isRegistrationSuccessful = registerUseCase.registerUser(user))
-                if (state.isRegistrationSuccessful) {
-                    eventChannel.send(RegisterEvent.RegistrationSuccessful)
+        when (val result = registerUseCase.isPasswordValid(user.password)) {
+            is Result.Error -> {
+                //I can't parse this here because the asString function requires a context. Where should this go?
+                state = state.copy(
+                    errorMessage = result.asErrorUiText()
+                        .asString(TODO("Need to do this somewhere else"))
+                )
+            }
+
+            is Result.Success -> {
+                state = state.copy(errorMessage = "")
+                viewModelScope.launch {
+                    state =
+                        state.copy(isRegistrationSuccessful = registerUseCase.registerUser(user))
+                    if (state.isRegistrationSuccessful) {
+                        eventChannel.send(RegisterEvent.RegistrationSuccessful)
+                    } else {
+                        eventChannel.send(RegisterEvent.RegistrationFailed)
+                    }
                 }
             }
-        } else {
-            Log.e("TAG", "Password in invalid")
         }
     }
 }
 
 data class RegisterState(
-        var email: String = "",
-        var password: String = "",
-        var name: String = "",
-        var isEmailValid: Boolean = false,
-        var isPasswordVisible: Boolean = false,
-        var isRegistrationSuccessful: Boolean = false,
-        var isLoginSuccessful: Boolean = false,
-        var isLoading: Boolean = false
-    )
+    var email: String = "",
+    var password: String = "",
+    var name: String = "",
+    var isEmailValid: Boolean = false,
+    var isPasswordVisible: Boolean = false,
+    var isRegistrationSuccessful: Boolean = false,
+    var isLoginSuccessful: Boolean = false,
+    var isLoading: Boolean = false,
+    var errorMessage: String = ""
+)

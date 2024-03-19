@@ -55,6 +55,7 @@ fun Nav() {
                 ObserveAsEvents(loginViewModel.events) { event ->
                     when (event) {
                         is LoginEvent.LoginSuccess -> navController.navigate(Screen.Agenda.route)
+                        is LoginEvent.LoginFailed -> TODO("Implement failed Login Logic")
                         else -> {}
                     }
                 }
@@ -72,13 +73,14 @@ fun Nav() {
             }
             composable(route = Screen.Register.route) {
                 val registerViewModel = hiltViewModel<RegisterViewModel>()
+                val state = registerViewModel.state
                 ObserveAsEvents(registerViewModel.events) { event ->
                     when (event) {
                         is RegisterEvent.RegistrationSuccessful -> navController.navigate(Screen.Agenda.route)
+                        is RegisterEvent.RegistrationFailed -> TODO("change the RegistrationFailed catch to show the data error")
                         else -> {}
                     }
                 }
-                val state = registerViewModel.state
                 RegisterScreen(
                     state = state,
                     onEvent = { event ->

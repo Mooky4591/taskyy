@@ -11,4 +11,5 @@ sealed interface LoginEvent {
     data class OnLoginClick(val login: Login) : LoginEvent
     data object OnRegisterLinkClick : LoginEvent
     data object LoginSuccess : LoginEvent
+    data object LoginFailed : LoginEvent
 }

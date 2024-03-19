@@ -40,6 +40,7 @@ class LoginViewModel @Inject constructor(
             is LoginEvent.OnNameChanged -> state = state.copy(name = event.name)
             is LoginEvent.OnRegisterLinkClick -> {}
             is LoginEvent.LoginSuccess -> {}
+            is LoginEvent.LoginFailed -> {}
         }
     }
 
@@ -53,6 +54,8 @@ class LoginViewModel @Inject constructor(
 
                 if (state.isLoginSuccessful) {
                     eventChannel.send(LoginEvent.LoginSuccess)
+                } else {
+                    eventChannel.send(LoginEvent.LoginFailed)
                 }
             }
         } else {

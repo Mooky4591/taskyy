@@ -8,6 +8,7 @@ import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.ApiKeyInterceptor
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AuthRepositoryImpl
+import com.example.taskyy.domain.error.PasswordValidator
 import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.domain.usecases.RegisterUseCase
@@ -42,7 +43,12 @@ object AuthModule {
     @Provides
     @Singleton
     fun provideRegisterUseCase(@ApplicationContext context: Context): RegisterUseCase {
-        return RegisterUseCase(provideAuthRepository(provideUserDao(context), provideRetrofitInstance(context)))
+        return RegisterUseCase(
+            provideAuthRepository(
+                provideUserDao(context),
+                provideRetrofitInstance(context)
+            ), providePasswordValidator()
+        )
     }
 
     @Provides
@@ -78,8 +84,14 @@ object AuthModule {
                 context.applicationContext,
                 TaskyyDatabase::class.java,
                 "database"
-            ).build()
+            ).fallbackToDestructiveMigration().build()
             return instance
         }
+    }
+
+    @Provides
+    @Singleton
+    fun providePasswordValidator(): PasswordValidator {
+        return PasswordValidator()
     }
 }
