@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
-import com.example.taskyy.domain.error.asUiText
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.ui.events.LoginEvent
@@ -57,7 +56,7 @@ class LoginViewModel @Inject constructor(
 
                     is Result.Error -> {
                         //I can't parse this here because the asString function requires a context. Where should this go?
-                        state = state.copy(loginErrorMessage = login.error.asUiText().asString())
+                        //state = state.copy(loginErrorMessage = login.error.asUiText().asString())
                         state = state.copy(isLogginIn = false)
                         eventChannel.send(LoginEvent.LoginFailed)
 
@@ -65,7 +64,7 @@ class LoginViewModel @Inject constructor(
                 }
             }
         }
-        TODO("Need to do the parsing the result error somewhere else")
+//        TODO("Need to do the parsing the result error somewhere else")
     }
 }
 

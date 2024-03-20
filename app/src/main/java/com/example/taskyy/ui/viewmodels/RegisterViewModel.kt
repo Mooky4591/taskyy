@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
-import com.example.taskyy.domain.error.asUiText
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.usecases.RegisterUseCase
 import com.example.taskyy.ui.events.RegisterEvent
@@ -52,8 +51,7 @@ class RegisterViewModel @Inject constructor(
                         state = state.copy(isRegistrationSuccessful = false)
                         //I can't parse this here because the asString function requires a context. Where should this go?
                         state = state.copy(
-                            networkErrorMessage = result.error.asUiText()
-                                .asString()
+                            //networkErrorMessage = result.error.asUiText().asString()
                         )
                         eventChannel.send(RegisterEvent.RegistrationFailed(state.networkErrorMessage))
                     }
@@ -63,7 +61,7 @@ class RegisterViewModel @Inject constructor(
                         eventChannel.send(RegisterEvent.RegistrationSuccessful)
                     }
                 }
-                TODO("Need to do the parsing the result error somewhere else")
+                //TODO("Need to do the parsing the result error somewhere else")
             }
 
         }
@@ -74,8 +72,7 @@ class RegisterViewModel @Inject constructor(
             is Result.Error -> {
                 //I can't parse this here because the asString function requires a context. Where should this go?
                 state = state.copy(
-                    passwordInvalidErrorMessage = result.error.asUiText()
-                        .asString()
+                    //passwordInvalidErrorMessage = result.error.asUiText().asString()
                 )
                 false
             }
@@ -85,7 +82,7 @@ class RegisterViewModel @Inject constructor(
                 true
             }
         }
-        TODO("Need to do the parsing the result error somewhere else")
+        // TODO("Need to do the parsing the result error somewhere else")
 
     }
 }

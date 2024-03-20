@@ -1,7 +1,6 @@
 package com.example.taskyy.domain.error
 
 import com.example.taskyy.R
-import com.example.taskyy.domain.objects.User
 import com.example.taskyy.ui.UiText
 
 fun PasswordValidator.PasswordError.asUiText(): UiText {
@@ -61,9 +60,5 @@ fun DataError.Network.asUiText(): UiText {
 }
 
 fun Result.Error<*, PasswordValidator.PasswordError>.asErrorUiText(): UiText {
-    return error.asUiText()
-}
-
-fun Result.Error<User, DataError.Network>.asErrorUiText(): UiText {
     return error.asUiText()
 }
