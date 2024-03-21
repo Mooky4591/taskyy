@@ -41,9 +41,7 @@ fun Nav() {
                         is LoginEvent.LoginFailed -> TODO("Implement failed Login Logic")
                         is LoginEvent.LoginSuccess -> {
                             navController.navigate(Screen.Agenda.route)
-                            loginViewModel.saveData("email", event.email)
                         }
-
                         else -> {}
                     }
                 }

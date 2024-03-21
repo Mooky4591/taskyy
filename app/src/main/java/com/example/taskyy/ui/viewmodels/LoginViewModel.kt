@@ -1,9 +1,9 @@
 package com.example.taskyy.ui.viewmodels
 
+import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
@@ -21,7 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
     var state by mutableStateOf(LoginState())
         private set
@@ -50,6 +50,7 @@ class LoginViewModel @Inject constructor(
 
     fun login(event: Login) {
         if (loginUseCase.isEmailValid(state.email)) {
+            sharedPreferences.edit().putString("email", state.email).apply()
             viewModelScope.launch {
                 state = state.copy(isLogginIn = true)
                 when (val login = loginUseCase.loginUser(event)) {
@@ -67,10 +68,6 @@ class LoginViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    fun saveData(key: String, value: Any) {
-        savedStateHandle[key] = value
     }
 }
 

@@ -1,9 +1,9 @@
 package com.example.taskyy.ui.viewmodels
 
+import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
@@ -22,7 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val sharedPreferences: SharedPreferences
 ):ViewModel() {
     var state by mutableStateOf(RegisterState())
         private set
@@ -61,6 +61,7 @@ class RegisterViewModel @Inject constructor(
                     }
 
                     is Result.Success -> {
+                        sharedPreferences.edit().putString("name", user.fullName).apply()
                         state = state.copy(isRegistrationSuccessful = true)
                         eventChannel.send(RegisterEvent.RegistrationSuccessful)
                     }

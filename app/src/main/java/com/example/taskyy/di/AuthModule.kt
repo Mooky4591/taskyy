@@ -1,6 +1,7 @@
 package com.example.taskyy.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.room.Room
 import com.example.taskyy.R
 import com.example.taskyy.data.local.data_access_objects.UserDao
@@ -96,5 +97,11 @@ object AuthModule {
     @Singleton
     fun providePasswordValidator(): PasswordValidator {
         return PasswordValidator()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
     }
 }
