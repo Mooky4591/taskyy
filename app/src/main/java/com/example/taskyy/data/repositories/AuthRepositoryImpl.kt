@@ -59,6 +59,7 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: HttpException) {
             when (e.code()) {
                 408 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                409 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.INCORRECT_PASSWORD_OR_EMAIL)
                 429 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.TOO_MANY_REQUESTS)
                 413 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
                 500 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERVER_ERROR)

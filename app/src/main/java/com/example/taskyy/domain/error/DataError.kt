@@ -8,6 +8,7 @@ sealed interface DataError : Error {
         PAYLOAD_TOO_LARGE,
         SERVER_ERROR,
         SERIALIZATION,
+        INCORRECT_PASSWORD_OR_EMAIL,
         UNKNOWN,
         UNKNOWN_HOST_EXCEPTION
     }

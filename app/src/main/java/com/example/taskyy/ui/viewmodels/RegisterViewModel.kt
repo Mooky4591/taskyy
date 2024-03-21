@@ -1,13 +1,17 @@
 package com.example.taskyy.ui.viewmodels
 
+import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
+import com.example.taskyy.domain.error.asErrorUiText
+import com.example.taskyy.domain.error.asUiText
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.usecases.RegisterUseCase
+import com.example.taskyy.ui.UiText
 import com.example.taskyy.ui.events.RegisterEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -18,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
+    private val sharedPreferences: SharedPreferences
 ):ViewModel() {
     var state by mutableStateOf(RegisterState())
         private set
@@ -49,41 +54,36 @@ class RegisterViewModel @Inject constructor(
                 when (val result = registerUseCase.registerUser(user)) {
                     is Result.Error -> {
                         state = state.copy(isRegistrationSuccessful = false)
-                        //I can't parse this here because the asString function requires a context. Where should this go?
                         state = state.copy(
-                            //networkErrorMessage = result.error.asUiText().asString()
+                            networkErrorMessage = result.error.asUiText()
                         )
-                        eventChannel.send(RegisterEvent.RegistrationFailed(state.networkErrorMessage))
+                        eventChannel.send(RegisterEvent.RegistrationFailed(state.networkErrorMessage!!))
                     }
 
                     is Result.Success -> {
+                        sharedPreferences.edit().putString("name", user.fullName).apply()
                         state = state.copy(isRegistrationSuccessful = true)
                         eventChannel.send(RegisterEvent.RegistrationSuccessful)
                     }
                 }
-                //TODO("Need to do the parsing the result error somewhere else")
             }
-
         }
     }
 
     private fun validatePassword(password: String): Boolean {
         return when (val result = registerUseCase.isPasswordValid(password)) {
             is Result.Error -> {
-                //I can't parse this here because the asString function requires a context. Where should this go?
                 state = state.copy(
-                    //passwordInvalidErrorMessage = result.error.asUiText().asString()
+                    passwordInvalidErrorMessage = result.asErrorUiText()
                 )
                 false
             }
 
             is Result.Success -> {
-                state = state.copy(passwordInvalidErrorMessage = "")
+                state = state.copy(passwordInvalidErrorMessage = null)
                 true
             }
         }
-        // TODO("Need to do the parsing the result error somewhere else")
-
     }
 }
 
@@ -96,6 +96,6 @@ data class RegisterState(
     var isRegistrationSuccessful: Boolean = false,
     var isLoginSuccessful: Boolean = false,
     var isLoading: Boolean = false,
-    var passwordInvalidErrorMessage: String = "",
-    var networkErrorMessage: String = ""
+    var passwordInvalidErrorMessage: UiText? = null,
+    var networkErrorMessage: UiText? = null
 )

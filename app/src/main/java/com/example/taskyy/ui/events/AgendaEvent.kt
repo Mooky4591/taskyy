@@ -11,4 +11,5 @@ sealed interface AgendaEvent {
     data object LogoutSuccessful : AgendaEvent
     data class SelectedDayIndex(val index: Int) : AgendaEvent
     data class UpdateDateString(val date: String) : AgendaEvent
+    data object SetUserInitials : AgendaEvent
 }

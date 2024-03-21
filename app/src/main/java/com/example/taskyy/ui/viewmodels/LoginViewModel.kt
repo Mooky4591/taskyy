@@ -1,13 +1,16 @@
 package com.example.taskyy.ui.viewmodels
 
+import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
+import com.example.taskyy.domain.error.asUiText
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.usecases.LoginUseCase
+import com.example.taskyy.ui.UiText
 import com.example.taskyy.ui.events.LoginEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -18,6 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
+    private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
     var state by mutableStateOf(LoginState())
         private set
@@ -46,6 +50,7 @@ class LoginViewModel @Inject constructor(
 
     fun login(event: Login) {
         if (loginUseCase.isEmailValid(state.email)) {
+            sharedPreferences.edit().putString("email", state.email).apply()
             viewModelScope.launch {
                 state = state.copy(isLogginIn = true)
                 when (val login = loginUseCase.loginUser(event)) {
@@ -55,16 +60,13 @@ class LoginViewModel @Inject constructor(
                     }
 
                     is Result.Error -> {
-                        //I can't parse this here because the asString function requires a context. Where should this go?
-                        //state = state.copy(loginErrorMessage = login.error.asUiText().asString())
+                        state = state.copy(loginErrorMessage = login.error.asUiText())
                         state = state.copy(isLogginIn = false)
-                        eventChannel.send(LoginEvent.LoginFailed)
-
+                        eventChannel.send(LoginEvent.LoginFailed(state.loginErrorMessage!!))
                     }
                 }
             }
         }
-//        TODO("Need to do the parsing the result error somewhere else")
     }
 }
 
@@ -76,6 +78,6 @@ data class LoginState(
     var isEmailValid: Boolean = false,
     var isPasswordVisible: Boolean = false,
     var isLoginSuccessful: Boolean = false,
-    var loginErrorMessage: String = ""
+    var loginErrorMessage: UiText? = null
 )
 

@@ -36,10 +36,18 @@ fun Nav() {
             composable(route = Screen.Login.route) {
                 val loginViewModel = hiltViewModel<LoginViewModel>()
                 val state = loginViewModel.state
+                val context = LocalContext.current
                 ObserveAsEvents(loginViewModel.events) { event ->
                     when (event) {
-                        is LoginEvent.LoginFailed -> TODO("Implement failed Login Logic")
-                        is LoginEvent.LoginSuccess -> navController.navigate(Screen.Agenda.route)
+                        is LoginEvent.LoginFailed -> Toast.makeText(
+                            context,
+                            event.errorText.asString(context),
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        is LoginEvent.LoginSuccess -> {
+                            navController.navigate(Screen.Agenda.route)
+                        }
                         else -> {}
                     }
                 }
@@ -63,7 +71,7 @@ fun Nav() {
                         is RegisterEvent.RegistrationSuccessful -> navController.navigate(Screen.Login.route)
                         is RegisterEvent.RegistrationFailed -> Toast.makeText(
                             context,
-                            event.errorMessage,
+                            event.errorMessage.asString(context),
                             Toast.LENGTH_SHORT
                         ).show()
 

@@ -56,6 +56,10 @@ fun DataError.Network.asUiText(): UiText {
         DataError.Network.UNKNOWN_HOST_EXCEPTION -> UiText.StringResource(
             R.string.unknown_host_exception
         )
+
+        DataError.Network.INCORRECT_PASSWORD_OR_EMAIL -> UiText.StringResource(
+            R.string.incorrect_password_or_email
+        )
     }
 }
 
