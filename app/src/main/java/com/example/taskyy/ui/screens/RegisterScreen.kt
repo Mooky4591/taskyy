@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.taskyy.R
@@ -59,12 +60,18 @@ fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
                         )
                     )
                 })
-            Text(text = state.passwordInvalidErrorMessage, color = Color.Red)
+            if (state.passwordInvalidErrorMessage != null) {
+                Text(
+                    text = state.passwordInvalidErrorMessage!!.asString(LocalContext.current),
+                    color = Color.Red
+                )
+            }
             Spacer(modifier = Modifier.height(50.dp))
             val loginObject = Login(state.email, state.password)
-            TaskyyActionButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
-                id = R.string.get_started
-            ), login = loginObject
+            TaskyyActionButton(
+                onClick = { onEvent(RegisterEvent.OnGetStartedClick) }, text = stringResource(
+                    id = R.string.get_started
+                ), login = loginObject
             )
         }
     }

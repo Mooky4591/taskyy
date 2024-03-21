@@ -39,7 +39,11 @@ fun Nav() {
                 ObserveAsEvents(loginViewModel.events) { event ->
                     when (event) {
                         is LoginEvent.LoginFailed -> TODO("Implement failed Login Logic")
-                        is LoginEvent.LoginSuccess -> navController.navigate(Screen.Agenda.route)
+                        is LoginEvent.LoginSuccess -> {
+                            navController.navigate(Screen.Agenda.route)
+                            loginViewModel.saveData("email", event.email)
+                        }
+
                         else -> {}
                     }
                 }
@@ -63,7 +67,7 @@ fun Nav() {
                         is RegisterEvent.RegistrationSuccessful -> navController.navigate(Screen.Login.route)
                         is RegisterEvent.RegistrationFailed -> Toast.makeText(
                             context,
-                            event.errorMessage,
+                            event.errorMessage.asString(context),
                             Toast.LENGTH_SHORT
                         ).show()
 

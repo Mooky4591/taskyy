@@ -55,6 +55,9 @@ class AgendaViewModel @Inject constructor(
 
             is AgendaEvent.UpdateDateString -> state =
                 state.copy(dateString = event.date)
+
+            is AgendaEvent.SetUserInitials ->
+                setUserInitials()
         }
     }
 
@@ -100,7 +103,7 @@ class AgendaViewModel @Inject constructor(
         }
     }
 
-    fun setUserInitials() {
+    private fun setUserInitials() {
         val email = savedStateHandle.get<String>("email")
         viewModelScope.launch {
             val name = agendaRepository.getUserName(email!!)
@@ -110,7 +113,6 @@ class AgendaViewModel @Inject constructor(
                 .mapNotNull { it.firstOrNull()?.toString() }
                 .reduce { acc, s -> acc + s })
         }
-        //TODO("edit the logic to handle a middle name")
     }
 }
 data class AgendaState(
