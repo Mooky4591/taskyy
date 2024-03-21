@@ -62,8 +62,7 @@ class LoginViewModel @Inject constructor(
                     is Result.Error -> {
                         state = state.copy(loginErrorMessage = login.error.asUiText())
                         state = state.copy(isLogginIn = false)
-                        eventChannel.send(LoginEvent.LoginFailed)
-
+                        eventChannel.send(LoginEvent.LoginFailed(state.loginErrorMessage!!))
                     }
                 }
             }
