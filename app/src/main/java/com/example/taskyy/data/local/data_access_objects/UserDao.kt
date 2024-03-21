@@ -2,14 +2,13 @@ package com.example.taskyy.data.local.data_access_objects
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.example.taskyy.data.local.room_entity.UserEntity
 
 @Dao
 interface UserDao {
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Upsert
     suspend fun insertUser(userEntity: UserEntity)
 
     @Delete
@@ -20,8 +19,5 @@ interface UserDao {
 
     @Query("SELECT name FROM user_table WHERE email = :email")
     suspend fun getUserNameByEmail(email: String): String
-
-    @Query("SELECT COUNT() FROM user_table WHERE id = :userId")
-    suspend fun doesUserExist(userId: String): Boolean
 
 }

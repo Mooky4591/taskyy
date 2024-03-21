@@ -1,14 +1,14 @@
 package com.example.taskyy.domain.navigation
 
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.events.LoginEvent
@@ -38,7 +38,8 @@ fun Nav() {
                 val state = loginViewModel.state
                 ObserveAsEvents(loginViewModel.events) { event ->
                     when (event) {
-                        is LoginEvent.LoginSuccess -> navController.navigate(Screen.Agenda.route + "/${event.email}")
+                        is LoginEvent.LoginFailed -> TODO("Implement failed Login Logic")
+                        is LoginEvent.LoginSuccess -> navController.navigate(Screen.Agenda.route)
                         else -> {}
                     }
                 }
@@ -56,9 +57,16 @@ fun Nav() {
             composable(route = Screen.Register.route) {
                 val registerViewModel = hiltViewModel<RegisterViewModel>()
                 val state = registerViewModel.state
+                val context = LocalContext.current
                 ObserveAsEvents(registerViewModel.events) { event ->
                     when (event) {
                         is RegisterEvent.RegistrationSuccessful -> navController.navigate(Screen.Login.route)
+                        is RegisterEvent.RegistrationFailed -> Toast.makeText(
+                            context,
+                            event.errorMessage,
+                            Toast.LENGTH_SHORT
+                        ).show()
+
                         else -> {}
                     }
                 }
@@ -67,17 +75,12 @@ fun Nav() {
                     onEvent = { registerViewModel.onEvent(it) }
                 )
             }
-            composable(route = Screen.Agenda.route + "/{email}",
-                arguments = listOf(
-                    navArgument("email") { type = NavType.StringType }
-                )
-            ) { backStackEntry ->
-                val email: String = backStackEntry.arguments?.getString("email") ?: ""
+            composable(
+                route = Screen.Agenda.route
+            ) {
                 val agendaViewModel = hiltViewModel<AgendaViewModel>()
                 val state = agendaViewModel.state
-                if (email != null) {
-                    agendaViewModel.setUserInitials(email)
-                }
+
                 ObserveAsEvents(agendaViewModel.events) { event ->
                     when (event) {
                         is AgendaEvent.LogoutSuccessful -> navController.navigate(Screen.Login.route)

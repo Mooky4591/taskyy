@@ -9,5 +9,6 @@ sealed interface RegisterEvent{
     data class OnTogglePasswordVisibility(val isPasswordVisible: Boolean) : RegisterEvent
     data object OnGetStartedClick : RegisterEvent
     data object RegistrationSuccessful : RegisterEvent
+    data class RegistrationFailed(val errorMessage: String) : RegisterEvent
 
 }

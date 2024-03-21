@@ -9,4 +9,16 @@
     <string name="password">Password</string>
     <string name="email_address">Email Address</string>
     <string name="logout">Logout</string>
+    <string name="too_short">Password must be at least 8 characters long</string>
+    <string name="no_lowercase">Password must contain at least one lowercase letter</string>
+    <string name="no_uppercase">Password must contain at least one uppercase letter</string>
+    <string name="no_digit">Password must contain at least one digit</string>
+    <string name="unknown_network_error">Uknown network error occurred</string>
+    <string name="serialization_error">Invalid data format found in request</string>
+    <string name="server_error">Server encountered an error. Please try your request again</string>
+    <string name="payload_too_large">Attempting to send too much data to the server</string>
+    <string name="too_many_requests">Too many requests, too quickly. Try spacing out requests</string>
+    <string name="no_internet">No or poor internet connection. Try again when internet connection is stronger</string>
+    <string name="request_timeout">Request has timed out. Please check your internet connection and try again</string>
+    <string name="unknown_host_exception">No network connection. Try again</string>
 </resources>

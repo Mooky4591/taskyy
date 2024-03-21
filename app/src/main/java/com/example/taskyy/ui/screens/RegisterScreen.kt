@@ -49,9 +49,17 @@ fun RegisterScreen(state: RegisterState, onEvent: (RegisterEvent) -> Unit) {
             Spacer(modifier = Modifier.height(10.dp))
             CreateEmailField(isEmailValid = state.isEmailValid, onValueChange = {email -> onEvent(RegisterEvent.OnEmailChanged(email = email))}, email = state.email)
             Spacer(modifier = Modifier.height(10.dp))
-            CreatePasswordField(password = state.password, onValueChange = {password -> onEvent(RegisterEvent.OnPasswordChanged(password))},
+            CreatePasswordField(password = state.password,
+                onValueChange = { password -> onEvent(RegisterEvent.OnPasswordChanged(password)) },
                 isPasswordVisible = state.isPasswordVisible,
-                onClick = {isPasswordVisible -> onEvent(RegisterEvent.OnTogglePasswordVisibility(isPasswordVisible))})
+                onClick = { isPasswordVisible ->
+                    onEvent(
+                        RegisterEvent.OnTogglePasswordVisibility(
+                            isPasswordVisible
+                        )
+                    )
+                })
+            Text(text = state.passwordInvalidErrorMessage, color = Color.Red)
             Spacer(modifier = Modifier.height(50.dp))
             val loginObject = Login(state.email, state.password)
             TaskyyActionButton(onClick = {onEvent(RegisterEvent.OnGetStartedClick)}, text = stringResource(
