@@ -25,7 +25,7 @@ import javax.inject.Inject
 class AgendaViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val agendaRepository: AgendaRepository,
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
 ): ViewModel() {
     var state by mutableStateOf(AgendaState())
         private set
@@ -53,11 +53,18 @@ class AgendaViewModel @Inject constructor(
             is AgendaEvent.SelectedDayIndex -> state =
                 state.copy(selectedIndex = event.index)
 
-            is AgendaEvent.UpdateDateString -> state =
-                state.copy(dateString = event.date)
+            is AgendaEvent.UpdateDateString -> {
+                state = state.copy(dateString = event.date)
+            }
 
-            is AgendaEvent.SetUserInitials ->
+            is AgendaEvent.SetUserDefaults -> {
                 setUserInitials()
+                setDefaultDateString()
+            }
+
+            is AgendaEvent.ReminderItemSelected -> {}
+            is AgendaEvent.TaskItemSelected -> {}
+            is AgendaEvent.EventItemSelected -> {}
         }
     }
 
@@ -115,6 +122,12 @@ class AgendaViewModel @Inject constructor(
                 .reduce { acc, s -> acc + s })
         }
     }
+
+    private fun setDefaultDateString() {
+        val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu")
+        state = state.copy(dateString = dateStringFormatter.format((LocalDateTime.now())))
+        sharedPreferences.edit().putString("date_string", state.dateString).apply()
+    }
 }
 data class AgendaState(
     var name: String = "",
@@ -122,7 +135,7 @@ data class AgendaState(
     var isMonthExpanded: Boolean = false,
     var selectedMonth: String = "",
     var selectedDayList: List<Day> = getDefaultListOfDays(),
-    var dateString: String = getDefaultDateString(),
+    var dateString: String = "",
     var isUserDropDownExpanded: Boolean = false,
     var isUserLoggingOut: Boolean = false,
     var wasLogoutSuccessful: Boolean = false,
@@ -130,12 +143,6 @@ data class AgendaState(
     var selectedAgendaDay: Boolean = false,
     var selectedIndex: Int = 0
 )
-
-fun getDefaultDateString(): String {
-    val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu")
-    return dateStringFormatter.format(LocalDateTime.now())
-
-}
 
 fun getDefaultListOfDays(): List<Day> {
     val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
