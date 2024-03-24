@@ -53,10 +53,7 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
     Scaffold(
         content = {
             LaunchedEffect(Unit) {
-                setUserInitials(onEvent = {
-                    onEvent(AgendaEvent.SetUserInitials)
-                }
-                )
+                    onEvent(AgendaEvent.SetUserDefaults)
             }
             Column(
                 verticalArrangement = Arrangement.SpaceEvenly,
@@ -116,10 +113,6 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
             )
         },
     )
-}
-
-fun setUserInitials(onEvent: () -> Unit) {
-    onEvent()
 }
 
 @Composable
@@ -252,15 +245,21 @@ fun AddAgendaItem(onEvent: (AgendaEvent) -> Unit, isAgendaItemExpanded: Boolean)
         ) {
             DropdownMenuItem(
                 text = { Text(text = "Event") },
-                onClick = { /*TODO*/ }
+                onClick = {
+                    onEvent(AgendaEvent.EventItemSelected)
+                }
             )
             DropdownMenuItem(
                 text = { Text(text = "Task") },
-                onClick = { /*TODO*/ }
+                onClick = {
+                    onEvent(AgendaEvent.TaskItemSelected)
+                }
             )
             DropdownMenuItem(
                 text = { Text(text = "Reminder") },
-                onClick = { /*TODO*/ }
+                onClick = {
+                    onEvent(AgendaEvent.ReminderItemSelected)
+                }
             )
         }
     }

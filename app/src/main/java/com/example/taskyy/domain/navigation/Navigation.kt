@@ -16,9 +16,11 @@ import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.screens.AgendaScreen
 import com.example.taskyy.ui.screens.LoginScreen
 import com.example.taskyy.ui.screens.RegisterScreen
+import com.example.taskyy.ui.screens.ReminderScreen
 import com.example.taskyy.ui.viewmodels.AgendaViewModel
 import com.example.taskyy.ui.viewmodels.LoginViewModel
 import com.example.taskyy.ui.viewmodels.RegisterViewModel
+import com.example.taskyy.ui.viewmodels.ReminderViewModel
 
 
 @RequiresApi(Build.VERSION_CODES.Q)
@@ -26,7 +28,6 @@ import com.example.taskyy.ui.viewmodels.RegisterViewModel
 fun Nav() {
 
     val navController = rememberNavController()
-
 
     NavHost(navController = navController, startDestination = "login_screen") {
         navigation(
@@ -83,9 +84,7 @@ fun Nav() {
                     onEvent = { registerViewModel.onEvent(it) }
                 )
             }
-            composable(
-                route = Screen.Agenda.route
-            ) {
+            composable(route = Screen.Agenda.route) {
                 val agendaViewModel = hiltViewModel<AgendaViewModel>()
                 val state = agendaViewModel.state
 
@@ -97,7 +96,23 @@ fun Nav() {
                 }
                 AgendaScreen(
                     state = state,
-                    onEvent = { event -> agendaViewModel.onEvent(event) }
+                    onEvent = { event ->
+                        when (event) {
+                            is AgendaEvent.ReminderItemSelected -> navController.navigate(Screen.Reminder.route)
+                            else -> agendaViewModel.onEvent(event)
+                        }
+                    }
+                )
+            }
+
+            composable(route = Screen.Reminder.route) {
+                val reminderViewModel = hiltViewModel<ReminderViewModel>()
+                val state = reminderViewModel.state
+                ReminderScreen(
+                    state = state,
+                    onEvent = {
+                        reminderViewModel.onEvent(it)
+                    }
                 )
             }
         }
