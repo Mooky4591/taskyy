@@ -4,6 +4,8 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -93,6 +95,7 @@ fun Nav() {
                         is AgendaEvent.LogoutSuccessful -> navController.navigate(Screen.Login.route)
                         else -> {}
                     }
+
                 }
                 AgendaScreen(
                     state = state,
@@ -101,13 +104,14 @@ fun Nav() {
                             is AgendaEvent.ReminderItemSelected -> navController.navigate(Screen.Reminder.route)
                             else -> agendaViewModel.onEvent(event)
                         }
+                        agendaViewModel.onEvent(event = event)
                     }
                 )
             }
 
             composable(route = Screen.Reminder.route) {
                 val reminderViewModel = hiltViewModel<ReminderViewModel>()
-                val state = reminderViewModel.state
+                val state by reminderViewModel.state.collectAsState()
                 ReminderScreen(
                     state = state,
                     onEvent = {
