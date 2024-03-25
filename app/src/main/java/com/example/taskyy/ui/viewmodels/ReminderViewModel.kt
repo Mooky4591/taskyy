@@ -1,8 +1,8 @@
 package com.example.taskyy.ui.viewmodels
 
-import android.content.SharedPreferences
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import com.example.taskyy.ui.ReminderType
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.objects.Day
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,14 +12,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
+
 @HiltViewModel
 class ReminderViewModel @Inject constructor(
-    private val sharedPreferences: SharedPreferences,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val _state = MutableStateFlow(ReminderState())
@@ -28,9 +29,16 @@ class ReminderViewModel @Inject constructor(
 
     fun onEvent(event: ReminderEvent) {
         when (event) {
-            is ReminderEvent.SetDateString -> setDateString()
-            is ReminderEvent.SaveSelected -> {
-                save()
+            is ReminderEvent.SetDateString -> {
+                setDateString()
+            }
+
+            is ReminderEvent.SaveReminder -> {
+            }
+
+            is ReminderEvent.SaveDetails -> {
+                _state.update { it.copy(reminderDescription = event.details) }
+                //saveDetails()
             }
 
             is ReminderEvent.Close -> {
@@ -38,7 +46,7 @@ class ReminderViewModel @Inject constructor(
             }
 
             is ReminderEvent.TimeSelected -> {
-                _state.update { it.copy(selectedTime = event.selectedTime) }
+                formatTimeSelected(event.selectedTime)
             }
 
             is ReminderEvent.ReminderDescriptionUpdated -> {
@@ -50,7 +58,9 @@ class ReminderViewModel @Inject constructor(
             }
 
             is ReminderEvent.AlarmTimeTextSelected -> {
-                _state.update { it.copy(alarmReminderTimeSelection = event.alarmTimeText) }
+                _state.update {
+                    it.copy(alarmReminderTimeSelection = setReminderText(event.alarmTimeText))
+                }
             }
 
             is ReminderEvent.AlarmTypeDropDownSelected -> {
@@ -66,6 +76,35 @@ class ReminderViewModel @Inject constructor(
             }
 
             is ReminderEvent.UpdateDateSelection -> formatDateString(event.selectedDate)
+        }
+    }
+
+    private fun formatTimeSelected(time: String) {
+        var timeString = time
+        if (timeString == "0:0") {
+            timeString = ("00:00")
+        }
+        if (timeString == "12:0") {
+            timeString = ("12:00")
+        }
+        val twelveHourDateFormat = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH)
+        val time24 = LocalTime.parse(timeString, twelveHourDateFormat)
+        val formatter12 = DateTimeFormatter.ofPattern("hh:mm a")
+        val time12 = time24.format(formatter12)
+
+        _state.update { it.copy(selectedTime = time12) }
+    }
+
+    private fun save() {
+        TODO("Not yet implemented")
+    }
+
+    private fun setReminderText(alarmTimeText: ReminderType): String {
+        return when (alarmTimeText) {
+            ReminderType.ONE_HOUR_BEFORE -> "1 hour before"
+            ReminderType.THIRTY_MINUTES_BEFORE -> "30 minutes before"
+            ReminderType.FIFTEEN_MINUTES_BEFORE -> "15 minutes before"
+            ReminderType.TEN_MINUTES_BEFORE -> "10 minutes before"
         }
     }
 
@@ -101,13 +140,9 @@ class ReminderViewModel @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    private fun save() {
-        TODO("Not yet implemented")
-    }
-
     private fun setDateString() {
-        val state = savedStateHandle.get<AgendaState>("state")
-        _state.update { it.copy(dateString = state?.dateString ?: "") }
+        val date = savedStateHandle.get<String>("dateString")
+        _state.update { it.copy(dateString = date ?: "") }
     }
 }
 

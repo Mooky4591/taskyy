@@ -58,6 +58,7 @@ class AgendaViewModel @Inject constructor(
 
             is AgendaEvent.UpdateDateString -> {
                 state = state.copy(dateString = event.date)
+                savedStateHandle["dateString"] = event.date
             }
 
             is AgendaEvent.SetUserDefaults -> {
@@ -66,17 +67,12 @@ class AgendaViewModel @Inject constructor(
             }
 
             is AgendaEvent.ReminderItemSelected -> {
-                savedStateHandle["state"] = state
-
             }
 
             is AgendaEvent.TaskItemSelected -> {
-                savedStateHandle["state"] = state
-
             }
 
             is AgendaEvent.EventItemSelected -> {
-                savedStateHandle["state"] = state
             }
         }
     }
@@ -109,6 +105,9 @@ class AgendaViewModel @Inject constructor(
             selectedMonth = monthFormatter.format(localDateTime).uppercase(),
             selectedDayList = days,
         )
+        savedStateHandle["days"] = days
+        savedStateHandle["selectedMonth"] = monthFormatter.format(localDateTime).uppercase()
+
     }
 
     private fun logout() {
@@ -140,7 +139,8 @@ class AgendaViewModel @Inject constructor(
         val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu")
         sharedPreferences.edit()
             .putString("date_string", dateStringFormatter.format(LocalDateTime.now())).apply()
-        state = state.copy(dateString = sharedPreferences.getString("date_string", "")!!)
+        savedStateHandle["date_string"] = dateStringFormatter.format(LocalDateTime.now())
+        state = savedStateHandle.get<String?>("date_string")?.let { state.copy(dateString = it) }!!
     }
 }
 data class AgendaState(
