@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.repository.AgendaRepository
@@ -14,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import java.io.Serializable
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -26,6 +28,7 @@ class AgendaViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val agendaRepository: AgendaRepository,
     private val sharedPreferences: SharedPreferences,
+    private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
     var state by mutableStateOf(AgendaState())
         private set
@@ -62,9 +65,19 @@ class AgendaViewModel @Inject constructor(
                 setDefaultDateString()
             }
 
-            is AgendaEvent.ReminderItemSelected -> {}
-            is AgendaEvent.TaskItemSelected -> {}
-            is AgendaEvent.EventItemSelected -> {}
+            is AgendaEvent.ReminderItemSelected -> {
+                savedStateHandle["state"] = state
+
+            }
+
+            is AgendaEvent.TaskItemSelected -> {
+                savedStateHandle["state"] = state
+
+            }
+
+            is AgendaEvent.EventItemSelected -> {
+                savedStateHandle["state"] = state
+            }
         }
     }
 
@@ -125,8 +138,9 @@ class AgendaViewModel @Inject constructor(
 
     private fun setDefaultDateString() {
         val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu")
-        state = state.copy(dateString = dateStringFormatter.format((LocalDateTime.now())))
-        sharedPreferences.edit().putString("date_string", state.dateString).apply()
+        sharedPreferences.edit()
+            .putString("date_string", dateStringFormatter.format(LocalDateTime.now())).apply()
+        state = state.copy(dateString = sharedPreferences.getString("date_string", "")!!)
     }
 }
 data class AgendaState(
@@ -142,7 +156,7 @@ data class AgendaState(
     var isAddAgendaItemExpanded: Boolean = false,
     var selectedAgendaDay: Boolean = false,
     var selectedIndex: Int = 0
-)
+) : Serializable
 
 fun getDefaultListOfDays(): List<Day> {
     val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)

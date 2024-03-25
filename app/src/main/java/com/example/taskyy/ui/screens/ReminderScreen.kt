@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,8 +28,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -53,7 +57,11 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
                         .fillMaxWidth(),
                     shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
                 ) {
-                    Body(itemBoxTitle = "", reminderText = "", dateString = state.dateString)
+                    ReminderScreenContent(
+                        dateString = state.dateString,
+                        onEvent = onEvent,
+                        state = state
+                    )
                 }
             }
         }
@@ -61,7 +69,11 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
 }
 
 @Composable
-fun Body(itemBoxTitle: String, reminderText: String, dateString: String) {
+private fun ReminderScreenContent(
+    dateString: String,
+    onEvent: (ReminderEvent) -> Unit,
+    state: ReminderState
+) {
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -71,52 +83,105 @@ fun Body(itemBoxTitle: String, reminderText: String, dateString: String) {
         ItemBoxTitle("Reminder")
     }
     Column {
-        NewItemRow()
-        RowDivider(30)
-        ItemDescription()
-        RowDivider(25)
-        TimeAndDateRow(dateString = dateString)
-        RowDivider(topPadding = 25)
-        Alarm()
+        NewItemRow(title = state.reminderTitleText)
+        RowDivider()
+        ItemDescription(description = state.reminderDescription)
+        RowDivider()
+        TimeAndDateRow(
+            dateString = dateString,
+            onEvent = onEvent,
+            isDatePickerExpanded = state.isDatePickerExpanded,
+            selectedTime = state.selectedTime,
+            selectedDate = state.selectedDate
+        )
+        RowDivider()
+        SetAlarmTimeRow(
+            isAlarmSelectionExpanded = state.isAlarmSelectionExpanded,
+            alarmTimeSelectionText = state.alarmReminderTimeSelection,
+            onEvent = { alarmSectionExpanded ->
+                onEvent(
+                    ReminderEvent.AlarmTypeDropDownSelected(alarmSectionExpanded)
+                )
+            })
     }
 }
 
 @Composable
-fun Alarm() {
+fun SetAlarmTimeRow(
+    isAlarmSelectionExpanded: Boolean,
+    alarmTimeSelectionText: String,
+    onEvent: (Boolean) -> Unit
+) {
     Row(
         modifier =
         Modifier
-            .padding(start = 20.dp, top = 20.dp)
+            .padding(start = 20.dp)
             .clickable {
-                //navigate to alarm selection screen
+                onEvent(!isAlarmSelectionExpanded)
             }
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .height(40.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AlarmIconWithBackground()
         Text(
-            text = "1 hour before",
+            text = alarmTimeSelectionText,
             color = Color.Black,
             fontSize = 15.sp,
             modifier = Modifier.padding(start = 5.dp)
         )
-        ChevronForward(0)
+        DropdownMenu(
+            expanded = isAlarmSelectionExpanded,
+            onDismissRequest = {
+                onEvent(!isAlarmSelectionExpanded)
+            }
+        ) {
+            DropdownMenuItem(
+                text = {
+                    /*TODO*/
+                },
+                onClick = {
+                    /*TODO*/
+                }
+            )
+
+            DropdownMenuItem(
+                text = {
+                    /*TODO*/
+                },
+                onClick = {
+                    /*TODO*/
+                }
+            )
+        }
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            ChevronForward()
+        }
     }
 }
 
 @Composable
-fun TimeAndDateRow(dateString: String) {
-    //two columns inside one row. One column for time and one for date
-    //need time and date pickers
+fun TimeAndDateRow(
+    dateString: String,
+    onEvent: (ReminderEvent) -> Unit,
+    isDatePickerExpanded: Boolean,
+    selectedTime: String,
+    selectedDate: Long
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 20.dp, top = 20.dp)
+        modifier = Modifier.padding(start = 20.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable {
-                //navigate to time picker
-            }
+            modifier = Modifier
+                .clickable {
+                }
+                .height(40.dp)
         ) {
             Text(
                 text = "From",
@@ -124,7 +189,7 @@ fun TimeAndDateRow(dateString: String) {
                 fontSize = 15.sp
             )
             Text(
-                text = "02:33",
+                text = selectedTime,
                 modifier = Modifier.padding(end = 40.dp),
                 fontSize = 15.sp
             )
@@ -135,102 +200,125 @@ fun TimeAndDateRow(dateString: String) {
             )
         }
         Row(
-            modifier = Modifier.clickable {
-                //navigate to date picker
-            }
+            modifier = Modifier
+                .clickable {
+                    onEvent(ReminderEvent.DatePickerSelcted(!isDatePickerExpanded))
+                }
+                .height(40.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = dateString,
                 color = Color.Black,
                 fontSize = 15.sp
             )
-
-            ChevronForward(topPadding = 0)
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                ChevronForward()
+            }
         }
+    }
+    if (isDatePickerExpanded) {
+        ShowDatePicker(
+            onItemSelected = { selectedDate ->
+                onEvent(ReminderEvent.UpdateDateSelection(selectedDate))
+            },
+            cancelled = { isDatePickerExpanded ->
+                onEvent(ReminderEvent.DatePickerSelcted(isDatePickerExpanded))
+            },
+            isDatePickerExpanded = isDatePickerExpanded
+        )
     }
 }
 
 @Composable
-fun ItemDescription() {
+fun ShowTimePicker() {
+    TODO("Not yet implemented")
+}
+
+@Composable
+fun ItemDescription(description: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable
-        {
-            //navigate to item description page
-        }
+        modifier = Modifier
+            .clickable
+            {
+                //navigate to item description page
+            }
+            .height(40.dp)
     ) {
         Text(
-            text = "Reminder Description",
-            modifier = Modifier.padding(start = 20.dp, top = 20.dp),
+            text = description,
+            modifier = Modifier.padding(start = 20.dp),
             fontSize = 15.sp
         )
-        ChevronForward(20)
-    }
-}
-
-@Composable
-fun RowDivider(topPadding: Int) {
-    Row(
-        modifier = Modifier.padding(top = topPadding.dp)
-    ) {
-        Box(
+        Column(
+            horizontalAlignment = Alignment.End,
             modifier = Modifier
-                .weight(1f)
-                .height(1.dp) // Adjust the height of the divider as needed
-                .padding(
-                    bottom = 4.dp,
-                    start = 20.dp,
-                    end = 20.dp
-                ) // Adjust the padding to control the distance between the divider and the content
+                .fillMaxWidth()
         ) {
-            HorizontalDivider(color = Color.LightGray) // Divider with black color
+            ChevronForward()
         }
     }
 }
 
 @Composable
-fun NewItemRow() {
+fun RowDivider() {
+    HorizontalDivider(
+        color = Color.LightGray,
+        modifier = Modifier
+            .padding(
+                horizontal = 20.dp,
+                vertical = 4.dp
+            )
+    )
+}
+
+@Composable
+fun NewItemRow(title: String) {
     Row(
         modifier =
         Modifier
-            .padding(top = 100.dp, start = 20.dp)
+            .padding(top = 60.dp, start = 20.dp)
             .clickable {
                 //navigate to name screen
-            },
+            }
+            .height(80.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         WhiteCircleWithBlackBorder()
         Text(
-            text = "New Reminder",
+            text = title,
             fontSize = 25.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 10.dp)
         )
-        ChevronForward(0)
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            ChevronForward()
+        }
     }
 }
 
 @Composable
-fun ChevronForward(topPadding: Int) {
-    Column(
-        horizontalAlignment = Alignment.End,
-        modifier = Modifier
-            .padding(top = topPadding.dp)
-            .fillMaxWidth()
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.chevron_forward),
-            contentDescription = "proceed forward arrow",
-            modifier = Modifier.padding(end = 15.dp)
-        )
-    }
+fun ChevronForward() {
+    Image(
+        painter = painterResource(id = R.drawable.chevron_forward),
+        contentDescription = "proceed forward arrow",
+        modifier = Modifier.padding(end = 15.dp)
+    )
 }
 
 @Composable
 fun AlarmIconWithBackground() {
     Box(
         modifier = Modifier
-            .size(32.dp) // Adjust the size of the vector asset as needed
             .background(
                 color = Color(android.graphics.Color.parseColor("#f2f6fc")),
                 shape = AbsoluteRoundedCornerShape(5.dp, 5.dp, 5.dp, 5.dp)
@@ -238,12 +326,11 @@ fun AlarmIconWithBackground() {
         contentAlignment = Alignment.Center
 
     ) {
-        Image(
-            painter = painterResource(
-                id = R.drawable.alarm_icon
-            ),
+        Icon(
+            imageVector = ImageVector.vectorResource(R.drawable.alarm_icon),
+            tint = Color(0xFFAEB4BF),
             contentDescription = "Alarm icon",
-            colorFilter = ColorFilter.tint(color = Color(android.graphics.Color.parseColor("#aeb4bf")))
+            modifier = Modifier.size(32.dp)
         )
     }
 }
@@ -305,7 +392,7 @@ fun TopBar(dateString: String, onEvent: (ReminderEvent) -> Unit) {
             modifier =
             Modifier
                 .clickable {
-                    //onEvent(ReminderEvent.Close)
+                    onEvent(ReminderEvent.Close)
                     //navigate to backstack
                 }
                 .padding(start = 10.dp)
@@ -323,8 +410,7 @@ fun TopBar(dateString: String, onEvent: (ReminderEvent) -> Unit) {
             modifier =
             Modifier
                 .clickable {
-                    //onEvent(ReminderEvent.Save)
-                    //save item
+                    onEvent(ReminderEvent.SaveSelected)
                 }
                 .padding(end = 10.dp, top = 5.dp)
         )
