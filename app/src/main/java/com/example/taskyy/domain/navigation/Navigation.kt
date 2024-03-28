@@ -4,24 +4,29 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import com.example.taskyy.ui.enums.EditTextScreenType
 import com.example.taskyy.ui.events.AgendaEvent
+import com.example.taskyy.ui.events.EditTextEvent
 import com.example.taskyy.ui.events.LoginEvent
 import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.screens.AgendaScreen
+import com.example.taskyy.ui.screens.EditTextScreen
 import com.example.taskyy.ui.screens.LoginScreen
 import com.example.taskyy.ui.screens.RegisterScreen
-import com.example.taskyy.ui.screens.ReminderDescription
 import com.example.taskyy.ui.screens.ReminderScreen
 import com.example.taskyy.ui.viewmodels.AgendaViewModel
+import com.example.taskyy.ui.viewmodels.EditTextViewModel
 import com.example.taskyy.ui.viewmodels.LoginViewModel
 import com.example.taskyy.ui.viewmodels.RegisterViewModel
 import com.example.taskyy.ui.viewmodels.ReminderViewModel
@@ -53,6 +58,7 @@ fun Nav() {
                         is LoginEvent.LoginSuccess -> {
                             navController.navigate(Screen.Agenda.route)
                         }
+
                         else -> {}
                     }
                 }
@@ -91,7 +97,6 @@ fun Nav() {
             composable(route = Screen.Agenda.route) {
                 val agendaViewModel = hiltViewModel<AgendaViewModel>()
                 val state = agendaViewModel.state
-
                 AgendaScreen(
                     state = state,
                     onEvent = { event ->
@@ -107,29 +112,82 @@ fun Nav() {
             composable(route = Screen.Reminder.route + "/{dateString}") {
                 val reminderViewModel = hiltViewModel<ReminderViewModel>()
                 val state by reminderViewModel.state.collectAsState()
+                val editedRemindDescription = navController
+                    .currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.getStateFlow<String>("reminderDescription", "Reminder Description")
+                    ?.collectAsStateWithLifecycle()
+
+                LaunchedEffect(editedRemindDescription) {
+                    reminderViewModel.setReminderDescription(
+                        editedRemindDescription?.value ?: "Reminder Description"
+                    )
+                }
+
                 ReminderScreen(
+                    state = state
+                ) { event ->
+                    when (event) {
+                        is ReminderEvent.EnterReminderDescription -> {
+                            navController.previousBackStackEntry?.savedStateHandle?.set(
+                                "screenType",
+                                event.editDescription
+                            )
+                            navController.navigate(Screen.EditText.route)
+                        }
+
+                        is ReminderEvent.EnterSetTitleScreen -> {
+                            navController.previousBackStackEntry?.savedStateHandle?.set(
+                                "screenType",
+                                event.editTitle
+                            )
+                            navController.navigate(Screen.EditText.route)
+                        }
+
+                        else -> reminderViewModel.onEvent(event)
+                    }
+                    reminderViewModel.onEvent(event)
+                }
+            }
+
+            composable(route = Screen.EditText.route) {
+                val editTextViewModel = hiltViewModel<EditTextViewModel>()
+                val state by editTextViewModel.state.collectAsState()
+                val screenType = navController
+                    .currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.getStateFlow<EditTextScreenType>("screenType", EditTextScreenType.NULL)
+                    ?.collectAsStateWithLifecycle()
+
+                LaunchedEffect(screenType) {
+                    if (screenType != null) {
+                        editTextViewModel.updateTitle(
+                            type = screenType.value
+                        )
+                    }
+                }
+
+                EditTextScreen(
                     state = state,
                     onEvent = { event ->
                         when (event) {
-                            is ReminderEvent.EnterReminderDescription -> navController.navigate(
-                                Screen.ReminderDetails.route
-                            )
+                            is EditTextEvent.SaveDescription -> {
+                                navController.previousBackStackEntry?.savedStateHandle?.set(
+                                    "reminderDescription",
+                                    state.enteredText
+                                )
+                                navController.popBackStack()
+                            }
 
-                            else -> reminderViewModel.onEvent(event = event)
+                            is EditTextEvent.SaveTitle -> {
+                                navController.previousBackStackEntry?.savedStateHandle?.set(
+                                    "reminderTitle",
+                                    state.enteredText
+                                )
+                            }
                         }
-                        reminderViewModel.onEvent(event)
-                    }
-                )
-            }
-
-            composable(route = Screen.ReminderDetails.route) {
-                val reminderViewModel = hiltViewModel<ReminderViewModel>()
-                val state by reminderViewModel.state.collectAsState()
-                ReminderDescription(
-                    state = state,
-                    onEvent = { event ->
-                        reminderViewModel.onEvent(event)
-                    }
+                        editTextViewModel.onEvent(event)
+                    },
                 )
             }
         }
