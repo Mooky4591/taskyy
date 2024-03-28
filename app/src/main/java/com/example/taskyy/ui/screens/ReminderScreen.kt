@@ -7,22 +7,31 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDefaults
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -35,7 +44,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.taskyy.R
+import com.example.taskyy.ui.ReminderType
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.viewmodels.ReminderState
 
@@ -50,7 +62,14 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
                     .background(Color.Black)
                     .padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
             ) {
-                TopBar(dateString = state.dateString, onEvent = onEvent)
+                TopBar(
+                    dateString = state.dateString,
+                    onEvent = onEvent,
+                    color = Color.White,
+                    saveFunction = {
+                        SaveReminder(onEvent = onEvent)
+                    },
+                )
                 Surface(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -58,7 +77,6 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
                     shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
                 ) {
                     ReminderScreenContent(
-                        dateString = state.dateString,
                         onEvent = onEvent,
                         state = state
                     )
@@ -70,7 +88,6 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
 
 @Composable
 private fun ReminderScreenContent(
-    dateString: String,
     onEvent: (ReminderEvent) -> Unit,
     state: ReminderState
 ) {
@@ -85,39 +102,93 @@ private fun ReminderScreenContent(
     Column {
         NewItemRow(title = state.reminderTitleText)
         RowDivider()
-        ItemDescription(description = state.reminderDescription)
+        ItemDescription(
+            description = state.reminderDescription,
+            enterItemDescription = { onEvent(ReminderEvent.EnterReminderDescription) })
         RowDivider()
         TimeAndDateRow(
-            dateString = dateString,
+            dateString = state.dateString,
             onEvent = onEvent,
             isDatePickerExpanded = state.isDatePickerExpanded,
             selectedTime = state.selectedTime,
-            selectedDate = state.selectedDate
+            isTimePickerExpanded = state.isTimePickerSelectionExpanded
         )
         RowDivider()
         SetAlarmTimeRow(
             isAlarmSelectionExpanded = state.isAlarmSelectionExpanded,
             alarmTimeSelectionText = state.alarmReminderTimeSelection,
-            onEvent = { alarmSectionExpanded ->
+            toggleAlarmExpanded = { alarmSectionExpanded ->
                 onEvent(
                     ReminderEvent.AlarmTypeDropDownSelected(alarmSectionExpanded)
                 )
-            })
+            },
+            setAlarmType = { selectedAlarmType ->
+                onEvent(
+                    ReminderEvent.AlarmTimeTextSelected(selectedAlarmType)
+                )
+            }
+        )
     }
+}
+
+@Composable
+fun DropDownItemSetUp(
+    toggleAlarmExpanded: (Boolean) -> Unit,
+    isAlarmSelectionExpanded: Boolean,
+    setAlarmType: (ReminderType) -> Unit
+) {
+    DropdownMenuItem(
+        text = {
+            Text(text = "10 minutes before")
+        },
+        onClick = {
+            toggleAlarmExpanded(!isAlarmSelectionExpanded)
+            setAlarmType(ReminderType.TEN_MINUTES_BEFORE)
+        }
+    )
+
+    DropdownMenuItem(
+        text = {
+            Text(text = "15 minutes before")
+        },
+        onClick = {
+            toggleAlarmExpanded(!isAlarmSelectionExpanded)
+            setAlarmType(ReminderType.FIFTEEN_MINUTES_BEFORE)
+        }
+    )
+    DropdownMenuItem(
+        text = {
+            Text(text = "30 minutes before")
+        },
+        onClick = {
+            toggleAlarmExpanded(!isAlarmSelectionExpanded)
+            setAlarmType(ReminderType.THIRTY_MINUTES_BEFORE)
+        }
+    )
+    DropdownMenuItem(
+        text = {
+            Text(text = "1 hour before")
+        },
+        onClick = {
+            toggleAlarmExpanded(!isAlarmSelectionExpanded)
+            setAlarmType(ReminderType.ONE_HOUR_BEFORE)
+        }
+    )
 }
 
 @Composable
 fun SetAlarmTimeRow(
     isAlarmSelectionExpanded: Boolean,
     alarmTimeSelectionText: String,
-    onEvent: (Boolean) -> Unit
+    toggleAlarmExpanded: (Boolean) -> Unit,
+    setAlarmType: (ReminderType) -> Unit
 ) {
     Row(
         modifier =
         Modifier
             .padding(start = 20.dp)
             .clickable {
-                onEvent(!isAlarmSelectionExpanded)
+                toggleAlarmExpanded(!isAlarmSelectionExpanded)
             }
             .fillMaxWidth()
             .height(40.dp),
@@ -133,84 +204,13 @@ fun SetAlarmTimeRow(
         DropdownMenu(
             expanded = isAlarmSelectionExpanded,
             onDismissRequest = {
-                onEvent(!isAlarmSelectionExpanded)
+                toggleAlarmExpanded(!isAlarmSelectionExpanded)
             }
         ) {
-            DropdownMenuItem(
-                text = {
-                    /*TODO*/
-                },
-                onClick = {
-                    /*TODO*/
-                }
-            )
-
-            DropdownMenuItem(
-                text = {
-                    /*TODO*/
-                },
-                onClick = {
-                    /*TODO*/
-                }
-            )
-        }
-        Column(
-            horizontalAlignment = Alignment.End,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            ChevronForward()
-        }
-    }
-}
-
-@Composable
-fun TimeAndDateRow(
-    dateString: String,
-    onEvent: (ReminderEvent) -> Unit,
-    isDatePickerExpanded: Boolean,
-    selectedTime: String,
-    selectedDate: Long
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 20.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clickable {
-                }
-                .height(40.dp)
-        ) {
-            Text(
-                text = "From",
-                modifier = Modifier.padding(end = 40.dp),
-                fontSize = 15.sp
-            )
-            Text(
-                text = selectedTime,
-                modifier = Modifier.padding(end = 40.dp),
-                fontSize = 15.sp
-            )
-            Image(
-                painter = painterResource(id = R.drawable.chevron_forward),
-                contentDescription = "proceed forward arrow",
-                modifier = Modifier.padding(end = 40.dp)
-            )
-        }
-        Row(
-            modifier = Modifier
-                .clickable {
-                    onEvent(ReminderEvent.DatePickerSelcted(!isDatePickerExpanded))
-                }
-                .height(40.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = dateString,
-                color = Color.Black,
-                fontSize = 15.sp
+            DropDownItemSetUp(
+                toggleAlarmExpanded = toggleAlarmExpanded,
+                isAlarmSelectionExpanded = isAlarmSelectionExpanded,
+                setAlarmType = setAlarmType
             )
             Column(
                 horizontalAlignment = Alignment.End,
@@ -219,6 +219,35 @@ fun TimeAndDateRow(
             ) {
                 ChevronForward()
             }
+        }
+    }
+}
+
+@Composable
+fun DateSection(
+    onEvent: (ReminderEvent) -> Unit,
+    dateString: String,
+    isDatePickerExpanded: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .clickable {
+                onEvent(ReminderEvent.DatePickerSelcted(!isDatePickerExpanded))
+            }
+            .height(40.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = dateString,
+            color = Color.Black,
+            fontSize = 15.sp
+        )
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            ChevronForward()
         }
     }
     if (isDatePickerExpanded) {
@@ -235,18 +264,152 @@ fun TimeAndDateRow(
 }
 
 @Composable
-fun ShowTimePicker() {
-    TODO("Not yet implemented")
+fun TimeAndDateRow(
+    dateString: String,
+    onEvent: (ReminderEvent) -> Unit,
+    isDatePickerExpanded: Boolean,
+    isTimePickerExpanded: Boolean,
+    selectedTime: String,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(start = 20.dp)
+    ) {
+        TimeSection(
+            isTimePickerExpanded = isTimePickerExpanded,
+            onEvent = onEvent,
+            selectedTime = selectedTime
+        )
+        DateSection(
+            isDatePickerExpanded = isDatePickerExpanded,
+            onEvent = onEvent,
+            dateString = dateString
+        )
+    }
 }
 
 @Composable
-fun ItemDescription(description: String) {
+fun TimeSection(
+    onEvent: (ReminderEvent) -> Unit,
+    isTimePickerExpanded: Boolean,
+    selectedTime: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clickable {
+                onEvent(ReminderEvent.TimePickerSelected(!isTimePickerExpanded))
+            }
+            .height(40.dp)
+    ) {
+        Text(
+            text = "From",
+            modifier = Modifier.padding(end = 40.dp),
+            fontSize = 15.sp
+        )
+        Text(
+            text = selectedTime,
+            modifier = Modifier.padding(end = 40.dp),
+            fontSize = 15.sp
+        )
+        Image(
+            painter = painterResource(id = R.drawable.chevron_forward),
+            contentDescription = "proceed forward arrow",
+            modifier = Modifier.padding(end = 40.dp)
+        )
+    }
+    if (isTimePickerExpanded) {
+        TimePickerDialog(
+            timeSelected = { selectedTime ->
+                onEvent(ReminderEvent.TimeSelected(selectedTime = selectedTime))
+            },
+            toggle = {
+                onEvent(ReminderEvent.TimePickerSelected(it))
+            },
+            isTimeSelectionExpanded = isTimePickerExpanded
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerDialog(
+    timeSelected: (String) -> Unit,
+    toggle: (Boolean) -> Unit,
+    isTimeSelectionExpanded: Boolean
+) {
+    val pickedTime = rememberTimePickerState()
+
+    Dialog(
+        onDismissRequest = {
+            toggle(!isTimeSelectionExpanded)
+        },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+        ),
+
+        ) {
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .width(IntrinsicSize.Min)
+                .height(IntrinsicSize.Min)
+                .background(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = Color.Black
+                ),
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp),
+                    text = "Select Time",
+                    style = MaterialTheme.typography.labelMedium
+                )
+                TimePicker(
+                    state = pickedTime,
+                    colors = TimePickerDefaults.colors(
+                        clockDialColor = Color.White,
+                        containerColor = Color.Black,
+                    )
+                )
+                Row(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth()
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(
+                        onClick = {
+                            toggle(!isTimeSelectionExpanded)
+                        }
+                    ) { Text("Cancel") }
+                    TextButton(
+                        onClick = {
+                            timeSelected("${pickedTime.hour}:${pickedTime.minute}")
+                            toggle(!isTimeSelectionExpanded)
+                        }
+                    ) { Text("OK") }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ItemDescription(description: String, enterItemDescription: (ReminderEvent) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clickable
             {
-                //navigate to item description page
+                enterItemDescription(ReminderEvent.EnterReminderDescription)
             }
             .height(40.dp)
     ) {
@@ -374,7 +537,12 @@ fun ItemBox(hexColor: String, size: Int, borderColor: String) {
 }
 
 @Composable
-fun TopBar(dateString: String, onEvent: (ReminderEvent) -> Unit) {
+fun TopBar(
+    dateString: String,
+    onEvent: (ReminderEvent) -> Unit,
+    color: Color,
+    saveFunction: @Composable () -> Unit
+) {
     Row(
         modifier =
         Modifier
@@ -385,34 +553,54 @@ fun TopBar(dateString: String, onEvent: (ReminderEvent) -> Unit) {
         LaunchedEffect(Unit) {
             onEvent(ReminderEvent.SetDateString)
         }
-        Text(
-            text = "X",
-            fontSize = 20.sp,
-            color = Color.White,
+        Icon(
+            painter = painterResource(
+                id = R.drawable.close
+            ),
+            contentDescription = "",
+            tint = color,
             modifier =
-            Modifier
-                .clickable {
-                    onEvent(ReminderEvent.Close)
-                    //navigate to backstack
-                }
-                .padding(start = 10.dp)
+            Modifier.clickable {
+                onEvent(ReminderEvent.Close)
+            }
+
         )
         Text(
             text = dateString,
             fontSize = 25.sp,
-            color = Color.White,
+            color = color,
             fontWeight = FontWeight.Bold
         )
-        Text(
-            text = "SAVE",
-            fontSize = 15.sp,
-            color = Color.White,
-            modifier =
-            Modifier
-                .clickable {
-                    onEvent(ReminderEvent.SaveSelected)
-                }
-                .padding(end = 10.dp, top = 5.dp)
-        )
+        saveFunction()
     }
+}
+
+@Composable
+fun SaveReminder(onEvent: (ReminderEvent) -> Unit) {
+    Text(
+        text = "SAVE",
+        fontSize = 15.sp,
+        color = Color.White,
+        modifier =
+        Modifier
+            .clickable {
+                onEvent(ReminderEvent.SaveReminder)
+            }
+            .padding(end = 10.dp, top = 5.dp)
+    )
+}
+
+@Composable
+fun SaveDetails(onEvent: (ReminderEvent) -> Unit, details: String) {
+    Text(
+        text = "SAVE",
+        fontSize = 15.sp,
+        color = Color(android.graphics.Color.parseColor("#7db4a7")),
+        modifier =
+        Modifier
+            .clickable {
+                onEvent(ReminderEvent.SaveDetails(details = details))
+            }
+            .padding(end = 10.dp, top = 5.dp)
+    )
 }

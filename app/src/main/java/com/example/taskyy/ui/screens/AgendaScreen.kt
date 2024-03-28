@@ -343,8 +343,8 @@ fun CircleWithInitials(
 }
 
 @Composable
-fun DropDownMenuItemText(logout: String) {
-    Text(text = logout, color = Color.Black)
+fun DropDownMenuItemText(itemTitle: String) {
+    Text(text = itemTitle, color = Color.Black)
 }
 
 @Composable

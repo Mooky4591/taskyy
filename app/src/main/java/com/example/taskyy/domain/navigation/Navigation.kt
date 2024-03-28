@@ -15,9 +15,11 @@ import androidx.navigation.navigation
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.events.LoginEvent
 import com.example.taskyy.ui.events.RegisterEvent
+import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.screens.AgendaScreen
 import com.example.taskyy.ui.screens.LoginScreen
 import com.example.taskyy.ui.screens.RegisterScreen
+import com.example.taskyy.ui.screens.ReminderDescription
 import com.example.taskyy.ui.screens.ReminderScreen
 import com.example.taskyy.ui.viewmodels.AgendaViewModel
 import com.example.taskyy.ui.viewmodels.LoginViewModel
@@ -90,18 +92,11 @@ fun Nav() {
                 val agendaViewModel = hiltViewModel<AgendaViewModel>()
                 val state = agendaViewModel.state
 
-                ObserveAsEvents(agendaViewModel.events) { event ->
-                    when (event) {
-                        is AgendaEvent.LogoutSuccessful -> navController.navigate(Screen.Login.route)
-                        else -> {}
-                    }
-
-                }
                 AgendaScreen(
                     state = state,
                     onEvent = { event ->
                         when (event) {
-                            is AgendaEvent.ReminderItemSelected -> navController.navigate(Screen.Reminder.route)
+                            is AgendaEvent.ReminderItemSelected -> navController.navigate(Screen.Reminder.route + "/${state.dateString}")
                             else -> agendaViewModel.onEvent(event)
                         }
                         agendaViewModel.onEvent(event = event)
@@ -109,13 +104,31 @@ fun Nav() {
                 )
             }
 
-            composable(route = Screen.Reminder.route) {
+            composable(route = Screen.Reminder.route + "/{dateString}") {
                 val reminderViewModel = hiltViewModel<ReminderViewModel>()
                 val state by reminderViewModel.state.collectAsState()
                 ReminderScreen(
                     state = state,
-                    onEvent = {
-                        reminderViewModel.onEvent(it)
+                    onEvent = { event ->
+                        when (event) {
+                            is ReminderEvent.EnterReminderDescription -> navController.navigate(
+                                Screen.ReminderDetails.route
+                            )
+
+                            else -> reminderViewModel.onEvent(event = event)
+                        }
+                        reminderViewModel.onEvent(event)
+                    }
+                )
+            }
+
+            composable(route = Screen.ReminderDetails.route) {
+                val reminderViewModel = hiltViewModel<ReminderViewModel>()
+                val state by reminderViewModel.state.collectAsState()
+                ReminderDescription(
+                    state = state,
+                    onEvent = { event ->
+                        reminderViewModel.onEvent(event)
                     }
                 )
             }
