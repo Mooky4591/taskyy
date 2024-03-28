@@ -36,6 +36,11 @@ class AgendaViewModel @Inject constructor(
     private val eventChannel = Channel<AgendaEvent>()
     val events = eventChannel.receiveAsFlow()
 
+    init {
+        setUserInitials()
+        setDefaultDateString()
+    }
+
     fun onEvent(event: AgendaEvent) {
         when (event) {
             is AgendaEvent.OnMonthExpanded -> state =
@@ -62,8 +67,8 @@ class AgendaViewModel @Inject constructor(
             }
 
             is AgendaEvent.SetUserDefaults -> {
-                setUserInitials()
-                setDefaultDateString()
+                //  setUserInitials()
+                //  setDefaultDateString()
             }
 
             is AgendaEvent.ReminderItemSelected -> {
@@ -124,23 +129,31 @@ class AgendaViewModel @Inject constructor(
 
     private fun setUserInitials() {
         val email = sharedPreferences.getString("email", "")
-        viewModelScope.launch {
-            val name = agendaRepository.getUserName(email!!)
-            sharedPreferences.edit().putString("name", name).apply()
-            state = state.copy(name = name)
-            state = state.copy(initials = name
-                .split(' ')
-                .mapNotNull { it.firstOrNull()?.toString() }
-                .reduce { acc, s -> acc + s })
+        if (savedStateHandle.get<String>("userInitials") != null) {
+            state = state.copy(initials = savedStateHandle.get<String>("userInitials") ?: "")
+        } else {
+            viewModelScope.launch {
+                val name = agendaRepository.getUserName(email!!)
+                sharedPreferences.edit().putString("name", name).apply()
+                state = state.copy(name = name)
+                state = state.copy(initials = name
+                    .split(' ')
+                    .mapNotNull { it.firstOrNull()?.toString() }
+                    .reduce { acc, s -> acc + s })
+                savedStateHandle["userInitials"] = state.initials
+            }
         }
     }
 
     private fun setDefaultDateString() {
-        val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu")
-        sharedPreferences.edit()
-            .putString("date_string", dateStringFormatter.format(LocalDateTime.now())).apply()
-        savedStateHandle["date_string"] = dateStringFormatter.format(LocalDateTime.now())
-        state = savedStateHandle.get<String?>("date_string")?.let { state.copy(dateString = it) }!!
+        if (savedStateHandle.get<String>("dateString") != null) {
+            state = state.copy(dateString = savedStateHandle.get<String>("dateString") ?: "")
+        } else {
+            val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu")
+            savedStateHandle["dateString"] = dateStringFormatter.format(LocalDateTime.now())
+            state =
+                savedStateHandle.get<String?>("dateString")?.let { state.copy(dateString = it) }!!
+        }
     }
 }
 data class AgendaState(

@@ -33,7 +33,6 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,48 +46,71 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.taskyy.R
-import com.example.taskyy.ui.ReminderType
+import com.example.taskyy.ui.enums.EditTextScreenType
+import com.example.taskyy.ui.enums.ReminderType
+import com.example.taskyy.ui.events.EditTextEvent
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.viewmodels.ReminderState
 
 @Composable
 fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
-    Scaffold(
-        content = {
-            Column(
-                verticalArrangement = Arrangement.SpaceEvenly,
+    Scaffold {
+        onEvent(ReminderEvent.SetUserDefaults)
+        Column(
+            verticalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
+        ) {
+            TopBar(
+                title = state.dateString,
+                color = Color.White,
+                saveFunction = {
+                    SaveReminder(onEvent = { onEvent(ReminderEvent.SaveReminder) })
+                },
+                onClose = { (onEvent(ReminderEvent.Close)) }
+            )
+            Surface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
+                    .fillMaxHeight()
+                    .fillMaxWidth(),
+                shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
             ) {
-                TopBar(
-                    dateString = state.dateString,
-                    onEvent = onEvent,
-                    color = Color.White,
-                    saveFunction = {
-                        SaveReminder(onEvent = onEvent)
+                ReminderScreenContent(
+                    enterItemDescription = {
+                        onEvent(
+                            ReminderEvent.EnterReminderDescription(
+                                EditTextScreenType.EDIT_DETAILS
+                            )
+                        )
                     },
+                    onDateSelected = { onEvent(ReminderEvent.DatePickerSelcted(datePickerExpanded = state.isDatePickerExpanded)) },
+                    onTimeSelected = { onEvent(ReminderEvent.TimePickerSelected(timePickerSelected = state.isTimePickerSelectionExpanded)) },
+                    alarmTimeTextSelected = { selectedAlarmType ->
+                        onEvent(ReminderEvent.AlarmTimeTextSelected(selectedAlarmType))
+                    },
+                    alarmTypeDropDownSelected = { alarmSectionExpanded ->
+                        onEvent(
+                            alarmSectionExpanded
+                        )
+                    },
+                    state = state,
+                    enterItemTitle = { onEvent(ReminderEvent.EnterSetTitleScreen(EditTextScreenType.EDIT_TITLE)) }
                 )
-                Surface(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(),
-                    shape = AbsoluteRoundedCornerShape(30.dp, 30.dp)
-                ) {
-                    ReminderScreenContent(
-                        onEvent = onEvent,
-                        state = state
-                    )
-                }
             }
         }
-    )
+    }
 }
 
 @Composable
 private fun ReminderScreenContent(
-    onEvent: (ReminderEvent) -> Unit,
+    enterItemDescription: (ReminderEvent) -> Unit,
+    enterItemTitle: (ReminderEvent) -> Unit,
+    onTimeSelected: (ReminderEvent) -> Unit,
+    onDateSelected: (ReminderEvent) -> Unit,
+    alarmTypeDropDownSelected: (ReminderEvent) -> Unit,
+    alarmTimeTextSelected: (ReminderType) -> Unit,
     state: ReminderState
 ) {
     Row(
@@ -100,32 +122,40 @@ private fun ReminderScreenContent(
         ItemBoxTitle("Reminder")
     }
     Column {
-        NewItemRow(title = state.reminderTitleText)
+        NewItemRow(title = state.reminderTitleText,
+            editTitle =
+            { enterItemTitle(ReminderEvent.EnterSetTitleScreen(EditTextScreenType.EDIT_TITLE)) }
+        )
         RowDivider()
         ItemDescription(
             description = state.reminderDescription,
-            enterItemDescription = { onEvent(ReminderEvent.EnterReminderDescription) })
+            enterItemDescription = {
+                enterItemDescription(
+                    ReminderEvent.EnterReminderDescription(
+                        EditTextScreenType.EDIT_DETAILS
+                    )
+                )
+            })
         RowDivider()
         TimeAndDateRow(
             dateString = state.dateString,
-            onEvent = onEvent,
+            onTimeSelected = { onTimeSelected(ReminderEvent.TimePickerSelected(timePickerSelected = state.isTimePickerSelectionExpanded)) },
             isDatePickerExpanded = state.isDatePickerExpanded,
             selectedTime = state.selectedTime,
-            isTimePickerExpanded = state.isTimePickerSelectionExpanded
+            isTimePickerExpanded = state.isTimePickerSelectionExpanded,
+            onDateSelected = { onDateSelected(ReminderEvent.DatePickerSelcted(datePickerExpanded = state.isDatePickerExpanded)) }
         )
         RowDivider()
         SetAlarmTimeRow(
             isAlarmSelectionExpanded = state.isAlarmSelectionExpanded,
             alarmTimeSelectionText = state.alarmReminderTimeSelection,
             toggleAlarmExpanded = { alarmSectionExpanded ->
-                onEvent(
+                alarmTypeDropDownSelected(
                     ReminderEvent.AlarmTypeDropDownSelected(alarmSectionExpanded)
                 )
             },
-            setAlarmType = { selectedAlarmType ->
-                onEvent(
-                    ReminderEvent.AlarmTimeTextSelected(selectedAlarmType)
-                )
+            setAlarmType = {
+                alarmTimeTextSelected(it)
             }
         )
     }
@@ -149,15 +179,6 @@ fun DropDownItemSetUp(
 
     DropdownMenuItem(
         text = {
-            Text(text = "15 minutes before")
-        },
-        onClick = {
-            toggleAlarmExpanded(!isAlarmSelectionExpanded)
-            setAlarmType(ReminderType.FIFTEEN_MINUTES_BEFORE)
-        }
-    )
-    DropdownMenuItem(
-        text = {
             Text(text = "30 minutes before")
         },
         onClick = {
@@ -172,6 +193,24 @@ fun DropDownItemSetUp(
         onClick = {
             toggleAlarmExpanded(!isAlarmSelectionExpanded)
             setAlarmType(ReminderType.ONE_HOUR_BEFORE)
+        }
+    )
+    DropdownMenuItem(
+        text = {
+            Text(text = "6 hours before")
+        },
+        onClick = {
+            toggleAlarmExpanded(!isAlarmSelectionExpanded)
+            setAlarmType(ReminderType.SIX_HOURS_BEFORE)
+        }
+    )
+    DropdownMenuItem(
+        text = {
+            Text(text = "1 day before")
+        },
+        onClick = {
+            toggleAlarmExpanded(!isAlarmSelectionExpanded)
+            setAlarmType(ReminderType.ONE_DAY_BEFORE)
         }
     )
 }
@@ -212,13 +251,13 @@ fun SetAlarmTimeRow(
                 isAlarmSelectionExpanded = isAlarmSelectionExpanded,
                 setAlarmType = setAlarmType
             )
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                ChevronForward()
-            }
+        }
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            ChevronForward()
         }
     }
 }
@@ -266,7 +305,8 @@ fun DateSection(
 @Composable
 fun TimeAndDateRow(
     dateString: String,
-    onEvent: (ReminderEvent) -> Unit,
+    onTimeSelected: (Any?) -> Unit,
+    onDateSelected: (Any?) -> Unit,
     isDatePickerExpanded: Boolean,
     isTimePickerExpanded: Boolean,
     selectedTime: String,
@@ -277,12 +317,12 @@ fun TimeAndDateRow(
     ) {
         TimeSection(
             isTimePickerExpanded = isTimePickerExpanded,
-            onEvent = onEvent,
+            onEvent = onTimeSelected,
             selectedTime = selectedTime
         )
         DateSection(
             isDatePickerExpanded = isDatePickerExpanded,
-            onEvent = onEvent,
+            onEvent = onDateSelected,
             dateString = dateString
         )
     }
@@ -290,7 +330,7 @@ fun TimeAndDateRow(
 
 @Composable
 fun TimeSection(
-    onEvent: (ReminderEvent) -> Unit,
+    onEvent: (Any) -> Unit,
     isTimePickerExpanded: Boolean,
     selectedTime: String
 ) {
@@ -409,7 +449,7 @@ fun ItemDescription(description: String, enterItemDescription: (ReminderEvent) -
         modifier = Modifier
             .clickable
             {
-                enterItemDescription(ReminderEvent.EnterReminderDescription)
+                enterItemDescription(ReminderEvent.EnterReminderDescription(EditTextScreenType.EDIT_DETAILS))
             }
             .height(40.dp)
     ) {
@@ -441,13 +481,13 @@ fun RowDivider() {
 }
 
 @Composable
-fun NewItemRow(title: String) {
+fun NewItemRow(title: String, editTitle: (String) -> Unit) {
     Row(
         modifier =
         Modifier
             .padding(top = 60.dp, start = 20.dp)
             .clickable {
-                //navigate to name screen
+                editTitle(title)
             }
             .height(80.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -538,8 +578,8 @@ fun ItemBox(hexColor: String, size: Int, borderColor: String) {
 
 @Composable
 fun TopBar(
-    dateString: String,
-    onEvent: (ReminderEvent) -> Unit,
+    title: String,
+    onClose: () -> Unit,
     color: Color,
     saveFunction: @Composable () -> Unit
 ) {
@@ -550,9 +590,6 @@ fun TopBar(
             .padding(top = 10.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        LaunchedEffect(Unit) {
-            onEvent(ReminderEvent.SetDateString)
-        }
         Icon(
             painter = painterResource(
                 id = R.drawable.close
@@ -561,12 +598,12 @@ fun TopBar(
             tint = color,
             modifier =
             Modifier.clickable {
-                onEvent(ReminderEvent.Close)
+                onClose()
             }
 
         )
         Text(
-            text = dateString,
+            text = title,
             fontSize = 25.sp,
             color = color,
             fontWeight = FontWeight.Bold
@@ -576,7 +613,7 @@ fun TopBar(
 }
 
 @Composable
-fun SaveReminder(onEvent: (ReminderEvent) -> Unit) {
+fun SaveReminder(onEvent: (ReminderEvent.SaveReminder) -> Unit) {
     Text(
         text = "SAVE",
         fontSize = 15.sp,
@@ -591,7 +628,7 @@ fun SaveReminder(onEvent: (ReminderEvent) -> Unit) {
 }
 
 @Composable
-fun SaveDetails(onEvent: (ReminderEvent) -> Unit, details: String) {
+fun SaveDetails(onEvent: (EditTextEvent) -> Unit, details: String) {
     Text(
         text = "SAVE",
         fontSize = 15.sp,
@@ -599,8 +636,28 @@ fun SaveDetails(onEvent: (ReminderEvent) -> Unit, details: String) {
         modifier =
         Modifier
             .clickable {
-                onEvent(ReminderEvent.SaveDetails(details = details))
+                onEvent(EditTextEvent.TextUpdated(details))
+                onEvent(EditTextEvent.SaveDescription(details))
+                onEvent(EditTextEvent.Back)
             }
             .padding(end = 10.dp, top = 5.dp)
     )
 }
+
+@Composable
+fun SaveTitle(details: String, onEvent: (EditTextEvent) -> Unit) {
+    Text(
+        text = "SAVE",
+        fontSize = 15.sp,
+        color = Color(android.graphics.Color.parseColor("#7db4a7")),
+        modifier =
+        Modifier
+            .clickable {
+                onEvent(EditTextEvent.TextUpdated(details))
+                onEvent(EditTextEvent.SaveTitle(details))
+                onEvent(EditTextEvent.Back)
+            }
+            .padding(end = 10.dp, top = 5.dp)
+    )
+}
+

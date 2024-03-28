@@ -12,24 +12,26 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.taskyy.ui.events.ReminderEvent
-import com.example.taskyy.ui.viewmodels.ReminderState
+import com.example.taskyy.ui.enums.EditTextScreenType
+import com.example.taskyy.ui.events.EditTextEvent
+import com.example.taskyy.ui.viewmodels.EditTextState
 
 @Composable
-fun ReminderDescription(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
+fun EditTextScreen(state: EditTextState, onEvent: (EditTextEvent) -> Unit) {
 
     Scaffold(
         topBar = {
             TopBar(
-                dateString = "EDIT DESCRIPTION",
-                onEvent = onEvent,
+                title = "EDIT DESCRIPTION",
+                onClose = { onEvent(EditTextEvent.Back) },
                 color = Color.Black,
                 saveFunction = {
-                    SaveDetails(
+                    DetermineWhichTopBarToUse(
+                        screenType = state.screenType,
                         onEvent = onEvent,
-                        details = state.reminderDescription
+                        details = state.enteredText
                     )
-                },
+                }
             )
         },
         content = {
@@ -39,9 +41,9 @@ fun ReminderDescription(state: ReminderState, onEvent: (ReminderEvent) -> Unit) 
                     .padding(top = 60.dp, start = 10.dp)
             ) {
                 BasicTextField(
-                    value = state.reminderDescription,
+                    value = state.enteredText,
                     onValueChange = { description ->
-                        onEvent(ReminderEvent.ReminderDescriptionUpdated(description))
+                        onEvent(EditTextEvent.TextUpdated(description))
                     },
                     textStyle = TextStyle(fontSize = 20.sp),
                     modifier = Modifier.padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
@@ -49,4 +51,27 @@ fun ReminderDescription(state: ReminderState, onEvent: (ReminderEvent) -> Unit) 
             }
         }
     )
+}
+
+@Composable
+fun DetermineWhichTopBarToUse(
+    screenType: EditTextScreenType,
+    onEvent: (EditTextEvent) -> Unit,
+    details: String
+) {
+    when (screenType) {
+        EditTextScreenType.EDIT_DETAILS -> SaveDetails(onEvent = {
+            onEvent(
+                EditTextEvent.SaveDescription(
+                    details
+                )
+            )
+        }, details = details)
+
+        EditTextScreenType.EDIT_TITLE -> SaveTitle(
+            details = details,
+            onEvent = { onEvent(EditTextEvent.SaveTitle(details)) })
+
+        EditTextScreenType.NULL -> {}
+    }
 }

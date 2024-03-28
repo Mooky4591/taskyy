@@ -7,7 +7,7 @@ sealed class Screen(val route: String) {
 
     //reminder screens
     data object Reminder : Screen(route = "reminder")
-    data object ReminderDetails : Screen(route = "reminder_details")
+    data object EditText : Screen(route = "reminder_details")
     data object Task : Screen(route = "task")
     data object Event : Screen(route = "event")
 }

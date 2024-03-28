@@ -2,7 +2,7 @@ package com.example.taskyy.ui.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.example.taskyy.ui.ReminderType
+import com.example.taskyy.ui.enums.ReminderType
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.objects.Day
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,22 +23,24 @@ import javax.inject.Inject
 class ReminderViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
     private val _state = MutableStateFlow(ReminderState())
     val state: StateFlow<ReminderState> = _state.asStateFlow()
 
+    init {
+        if (savedStateHandle.get<String>("dateString") != null) {
+            _state.update {
+                it.copy(dateString = savedStateHandle.get<String>("dateString")!!)
+            }
+        }
+    }
 
     fun onEvent(event: ReminderEvent) {
         when (event) {
             is ReminderEvent.SetDateString -> {
-                setDateString()
             }
 
             is ReminderEvent.SaveReminder -> {
-            }
-
-            is ReminderEvent.SaveDetails -> {
-                _state.update { it.copy(reminderDescription = event.details) }
-                //saveDetails()
             }
 
             is ReminderEvent.Close -> {
@@ -47,10 +49,6 @@ class ReminderViewModel @Inject constructor(
 
             is ReminderEvent.TimeSelected -> {
                 formatTimeSelected(event.selectedTime)
-            }
-
-            is ReminderEvent.ReminderDescriptionUpdated -> {
-                _state.update { it.copy(reminderDescription = event.reminderDescription) }
             }
 
             is ReminderEvent.ReminderTitleTextUpdated -> {
@@ -76,6 +74,8 @@ class ReminderViewModel @Inject constructor(
             }
 
             is ReminderEvent.UpdateDateSelection -> formatDateString(event.selectedDate)
+            is ReminderEvent.SetUserDefaults -> {
+            }
         }
     }
 
@@ -103,8 +103,9 @@ class ReminderViewModel @Inject constructor(
         return when (alarmTimeText) {
             ReminderType.ONE_HOUR_BEFORE -> "1 hour before"
             ReminderType.THIRTY_MINUTES_BEFORE -> "30 minutes before"
-            ReminderType.FIFTEEN_MINUTES_BEFORE -> "15 minutes before"
+            ReminderType.ONE_DAY_BEFORE -> "1 day before"
             ReminderType.TEN_MINUTES_BEFORE -> "10 minutes before"
+            ReminderType.SIX_HOURS_BEFORE -> "6 hours before"
         }
     }
 
@@ -140,9 +141,8 @@ class ReminderViewModel @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    private fun setDateString() {
-        val date = savedStateHandle.get<String>("dateString")
-        _state.update { it.copy(dateString = date ?: "") }
+    fun setReminderDescription(description: String) {
+        _state.update { it.copy(reminderDescription = description) }
     }
 }
 
@@ -151,9 +151,9 @@ data class ReminderState(
     var isAlarmSelectionExpanded: Boolean = false,
     var isTimePickerSelectionExpanded: Boolean = false,
     var isDatePickerExpanded: Boolean = false,
-    var alarmReminderTimeSelection: String = "1 hour before",
+    var alarmReminderTimeSelection: String = "",
     var selectedTime: String = "",
     var selectedDate: Long = 0,
-    var reminderDescription: String = "Reminder description",
+    var reminderDescription: String = "",
     var reminderTitleText: String = "New Reminder"
 )
