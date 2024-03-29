@@ -11,7 +11,6 @@ sealed interface AgendaEvent {
     data object LogoutSuccessful : AgendaEvent
     data class SelectedDayIndex(val index: Int) : AgendaEvent
     data class UpdateDateString(val date: String) : AgendaEvent
-    data object SetUserDefaults : AgendaEvent
     data object EventItemSelected : AgendaEvent
     data object TaskItemSelected : AgendaEvent
     data object ReminderItemSelected : AgendaEvent

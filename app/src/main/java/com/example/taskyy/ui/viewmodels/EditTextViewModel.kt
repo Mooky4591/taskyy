@@ -18,6 +18,11 @@ class EditTextViewModel @Inject constructor(
     private val _state = MutableStateFlow(EditTextState())
     val state: StateFlow<EditTextState> = _state.asStateFlow()
 
+    init {
+        val screenType = savedStateHandle.get<EditTextScreenType>("screenType")
+        _state.update { it.copy(screenType = screenType) }
+    }
+
     fun onEvent(event: EditTextEvent) {
         when (event) {
             is EditTextEvent.TextUpdated -> {
@@ -33,15 +38,10 @@ class EditTextViewModel @Inject constructor(
             is EditTextEvent.Back -> {}
         }
     }
-
-    fun updateTitle(type: EditTextScreenType) {
-        val screenType = savedStateHandle.get<EditTextScreenType>("screenType")
-        _state.update { it.copy(screenType = type) }
-    }
 }
 
 data class EditTextState(
     var enteredText: String = "",
     var title: String = "",
-    var screenType: EditTextScreenType = EditTextScreenType.NULL
+    var screenType: EditTextScreenType? = null
 )

@@ -74,8 +74,6 @@ class ReminderViewModel @Inject constructor(
             }
 
             is ReminderEvent.UpdateDateSelection -> formatDateString(event.selectedDate)
-            is ReminderEvent.SetUserDefaults -> {
-            }
         }
     }
 
@@ -143,6 +141,10 @@ class ReminderViewModel @Inject constructor(
 
     fun setReminderDescription(description: String) {
         _state.update { it.copy(reminderDescription = description) }
+    }
+
+    fun setReminderTitle(title: String) {
+        _state.update { it.copy(reminderTitleText = title) }
     }
 }
 

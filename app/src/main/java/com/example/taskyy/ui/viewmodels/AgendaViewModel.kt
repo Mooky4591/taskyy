@@ -65,12 +65,6 @@ class AgendaViewModel @Inject constructor(
                 state = state.copy(dateString = event.date)
                 savedStateHandle["dateString"] = event.date
             }
-
-            is AgendaEvent.SetUserDefaults -> {
-                //  setUserInitials()
-                //  setDefaultDateString()
-            }
-
             is AgendaEvent.ReminderItemSelected -> {
             }
 
