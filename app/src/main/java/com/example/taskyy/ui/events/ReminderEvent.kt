@@ -13,11 +13,8 @@ interface ReminderEvent {
     data class EnterReminderDescription(var editDescription: EditTextScreenType) : ReminderEvent
     data class EnterSetTitleScreen(var editTitle: EditTextScreenType) : ReminderEvent
     data class ReminderTitleTextUpdated(var reminderTitleText: String) : ReminderEvent
-    data class ReminderDescriptionUpdated(var reminderDescription: String) : ReminderEvent
     data class UpdateDateSelection(var selectedDate: Long) : ReminderEvent
     data class DatePickerSelcted(var datePickerExpanded: Boolean) : ReminderEvent
-    data object SetUserDefaults : ReminderEvent
     data object SaveReminder : ReminderEvent
-    data class SaveTitle(val title: String) : ReminderEvent
     data object Close : ReminderEvent
 }

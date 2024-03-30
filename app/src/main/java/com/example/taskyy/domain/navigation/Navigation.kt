@@ -10,9 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.example.taskyy.ui.enums.EditTextScreenType
 import com.example.taskyy.ui.events.AgendaEvent
@@ -104,7 +106,6 @@ fun Nav() {
                             is AgendaEvent.ReminderItemSelected -> navController.navigate(Screen.Reminder.route + "/${state.dateString}")
                             else -> agendaViewModel.onEvent(event)
                         }
-                        agendaViewModel.onEvent(event = event)
                     }
                 )
             }
@@ -117,10 +118,20 @@ fun Nav() {
                     ?.savedStateHandle
                     ?.getStateFlow<String>("reminderDescription", "Reminder Description")
                     ?.collectAsStateWithLifecycle()
+                val editedRemindTitle = navController
+                    .currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.getStateFlow("reminderTitle", "New Reminder")
+                    ?.collectAsStateWithLifecycle()
 
                 LaunchedEffect(editedRemindDescription) {
                     reminderViewModel.setReminderDescription(
                         editedRemindDescription?.value ?: "Reminder Description"
+                    )
+                }
+                LaunchedEffect(editedRemindTitle) {
+                    reminderViewModel.setReminderTitle(
+                        editedRemindTitle?.value ?: "Reminder Title"
                     )
                 }
 
@@ -129,43 +140,27 @@ fun Nav() {
                 ) { event ->
                     when (event) {
                         is ReminderEvent.EnterReminderDescription -> {
-                            navController.previousBackStackEntry?.savedStateHandle?.set(
-                                "screenType",
-                                event.editDescription
-                            )
-                            navController.navigate(Screen.EditText.route)
+                            navController.navigate(Screen.EditText.route + "/${event.editDescription}")
                         }
 
                         is ReminderEvent.EnterSetTitleScreen -> {
-                            navController.previousBackStackEntry?.savedStateHandle?.set(
-                                "screenType",
-                                event.editTitle
-                            )
-                            navController.navigate(Screen.EditText.route)
+                            navController.navigate(Screen.EditText.route + "/${event.editTitle}")
                         }
 
                         else -> reminderViewModel.onEvent(event)
                     }
-                    reminderViewModel.onEvent(event)
                 }
             }
 
-            composable(route = Screen.EditText.route) {
+            composable(route = Screen.EditText.route + "/{screenType}",
+                arguments = listOf(
+                    navArgument("screenType") {
+                        type = NavType.EnumType<EditTextScreenType>(EditTextScreenType::class.java)
+                    }
+                )
+            ) {
                 val editTextViewModel = hiltViewModel<EditTextViewModel>()
                 val state by editTextViewModel.state.collectAsState()
-                val screenType = navController
-                    .currentBackStackEntry
-                    ?.savedStateHandle
-                    ?.getStateFlow<EditTextScreenType>("screenType", EditTextScreenType.NULL)
-                    ?.collectAsStateWithLifecycle()
-
-                LaunchedEffect(screenType) {
-                    if (screenType != null) {
-                        editTextViewModel.updateTitle(
-                            type = screenType.value
-                        )
-                    }
-                }
 
                 EditTextScreen(
                     state = state,
@@ -184,6 +179,10 @@ fun Nav() {
                                     "reminderTitle",
                                     state.enteredText
                                 )
+                                navController.navigateUp()
+                            }
+
+                            else -> {
                             }
                         }
                         editTextViewModel.onEvent(event)

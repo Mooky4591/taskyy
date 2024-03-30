@@ -22,7 +22,7 @@ fun EditTextScreen(state: EditTextState, onEvent: (EditTextEvent) -> Unit) {
     Scaffold(
         topBar = {
             TopBar(
-                title = "EDIT DESCRIPTION",
+                title = determineTitleText(screenType = state.screenType),
                 onClose = { onEvent(EditTextEvent.Back) },
                 color = Color.Black,
                 saveFunction = {
@@ -54,24 +54,36 @@ fun EditTextScreen(state: EditTextState, onEvent: (EditTextEvent) -> Unit) {
 }
 
 @Composable
+fun determineTitleText(screenType: EditTextScreenType?): String {
+    return when (screenType) {
+        EditTextScreenType.EDIT_DETAILS -> "EDIT DETAILS"
+        EditTextScreenType.EDIT_TITLE -> "EDIT TITLE"
+        else -> {
+            ""
+        }
+    }
+}
+
+@Composable
 fun DetermineWhichTopBarToUse(
-    screenType: EditTextScreenType,
+    screenType: EditTextScreenType?,
     onEvent: (EditTextEvent) -> Unit,
     details: String
 ) {
-    when (screenType) {
-        EditTextScreenType.EDIT_DETAILS -> SaveDetails(onEvent = {
-            onEvent(
-                EditTextEvent.SaveDescription(
-                    details
+    return when (screenType) {
+        EditTextScreenType.EDIT_DETAILS ->
+            SaveDetails(onEvent = {
+                onEvent(
+                    EditTextEvent.SaveDescription(
+                        details
+                    )
                 )
-            )
-        }, details = details)
+            }, details = details)
 
         EditTextScreenType.EDIT_TITLE -> SaveTitle(
             details = details,
             onEvent = { onEvent(EditTextEvent.SaveTitle(details)) })
 
-        EditTextScreenType.NULL -> {}
+        else -> {}
     }
 }

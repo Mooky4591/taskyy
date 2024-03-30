@@ -55,7 +55,6 @@ import com.example.taskyy.ui.viewmodels.ReminderState
 @Composable
 fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
     Scaffold {
-        onEvent(ReminderEvent.SetUserDefaults)
         Column(
             verticalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier
@@ -85,8 +84,8 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
                             )
                         )
                     },
-                    onDateSelected = { onEvent(ReminderEvent.DatePickerSelcted(datePickerExpanded = state.isDatePickerExpanded)) },
-                    onTimeSelected = { onEvent(ReminderEvent.TimePickerSelected(timePickerSelected = state.isTimePickerSelectionExpanded)) },
+                    onDateExpanded = { onEvent(ReminderEvent.DatePickerSelcted(datePickerExpanded = !state.isDatePickerExpanded)) },
+                    onTimeExpanded = { onEvent(ReminderEvent.TimePickerSelected(timePickerSelected = !state.isTimePickerSelectionExpanded)) },
                     alarmTimeTextSelected = { selectedAlarmType ->
                         onEvent(ReminderEvent.AlarmTimeTextSelected(selectedAlarmType))
                     },
@@ -107,8 +106,8 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
 private fun ReminderScreenContent(
     enterItemDescription: (ReminderEvent) -> Unit,
     enterItemTitle: (ReminderEvent) -> Unit,
-    onTimeSelected: (ReminderEvent) -> Unit,
-    onDateSelected: (ReminderEvent) -> Unit,
+    onTimeExpanded: (Boolean) -> Unit,
+    onDateExpanded: (Boolean) -> Unit,
     alarmTypeDropDownSelected: (ReminderEvent) -> Unit,
     alarmTimeTextSelected: (ReminderType) -> Unit,
     state: ReminderState
@@ -139,11 +138,11 @@ private fun ReminderScreenContent(
         RowDivider()
         TimeAndDateRow(
             dateString = state.dateString,
-            onTimeSelected = { onTimeSelected(ReminderEvent.TimePickerSelected(timePickerSelected = state.isTimePickerSelectionExpanded)) },
             isDatePickerExpanded = state.isDatePickerExpanded,
-            selectedTime = state.selectedTime,
+            timeString = state.selectedTime,
             isTimePickerExpanded = state.isTimePickerSelectionExpanded,
-            onDateSelected = { onDateSelected(ReminderEvent.DatePickerSelcted(datePickerExpanded = state.isDatePickerExpanded)) }
+            onDateExpanded = { onDateExpanded(state.isDatePickerExpanded) },
+            onTimeExpanded = { onTimeExpanded(state.isTimePickerSelectionExpanded) }
         )
         RowDivider()
         SetAlarmTimeRow(
@@ -305,11 +304,11 @@ fun DateSection(
 @Composable
 fun TimeAndDateRow(
     dateString: String,
-    onTimeSelected: (Any?) -> Unit,
-    onDateSelected: (Any?) -> Unit,
+    onDateExpanded: (Boolean) -> Unit,
+    onTimeExpanded: (Boolean) -> Unit,
     isDatePickerExpanded: Boolean,
     isTimePickerExpanded: Boolean,
-    selectedTime: String,
+    timeString: String,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -317,12 +316,17 @@ fun TimeAndDateRow(
     ) {
         TimeSection(
             isTimePickerExpanded = isTimePickerExpanded,
-            onEvent = onTimeSelected,
-            selectedTime = selectedTime
+            selectedTime = timeString,
+            toggleTimePicker = {
+                onTimeExpanded(it)
+            },
+            userSelectedTime = {
+                ReminderEvent.TimeSelected(selectedTime = it)
+            }
         )
         DateSection(
             isDatePickerExpanded = isDatePickerExpanded,
-            onEvent = onDateSelected,
+            onEvent = { onDateExpanded(isDatePickerExpanded) },
             dateString = dateString
         )
     }
@@ -330,7 +334,8 @@ fun TimeAndDateRow(
 
 @Composable
 fun TimeSection(
-    onEvent: (Any) -> Unit,
+    toggleTimePicker: (Boolean) -> Unit,
+    userSelectedTime: (String) -> Unit,
     isTimePickerExpanded: Boolean,
     selectedTime: String
 ) {
@@ -338,7 +343,7 @@ fun TimeSection(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clickable {
-                onEvent(ReminderEvent.TimePickerSelected(!isTimePickerExpanded))
+                toggleTimePicker(!isTimePickerExpanded)
             }
             .height(40.dp)
     ) {
@@ -361,10 +366,10 @@ fun TimeSection(
     if (isTimePickerExpanded) {
         TimePickerDialog(
             timeSelected = { selectedTime ->
-                onEvent(ReminderEvent.TimeSelected(selectedTime = selectedTime))
+                userSelectedTime(selectedTime)
             },
             toggle = {
-                onEvent(ReminderEvent.TimePickerSelected(it))
+                toggleTimePicker(it)
             },
             isTimeSelectionExpanded = isTimePickerExpanded
         )
@@ -431,7 +436,9 @@ fun TimePickerDialog(
                     ) { Text("Cancel") }
                     TextButton(
                         onClick = {
-                            timeSelected("${pickedTime.hour}:${pickedTime.minute}")
+                            val hour = pickedTime.hour
+                            val minute = pickedTime.minute
+                            timeSelected("$hour:$minute")
                             toggle(!isTimeSelectionExpanded)
                         }
                     ) { Text("OK") }
@@ -636,9 +643,7 @@ fun SaveDetails(onEvent: (EditTextEvent) -> Unit, details: String) {
         modifier =
         Modifier
             .clickable {
-                onEvent(EditTextEvent.TextUpdated(details))
                 onEvent(EditTextEvent.SaveDescription(details))
-                onEvent(EditTextEvent.Back)
             }
             .padding(end = 10.dp, top = 5.dp)
     )
@@ -653,9 +658,7 @@ fun SaveTitle(details: String, onEvent: (EditTextEvent) -> Unit) {
         modifier =
         Modifier
             .clickable {
-                onEvent(EditTextEvent.TextUpdated(details))
                 onEvent(EditTextEvent.SaveTitle(details))
-                onEvent(EditTextEvent.Back)
             }
             .padding(end = 10.dp, top = 5.dp)
     )
