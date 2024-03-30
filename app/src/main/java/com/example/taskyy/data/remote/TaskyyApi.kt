@@ -4,6 +4,7 @@ import com.example.taskyy.data.local.room_entity.EventEntity
 import com.example.taskyy.data.local.room_entity.ReminderEntity
 import com.example.taskyy.data.local.room_entity.TaskEntity
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
+import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
 import com.example.taskyy.domain.objects.Login
 import retrofit2.http.Body
@@ -21,8 +22,11 @@ interface TaskyyApi {
     @POST("/login")
     suspend fun loginUser(@Body body: Login): LoginUserResponse
 
-  //  @GET("/authenticate")
-   // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>
+    @POST("/reminder")
+    fun createReminder(@Body body: ReminderDTO): retrofit2.Call<Void>
+
+    //  @GET("/authenticate")
+    // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>
 
     @GET("/logout")
     suspend fun logoutUser()
@@ -65,9 +69,6 @@ interface TaskyyApi {
 
     @DELETE("/task")
     fun deleteTask(@Query("key") key: String, @Query("task_id") taskId: String)
-
-    @POST("/reminder")
-    fun createReminder(@Query("key") key: String)
 
     @PUT("/reminder")
     fun updateReminder(@Query("key") key: String)

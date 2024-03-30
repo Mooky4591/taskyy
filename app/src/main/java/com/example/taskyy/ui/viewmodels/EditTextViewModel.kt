@@ -41,7 +41,7 @@ class EditTextViewModel @Inject constructor(
 }
 
 data class EditTextState(
-    var enteredText: String = "",
+    var enteredText: String = "Edit",
     var title: String = "",
     var screenType: EditTextScreenType? = null
 )
