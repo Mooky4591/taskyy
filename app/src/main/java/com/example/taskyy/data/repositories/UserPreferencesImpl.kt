@@ -19,7 +19,7 @@ class UserPreferencesImpl(
     }
 
     override fun addUserFullName(fullName: String, key: String) {
-        sharedPref.edit().putString(fullName, key).apply()
+        sharedPref.edit().putString(key, fullName).apply()
     }
 
     override fun getUserFullName(key: String): String {
@@ -28,7 +28,7 @@ class UserPreferencesImpl(
     }
 
     override fun addUserEmail(email: String, key: String) {
-        sharedPref.edit().putString(email, key).apply()
+        sharedPref.edit().putString(key, email).apply()
 
     }
 
@@ -38,7 +38,7 @@ class UserPreferencesImpl(
     }
 
     override fun addUserId(userId: String, key: String) {
-        sharedPref.edit().putString(userId, key).apply()
+        sharedPref.edit().putString(key, userId).apply()
     }
 
     override fun getUserId(key: String): String {
@@ -47,7 +47,7 @@ class UserPreferencesImpl(
     }
 
     override fun addUserToken(token: String, key: String) {
-        sharedPref.edit().putString(token, key).apply()
+        sharedPref.edit().putString(key, token).apply()
     }
 
     override fun getUserToken(key: String): String {

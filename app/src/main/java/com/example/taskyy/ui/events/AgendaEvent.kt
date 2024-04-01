@@ -8,6 +8,7 @@ sealed interface AgendaEvent {
     data object OnLogOutCLicked : AgendaEvent
     data class AddAgendaItem(val isAgendaItemExpanded: Boolean) : AgendaEvent
     data class OnAgendaDaySelected(val agendaDaySelected: Boolean) : AgendaEvent
+    data class UpdateDate(val date: Long) : AgendaEvent
     data object LogoutSuccessful : AgendaEvent
     data class SelectedDayIndex(val index: Int) : AgendaEvent
     data object EventItemSelected : AgendaEvent

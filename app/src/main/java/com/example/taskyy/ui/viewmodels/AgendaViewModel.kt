@@ -44,6 +44,9 @@ class AgendaViewModel @Inject constructor(
 
     init {
         setUserInitials()
+        val selectedDate =
+            savedStateHandle.get<LocalDate>("selectedDate")?.atStartOfDay(ZoneId.systemDefault())
+                ?.toInstant()?.toEpochMilli() ?: 0
         checkForReminders(
             userPreferences.getUserId("userId"),
             savedStateHandle.get<LocalDate>("selectedDate")?.atStartOfDay(ZoneId.systemDefault())
@@ -71,7 +74,10 @@ class AgendaViewModel @Inject constructor(
             is AgendaEvent.OnMonthExpanded -> state =
                 state.copy(isMonthExpanded = event.isMonthExpanded)
 
-            is AgendaEvent.OnDateSelected -> formatSelectedDate(event.date)
+            is AgendaEvent.OnDateSelected -> {
+                formatSelectedDate(event.date)
+                generateSelectableDaysRow(event.date)
+            }
             is AgendaEvent.OnUserInitialsClicked -> state =
                 state.copy(isUserDropDownExpanded = event.isUserDropDownExpanded)
 
@@ -93,6 +99,10 @@ class AgendaViewModel @Inject constructor(
 
             is AgendaEvent.EventItemSelected -> {
             }
+
+            is AgendaEvent.UpdateDate -> {
+                formatSelectedDate(event.date)
+            }
         }
     }
 
@@ -100,14 +110,21 @@ class AgendaViewModel @Inject constructor(
         val instant = Instant.ofEpochMilli(date)
         val localDateTime = LocalDateTime.ofInstant(
             instant,
-            ZoneId.systemDefault()
+            ZoneId.of("UTC")
         )
+        timeDateState = timeDateState.copy(dateTime = localDateTime)
+    }
+
+    private fun generateSelectableDaysRow(date: Long) {
+        val instant = Instant.ofEpochMilli(date)
+        val localDateTime = LocalDateTime.ofInstant(
+            instant,
+            ZoneId.of("UTC"),
+        ).minusDays(1)
 
         val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
         val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
         val dayOfTheWeekFormatter = DateTimeFormatter.ofPattern("E", Locale.ENGLISH)
-
-        timeDateState = timeDateState.copy(dateTime = localDateTime)
 
         val days = (1..6).map {
             val date = localDateTime.plusDays(it.toLong())
@@ -115,7 +132,7 @@ class AgendaViewModel @Inject constructor(
                 dayOfTheMonth = dayOfTheMonthFormatter.format(date),
                 dayOfTheWeek = dayOfTheWeekFormatter.format(date),
                 index = it,
-                date = localDateTime.toMillis()
+                date = date.toMillis()
             )
         }
 
@@ -125,7 +142,6 @@ class AgendaViewModel @Inject constructor(
         )
         savedStateHandle["days"] = days
         savedStateHandle["selectedMonth"] = monthFormatter.format(localDateTime).uppercase()
-
     }
 
     private fun logout() {
@@ -141,13 +157,10 @@ class AgendaViewModel @Inject constructor(
     }
 
     private fun setUserInitials() {
-        val email = userPreferences.getUserEmail("email")
-        if (savedStateHandle.get<String>("userInitials") != null) {
-            state = state.copy(initials = savedStateHandle.get<String>("userInitials") ?: "")
-        } else {
             viewModelScope.launch {
+                val email = userPreferences.getUserEmail("email")
                 val name = agendaRepository.getUserName(email)
-                userPreferences.addUserFullName(name, "name")
+                userPreferences.addUserFullName(fullName = name, key = "name")
 
                 state = state.copy(name = name)
                 state = state.copy(initials = name
@@ -158,7 +171,6 @@ class AgendaViewModel @Inject constructor(
             }
         }
     }
-}
 data class AgendaState(
     var name: String = "",
     var initials: String = "",
@@ -182,7 +194,6 @@ data class TimeDateState(
 fun getDefaultListOfDays(): List<Day> {
     val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
     val dayOfTheWeekFormatter = DateTimeFormatter.ofPattern("E", Locale.ENGLISH)
-    val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.ENGLISH)
 
     return (0..5).map {
         val date = LocalDateTime.now().plusDays(it.toLong())

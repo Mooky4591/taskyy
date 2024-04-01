@@ -54,7 +54,15 @@ class ReminderViewModel @Inject constructor(
 
     init {
         if (savedStateHandle.get<String>("dateString") != null) {
+            val date = savedStateHandle.get<String>("dateString")!!
+            formatDateTimeStringFromSavedStateHandle(date)
         }
+    }
+
+    private fun formatDateTimeStringFromSavedStateHandle(date: String) {
+        val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        val localDateTime = LocalDateTime.parse(date, formatter)
+        _dateTimeState.update { it.copy(dateTime = localDateTime) }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)

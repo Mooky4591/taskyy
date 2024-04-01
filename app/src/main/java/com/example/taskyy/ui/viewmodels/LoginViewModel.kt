@@ -55,7 +55,7 @@ class LoginViewModel @Inject constructor(
                 when (val login = loginUseCase.loginUser(event)) {
                     is Result.Success -> {
                         state = state.copy(isLogginIn = false)
-                        userPreferences.addUserEmail(state.email, "email")
+                        userPreferences.addUserEmail(key = "email", email = state.email)
                         eventChannel.send(LoginEvent.LoginSuccess(state.email))
                     }
 

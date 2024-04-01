@@ -99,7 +99,7 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateSta
                                 onEvent(AgendaEvent.SelectedDayIndex(index = index))
                             },
                             updateDateStringOnSelectedDayClick = { date ->
-                                onEvent(AgendaEvent.OnDateSelected(date))
+                                onEvent(AgendaEvent.UpdateDate(date))
                             }
                         )
                     }
@@ -245,7 +245,7 @@ fun DateSelectionAndUserInitialsButton(
             DateSelection(
                 isMonthExpanded = isMonthExpanded,
                 selectedMonth = selectedMonth,
-                datePickerExpanded = { onEvent(AgendaEvent.OnMonthExpanded(isMonthExpanded)) },
+                datePickerExpanded = { onEvent(AgendaEvent.OnMonthExpanded(!isMonthExpanded)) },
                 userSelectedDate = { userSelectedDate: Long ->
                     onEvent(
                         AgendaEvent.OnDateSelected(
@@ -351,7 +351,7 @@ fun DateSelection(
                 userSelectedDate(selectedMonth)
             },
             cancelled = { isMonthExpanded ->
-                datePickerExpanded(AgendaEvent.OnMonthExpanded(isMonthExpanded))
+                datePickerExpanded(AgendaEvent.OnMonthExpanded(!isMonthExpanded))
             },
             isDatePickerExpanded = isMonthExpanded
         )
