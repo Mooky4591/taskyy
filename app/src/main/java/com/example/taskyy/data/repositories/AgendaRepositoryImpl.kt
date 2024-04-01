@@ -3,11 +3,13 @@ package com.example.taskyy.data.repositories
 import android.util.Log
 import com.example.taskyy.data.local.data_access_objects.AgendaActivityDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
-import com.example.taskyy.data.local.room_entity.ReminderEntity
+import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.domain.error.DataError
+import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.repository.AgendaRepository
+import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.ui.objects.Reminder
 import retrofit2.HttpException
 import java.io.IOException
@@ -16,7 +18,8 @@ import javax.inject.Inject
 class AgendaRepositoryImpl @Inject constructor(
     private val retrofit: TaskyyApi,
     private val agendaDao: AgendaActivityDao,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val userPreferences: UserPreferences
 ): AgendaRepository {
 
     override suspend fun logout(): Boolean {
@@ -36,31 +39,78 @@ class AgendaRepositoryImpl @Inject constructor(
         return userDao.getUserNameByEmail(email)
     }
 
-    override suspend fun saveReminder(reminder: Reminder): com.example.taskyy.domain.error.Result<Reminder, DataError.Network> {
+    override suspend fun saveReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local> {
+        val reminderEntity = reminder.toReminderEntity(userPreferences.getUserId("userId"))
         return try {
-            val reminderEntity = reminder.toReminderEntity()
-            val reminderDTO = reminder.toReminderDto()
-            retrofit.createReminder(reminderDTO)
             agendaDao.insertReminder(reminderEntity)
-            com.example.taskyy.domain.error.Result.Success(reminder)
-        } catch (e: HttpException) {
-            when (e.code()) {
-                408 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.REQUEST_TIMEOUT)
-                429 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.TOO_MANY_REQUESTS)
-                413 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
-                500 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERVER_ERROR)
-                400 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERIALIZATION)
-                else -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN)
+            Result.Success(reminder)
+        } catch (e: IOException) {
+            when (e.message) {
+                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
+                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
+                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
+                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
+                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
+                else -> Result.Error(DataError.Local.UNKNOWN)
             }
         }
     }
 
+    override suspend fun uploadReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network> {
+        val reminderDTO = reminder.toReminderDto()
+        return try {
+            retrofit.createReminder(reminderDTO)
+            Result.Success(reminder)
+        } catch (e: HttpException) {
+            when (e.code()) {
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> Result.Error(DataError.Network.SERIALIZATION)
+                else -> Result.Error(DataError.Network.UNKNOWN)
+            }
+        }
+    }
+
+    override suspend fun getReminders(
+        userId: String,
+        time: Long
+    ): Result<List<Reminder>, DataError.Local> {
+        return try {
+            val list = agendaDao.getReminders(userId, time)
+            Result.Success(list.transformToReminder())
+        } catch (e: IOException) {
+            when (e.message) {
+                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
+                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
+                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
+                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
+                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
+                else -> Result.Error(DataError.Local.UNKNOWN)
+            }
+        }
+    }
 }
 
-fun Reminder.toReminderEntity(): ReminderEntity {
+fun List<ReminderEntity>.transformToReminder(): List<Reminder> {
+    return map { reminderEntity ->
+        Reminder(
+            reminderEntity.title,
+            reminderEntity.description,
+            reminderEntity.time,
+            reminderEntity.remindAt,
+            reminderEntity.id,
+            reminderEntity.userId!!
+        )
+    }
+}
+
+fun Reminder.toReminderEntity(userId: String?): ReminderEntity {
     return ReminderEntity(
         id = id,
         description = description,
+        userId = userId,
         title = title,
         remindAt = alarmType,
         time = timeInMillis

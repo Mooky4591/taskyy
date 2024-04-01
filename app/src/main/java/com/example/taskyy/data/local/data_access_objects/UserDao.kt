@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
-import com.example.taskyy.data.local.room_entity.UserEntity
+import com.example.taskyy.data.local.room_entity.user.UserEntity
 
 @Dao
 interface UserDao {
@@ -19,5 +19,8 @@ interface UserDao {
 
     @Query("SELECT name FROM user_table WHERE email = :email")
     suspend fun getUserNameByEmail(email: String): String
+
+    @Query("SELECT id FROM user_table WHERE email = :email")
+    suspend fun getUserIdByEmail(email: String): String
 
 }

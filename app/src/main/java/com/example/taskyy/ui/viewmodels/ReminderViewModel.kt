@@ -8,10 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.error.asUiText
 import com.example.taskyy.domain.repository.AgendaRepository
+import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.ui.enums.ReminderType
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.objects.Day
 import com.example.taskyy.ui.objects.Reminder
+import com.example.taskyy.ui.screens.toMillis
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,38 +22,38 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.joda.time.format.DateTimeFormat
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Date
 import java.util.Locale
-import java.util.TimeZone
+import java.util.UUID
 import javax.inject.Inject
-import kotlin.random.Random
-import kotlin.random.nextInt
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.DurationUnit
 
 
 @HiltViewModel
 class ReminderViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val agendaRepository: AgendaRepository
+    private val agendaRepository: AgendaRepository,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ReminderState())
     val state: StateFlow<ReminderState> = _state.asStateFlow()
+
+    private val _dateTimeState = MutableStateFlow(TimeAndDateState())
+    val timeAndDateState: StateFlow<TimeAndDateState> = _dateTimeState.asStateFlow()
 
     private val eventChannel = Channel<ReminderEvent>()
     val events = eventChannel.receiveAsFlow()
 
     init {
         if (savedStateHandle.get<String>("dateString") != null) {
-            _state.update {
-                it.copy(dateString = savedStateHandle.get<String>("dateString")!!)
-            }
         }
     }
 
@@ -95,36 +97,45 @@ class ReminderViewModel @Inject constructor(
                 _state.update { it.copy(isDatePickerExpanded = event.datePickerExpanded) }
             }
 
-            is ReminderEvent.UpdateDateSelection -> formatDateString(event.selectedDate)
+            is ReminderEvent.UpdateDateSelection -> {
+                formatDateString(event.selectedDate)
+            }
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     private fun formatTimeSelected(time: TimePickerState) {
 
-        val localTime = org.joda.time.LocalTime(time.hour, time.minute)
-        val twelveHourDateFormat =
-            DateTimeFormat.forPattern("hh:mm aa") // 12-hour format with AM/PM
-        val formattedTime = twelveHourDateFormat.print(localTime)
+        val localTime = LocalTime.of(time.hour, time.minute)
 
-        _state.update { it.copy(selectedTime = formattedTime) }
+        _dateTimeState.update { it.copy(dateTime = localTime.atDate(_dateTimeState.value.dateTime.toLocalDate())) }
     }
 
     private fun save(title: String, description: String) {
-        val newReminder = Reminder(
-            alarmType = _state.value.formattedReminderType,
-            title = title,
-            description = description,
-            timeInMillis = _state.value.formattedReminderTime,
-            id = Random.nextInt(1..10000),
-
+        val userId = userPreferences.getUserId("userId")
+        val newReminder =
+            Reminder(
+                alarmType = _state.value.formattedReminderTime,
+                title = title,
+                description = description,
+                timeInMillis = _dateTimeState.value.dateTime.toLocalDate()
+                    .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                id = UUID.randomUUID().toString(),
+                userId = userId
             )
         viewModelScope.launch {
-            when (val save = agendaRepository.saveReminder(newReminder)) {
+            when (val save = agendaRepository.saveReminderToDB(newReminder)) {
                 is Result.Success -> {
-                    eventChannel.send(ReminderEvent.SaveSuccessful)
-                }
+                    when (val save = agendaRepository.uploadReminderToApi(newReminder)) {
+                        is Result.Success -> {
+                            eventChannel.send(ReminderEvent.SaveSuccessful)
+                        }
 
+                        is Result.Error -> {
+                            eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
+                        }
+                    }
+                }
                 is Result.Error -> {
                     eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
                 }
@@ -132,33 +143,68 @@ class ReminderViewModel @Inject constructor(
         }
     }
 
-    private fun formatTimeForDB(selectedTime: String, selectedDate: String) {
+    private fun formatReminderTimeForDB(selectedTime: String, selectedDate: LocalDateTime) {
+        when (selectedTime) {
+            "10 minutes before" -> {
+                _state.update {
+                    it.copy(
+                        formattedReminderTime = selectedDate.plusMinutes(
+                            10.minutes.toLong(
+                                DurationUnit.MILLISECONDS
+                            )
+                        ).toMillis()
+                    )
+                }
+            }
 
-        val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
-        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
-        val date = dateFormat.parse(selectedDate) ?: Date(0)
-        val dateMillis = date.time
+            "30 minutes before" -> {
+                _state.update {
+                    it.copy(
+                        formattedReminderTime = selectedDate.plusMinutes(
+                            30.minutes.toLong(
+                                DurationUnit.MILLISECONDS
+                            )
+                        ).toMillis()
+                    )
+                }
+            }
 
-        val timeFormat = SimpleDateFormat("HH:mm a", Locale.getDefault())
-        timeFormat.timeZone = TimeZone.getTimeZone("UTC")
-        val time = timeFormat.parse(selectedTime) ?: Date(0)
-        val timeMillis = time.time
+            "1 hour before" -> {
+                _state.update {
+                    it.copy(
+                        formattedReminderTime = selectedDate.plusHours(
+                            1.hours.toLong(
+                                DurationUnit.MILLISECONDS
+                            )
+                        ).toMillis()
+                    )
+                }
+            }
 
-        _state.update { it.copy(formattedReminderTime = dateMillis + timeMillis) }
-    }
+            "6 hours before" -> {
+                _state.update {
+                    it.copy(
+                        formattedReminderTime = selectedDate.plusHours(
+                            6.hours.toLong(
+                                DurationUnit.MILLISECONDS
+                            )
+                        ).toMillis()
+                    )
+                }
+            }
 
-    private fun formatReminderType(reminderType: String, timeToAdd: Int) {
-        val timeToAddInMilis: Long = when (reminderType) {
-            "10 minutes before" -> timeToAdd * 60 * 1000L
-            "30 minutes before" -> timeToAdd * 60 * 1000L
-            "1 hour before" -> timeToAdd * 60 * 60 * 1000L
-            "6 hours before" -> timeToAdd * 60 * 60 * 1000L
-            "1 day before" -> timeToAdd * 24 * 60 * 60 * 1000L
-            else -> {
-                0
+            "1 day before" -> {
+                _state.update {
+                    it.copy(
+                        formattedReminderTime = selectedDate.plusDays(
+                            1.days.toLong(
+                                DurationUnit.MILLISECONDS
+                            )
+                        ).toMillis()
+                    )
+                }
             }
         }
-        _state.update { it.copy(formattedReminderType = timeToAddInMilis) }
     }
 
     private fun setReminderText(alarmTimeText: ReminderType): String {
@@ -167,41 +213,34 @@ class ReminderViewModel @Inject constructor(
         when (alarmTimeText) {
             ReminderType.ONE_HOUR_BEFORE -> {
                 timeText = "1 hour before"
-                formatTimeForDB(
-                    selectedTime = _state.value.selectedTime,
-                    selectedDate = _state.value.dateString
-                )
-                formatReminderType(timeText, 1)
+                formatReminderTimeForDB(timeText, _dateTimeState.value.dateTime)
             }
 
             ReminderType.THIRTY_MINUTES_BEFORE -> {
                 timeText = "30 minutes before"
-                formatTimeForDB(_state.value.selectedTime, _state.value.dateString)
-                formatReminderType(timeText, 30)
+                formatReminderTimeForDB(timeText, _dateTimeState.value.dateTime)
             }
 
             ReminderType.ONE_DAY_BEFORE -> {
                 timeText = "1 day before"
-                formatTimeForDB(_state.value.selectedTime, _state.value.dateString)
-                formatReminderType(timeText, 1)
+                formatReminderTimeForDB(timeText, _dateTimeState.value.dateTime)
             }
 
             ReminderType.TEN_MINUTES_BEFORE -> {
                 timeText = "10 minutes before"
-                formatTimeForDB(_state.value.selectedTime, _state.value.dateString)
-                formatReminderType(timeText, 10)
+                formatReminderTimeForDB(timeText, _dateTimeState.value.dateTime)
             }
 
             ReminderType.SIX_HOURS_BEFORE -> {
                 timeText = "6 hours before"
-                formatTimeForDB(_state.value.selectedTime, _state.value.dateString)
-                formatReminderType(timeText, 6)
+                formatReminderTimeForDB(timeText, _dateTimeState.value.dateTime)
             }
         }
         return timeText
     }
 
     private fun formatDateString(date: Long) {
+
         val instant = Instant.ofEpochMilli(date)
         val localDateTime = LocalDateTime.ofInstant(
             instant,
@@ -211,9 +250,15 @@ class ReminderViewModel @Inject constructor(
         val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
         val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
         val dayOfTheWeekFormatter = DateTimeFormatter.ofPattern("E", Locale.ENGLISH)
-        val dateStringFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.ENGLISH)
 
-        _state.update { it.copy(dateString = dateStringFormatter.format(localDateTime.plusDays(1))) }
+        _dateTimeState.update {
+            it.copy(
+                dateTime = localDateTime
+                    .plusHours(_dateTimeState.value.dateTime.hour.toLong())
+                    .plusMinutes(_dateTimeState.value.dateTime.minute.toLong())
+                    .plusSeconds(_dateTimeState.value.dateTime.second.toLong())
+            )
+        }
 
         val days = (1..6).map {
             val date = localDateTime.plusDays(it.toLong())
@@ -221,7 +266,7 @@ class ReminderViewModel @Inject constructor(
                 dayOfTheMonth = dayOfTheMonthFormatter.format(date),
                 dayOfTheWeek = dayOfTheWeekFormatter.format(date),
                 index = it,
-                date = dateStringFormatter.format(date)
+                date = date.toMillis()
             )
         }
 
@@ -244,18 +289,17 @@ class ReminderViewModel @Inject constructor(
 
 
 data class ReminderState(
-    var dateString: String = "",
     var isAlarmSelectionExpanded: Boolean = false,
     var isTimePickerSelectionExpanded: Boolean = false,
     var isDatePickerExpanded: Boolean = false,
     var alarmReminderTimeSelection: String = "",
     var reminderType: ReminderType = ReminderType.ONE_HOUR_BEFORE,
-    var formattedReminderTime: Long = 0,
-    var formattedReminderType: Long = 0,
-    var selectedTime: String = LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")),
-    var selectedDate: Long = 0,
+    var formattedReminderTime: Long = 3600000,
     var reminderDescription: String = "Description",
     var reminderTitleText: String = "New Reminder",
     var saveFailedMessage: String = "",
+)
 
+data class TimeAndDateState(
+    val dateTime: LocalDateTime = LocalDateTime.now(),
     )

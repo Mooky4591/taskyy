@@ -1,7 +1,7 @@
 package com.example.taskyy.data.repositories
 
 import com.example.taskyy.data.local.data_access_objects.UserDao
-import com.example.taskyy.data.local.room_entity.UserEntity
+import com.example.taskyy.data.local.room_entity.user.UserEntity
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
@@ -9,6 +9,7 @@ import com.example.taskyy.domain.error.DataError
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.repository.AuthRepository
+import com.example.taskyy.domain.repository.UserPreferences
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
@@ -16,9 +17,13 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     private val retrofit: TaskyyApi,
+    private val userPreferences: UserPreferences
 ): AuthRepository {
 
     override suspend fun addTokenAndIdToDatabase(token: String, userId: String, email: String) {
+        //need to determine why userId is empty
+        userPreferences.addUserId("userId", "userId")
+        userPreferences.addUserToken(token, "token")
         userDao.update(token, userId, email)
     }
 

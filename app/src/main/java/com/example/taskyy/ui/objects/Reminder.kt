@@ -5,7 +5,8 @@ class Reminder(
     description: String,
     val timeInMillis: Long,
     alarmType: Long,
-    val id: Int
+    val id: String,
+    val userId: String
 ) : AgendaEventItem(title, description, alarmType) {
 
 }

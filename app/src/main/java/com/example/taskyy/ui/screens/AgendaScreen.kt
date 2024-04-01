@@ -15,8 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Card
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -26,31 +31,43 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taskyy.R
 import com.example.taskyy.ui.events.AgendaEvent
+import com.example.taskyy.ui.objects.AgendaEventItem
 import com.example.taskyy.ui.objects.Day
 import com.example.taskyy.ui.viewmodels.AgendaState
+import com.example.taskyy.ui.viewmodels.TimeDateState
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
+fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateState: TimeDateState) {
     Scaffold(
         content = {
+            val formattedTitleDate = remember(timeDateState.dateTime) {
+                DateTimeFormatter.ofPattern("MMMM dd, yyyy").format(timeDateState.dateTime)
+            }
             Column(
                 verticalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier
@@ -82,7 +99,7 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
                                 onEvent(AgendaEvent.SelectedDayIndex(index = index))
                             },
                             updateDateStringOnSelectedDayClick = { date ->
-                                onEvent(AgendaEvent.UpdateDateString(date))
+                                onEvent(AgendaEvent.OnDateSelected(date))
                             }
                         )
                     }
@@ -90,7 +107,7 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
                         modifier = Modifier.padding(start = 20.dp)
                     ) {
                         Text(
-                            text = state.dateString,
+                            text = formattedTitleDate,
                             color = Color.Black,
                             fontSize = 25.sp,
                             fontWeight = FontWeight.Bold,
@@ -98,6 +115,7 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
                                 .height(250.dp)
                                 .wrapContentHeight(Alignment.CenterVertically)
                         )
+                        ListOfAgendaEvents(state.listOfAgendaEvents)
                     }
                 }
             }
@@ -112,11 +130,54 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit) {
 }
 
 @Composable
+fun ListOfAgendaEvents(reminders: List<AgendaEventItem>) {
+    LazyColumn {
+        items(items = reminders, key = { item -> item.title }) { item ->
+            AgendaDisplayItem(
+                title = item.title,
+                description = item.description,
+                date = item.alarmType.toString(),
+                onEllipsisClick = { /*TODO*/ })
+        }
+    }
+}
+
+@Preview
+@Composable
+fun AgendaScreenPreview() {
+    // Sample data for preview
+    val state = AgendaState(
+        isMonthExpanded = false,
+        isUserDropDownExpanded = false,
+        selectedMonth = "March 2024",
+        initials = "JD",
+        selectedDayList = listOf(
+            Day("Monday", "1", 0, 1704102400000),
+            Day("Tuesday", "2", 1, 1704188800000),
+            Day("Wednesday", "3", 2, 1704275200000),
+            Day("Thursday", "4", 3, 1704361600000),
+            Day("Friday", "5", 4, 1704448000000),
+            Day("Saturday", "6", 5, 1704534400000),
+        ),
+        selectedIndex = 0,
+        isAddAgendaItemExpanded = false
+    )
+    val timeDateState = TimeDateState(
+        dateTime = LocalDateTime.now()
+    )
+
+    // Preview the AgendaScreen composable with sample data
+    AgendaScreen(state = state, onEvent = {}, timeDateState = timeDateState)
+}
+
+
+
+@Composable
 fun RowOfDaysToDisplay(
     selectedDay: List<Day>,
     selectedDayIndexOnClick: (Int) -> Unit,
     selectedIndex: Int,
-    updateDateStringOnSelectedDayClick: (String) -> Unit
+    updateDateStringOnSelectedDayClick: (Long) -> Unit
 ) {
     if (selectedDay.isNotEmpty()) {
         for (day in selectedDay) {
@@ -365,6 +426,78 @@ fun MonthText(selectedMonth: String) {
     )
 }
 
+@Composable
+fun AgendaDisplayItem(
+    title: String,
+    description: String,
+    date: String,
+    onEllipsisClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+
+    Card(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .clickable { TODO() }
+            .wrapContentSize(), // Wraps the card content
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                WhiteCircleWithBlackBorder()
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 5.dp)
+                )
+                IconButton(
+                    onClick = onEllipsisClick,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.MoreVert,
+                        contentDescription = "More options",
+                        modifier = Modifier
+                            .rotate(90f)
+                            .clickable { TODO() }
+                    )
+                }
+            }
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = date,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewRoundedCard() {
+    AgendaDisplayItem(
+        title = "Title",
+        description = "This is a sample description for the rounded card UI model.",
+        date = "March 28, 2024",
+        onEllipsisClick = {}
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShowDatePicker(
@@ -413,4 +546,5 @@ fun ShowDatePicker(
             containerColor = Color.Black
         )
     )
+
 }

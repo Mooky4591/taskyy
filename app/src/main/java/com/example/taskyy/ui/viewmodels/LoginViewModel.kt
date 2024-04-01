@@ -1,6 +1,5 @@
 package com.example.taskyy.ui.viewmodels
 
-import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.error.asUiText
 import com.example.taskyy.domain.objects.Login
+import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.ui.UiText
 import com.example.taskyy.ui.events.LoginEvent
@@ -21,7 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val sharedPreferences: SharedPreferences
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
     var state by mutableStateOf(LoginState())
         private set
@@ -50,12 +50,12 @@ class LoginViewModel @Inject constructor(
 
     fun login(event: Login) {
         if (loginUseCase.isEmailValid(state.email)) {
-            sharedPreferences.edit().putString("email", state.email).apply()
             viewModelScope.launch {
                 state = state.copy(isLogginIn = true)
                 when (val login = loginUseCase.loginUser(event)) {
                     is Result.Success -> {
                         state = state.copy(isLogginIn = false)
+                        userPreferences.addUserEmail(state.email, "email")
                         eventChannel.send(LoginEvent.LoginSuccess(state.email))
                     }
 
