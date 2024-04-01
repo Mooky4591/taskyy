@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -52,6 +53,7 @@ import com.example.taskyy.ui.events.EditTextEvent
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.viewmodels.ReminderState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
     Scaffold {
@@ -66,7 +68,14 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
                 title = state.dateString,
                 color = Color.White,
                 saveFunction = {
-                    SaveReminder(onEvent = { onEvent(ReminderEvent.SaveReminder) })
+                    SaveReminder(
+                        onEvent = { reminder ->
+                            onEvent(reminder)
+                        },
+                        title = state.reminderTitleText,
+                        description = state.reminderDescription,
+                        alarmType = state.alarmReminderTimeSelection,
+                    )
                 },
                 onClose = { (onEvent(ReminderEvent.Close)) }
             )
@@ -95,19 +104,28 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
                         )
                     },
                     state = state,
-                    enterItemTitle = { onEvent(ReminderEvent.EnterSetTitleScreen(EditTextScreenType.EDIT_TITLE)) }
+                    enterItemTitle = { onEvent(ReminderEvent.EnterSetTitleScreen(EditTextScreenType.EDIT_TITLE)) },
+                    onTimeSelected = { timePickerState ->
+                        onEvent(ReminderEvent.TimeSelected(selectedTime = timePickerState))
+                    },
+                    onDateSelected = { selectedDate ->
+                        onEvent(selectedDate)
+                    }
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReminderScreenContent(
     enterItemDescription: (ReminderEvent) -> Unit,
     enterItemTitle: (ReminderEvent) -> Unit,
     onTimeExpanded: (Boolean) -> Unit,
     onDateExpanded: (Boolean) -> Unit,
+    onTimeSelected: (TimePickerState) -> Unit,
+    onDateSelected: (ReminderEvent) -> Unit,
     alarmTypeDropDownSelected: (ReminderEvent) -> Unit,
     alarmTimeTextSelected: (ReminderType) -> Unit,
     state: ReminderState
@@ -142,7 +160,15 @@ private fun ReminderScreenContent(
             timeString = state.selectedTime,
             isTimePickerExpanded = state.isTimePickerSelectionExpanded,
             onDateExpanded = { onDateExpanded(state.isDatePickerExpanded) },
-            onTimeExpanded = { onTimeExpanded(state.isTimePickerSelectionExpanded) }
+            onTimeExpanded = { onTimeExpanded(state.isTimePickerSelectionExpanded) },
+            onTimeSelected = { timePickerState -> onTimeSelected(timePickerState) },
+            onDateSelected = { selectedDate ->
+                onDateSelected(
+                    ReminderEvent.UpdateDateSelection(
+                        selectedDate
+                    )
+                )
+            }
         )
         RowDivider()
         SetAlarmTimeRow(
@@ -157,6 +183,7 @@ private fun ReminderScreenContent(
                 alarmTimeTextSelected(it)
             }
         )
+        RowDivider()
     }
 }
 
@@ -233,8 +260,14 @@ fun SetAlarmTimeRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AlarmIconWithBackground()
+        val alarmText =
+            if (alarmTimeSelectionText == "") {
+                "1 hour before"
+            } else {
+                alarmTimeSelectionText
+            }
         Text(
-            text = alarmTimeSelectionText,
+            text = alarmText,
             color = Color.Black,
             fontSize = 15.sp,
             modifier = Modifier.padding(start = 5.dp)
@@ -263,14 +296,15 @@ fun SetAlarmTimeRow(
 
 @Composable
 fun DateSection(
-    onEvent: (ReminderEvent) -> Unit,
+    datePickerExpanded: (ReminderEvent) -> Unit,
     dateString: String,
-    isDatePickerExpanded: Boolean
+    isDatePickerExpanded: Boolean,
+    userSelectedDate: (Long) -> Unit
 ) {
     Row(
         modifier = Modifier
             .clickable {
-                onEvent(ReminderEvent.DatePickerSelcted(!isDatePickerExpanded))
+                datePickerExpanded(ReminderEvent.DatePickerSelcted(!isDatePickerExpanded))
             }
             .height(40.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -290,22 +324,25 @@ fun DateSection(
     }
     if (isDatePickerExpanded) {
         ShowDatePicker(
-            onItemSelected = { selectedDate ->
-                onEvent(ReminderEvent.UpdateDateSelection(selectedDate))
+            onItemSelected = {
+                userSelectedDate(it)
             },
             cancelled = { isDatePickerExpanded ->
-                onEvent(ReminderEvent.DatePickerSelcted(isDatePickerExpanded))
+                datePickerExpanded(ReminderEvent.DatePickerSelcted(isDatePickerExpanded))
             },
             isDatePickerExpanded = isDatePickerExpanded
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeAndDateRow(
     dateString: String,
     onDateExpanded: (Boolean) -> Unit,
-    onTimeExpanded: (Boolean) -> Unit,
+    onTimeExpanded: (ReminderEvent) -> Unit,
+    onTimeSelected: (TimePickerState) -> Unit,
+    onDateSelected: (Long) -> Unit,
     isDatePickerExpanded: Boolean,
     isTimePickerExpanded: Boolean,
     timeString: String,
@@ -318,24 +355,26 @@ fun TimeAndDateRow(
             isTimePickerExpanded = isTimePickerExpanded,
             selectedTime = timeString,
             toggleTimePicker = {
-                onTimeExpanded(it)
+                onTimeExpanded(ReminderEvent.TimePickerSelected(!isTimePickerExpanded))
             },
-            userSelectedTime = {
-                ReminderEvent.TimeSelected(selectedTime = it)
+            userSelectedTime = { selectedTime ->
+                onTimeSelected(selectedTime)
             }
         )
         DateSection(
             isDatePickerExpanded = isDatePickerExpanded,
-            onEvent = { onDateExpanded(isDatePickerExpanded) },
-            dateString = dateString
+            datePickerExpanded = { onDateExpanded(isDatePickerExpanded) },
+            userSelectedDate = { dateSelected: Long -> onDateSelected(dateSelected) },
+            dateString = dateString,
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeSection(
-    toggleTimePicker: (Boolean) -> Unit,
-    userSelectedTime: (String) -> Unit,
+    toggleTimePicker: (ReminderEvent) -> Unit,
+    userSelectedTime: (TimePickerState) -> Unit,
     isTimePickerExpanded: Boolean,
     selectedTime: String
 ) {
@@ -343,7 +382,7 @@ fun TimeSection(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clickable {
-                toggleTimePicker(!isTimePickerExpanded)
+                toggleTimePicker(ReminderEvent.TimePickerSelected(!isTimePickerExpanded))
             }
             .height(40.dp)
     ) {
@@ -369,7 +408,7 @@ fun TimeSection(
                 userSelectedTime(selectedTime)
             },
             toggle = {
-                toggleTimePicker(it)
+                toggleTimePicker(ReminderEvent.TimePickerSelected(!it))
             },
             isTimeSelectionExpanded = isTimePickerExpanded
         )
@@ -379,7 +418,7 @@ fun TimeSection(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(
-    timeSelected: (String) -> Unit,
+    timeSelected: (TimePickerState) -> Unit,
     toggle: (Boolean) -> Unit,
     isTimeSelectionExpanded: Boolean
 ) {
@@ -436,9 +475,7 @@ fun TimePickerDialog(
                     ) { Text("Cancel") }
                     TextButton(
                         onClick = {
-                            val hour = pickedTime.hour
-                            val minute = pickedTime.minute
-                            timeSelected("$hour:$minute")
+                            timeSelected(pickedTime)
                             toggle(!isTimeSelectionExpanded)
                         }
                     ) { Text("OK") }
@@ -620,7 +657,12 @@ fun TopBar(
 }
 
 @Composable
-fun SaveReminder(onEvent: (ReminderEvent.SaveReminder) -> Unit) {
+fun SaveReminder(
+    onEvent: (ReminderEvent.SaveReminder) -> Unit,
+    title: String,
+    description: String,
+    alarmType: String,
+) {
     Text(
         text = "SAVE",
         fontSize = 15.sp,
@@ -628,7 +670,7 @@ fun SaveReminder(onEvent: (ReminderEvent.SaveReminder) -> Unit) {
         modifier =
         Modifier
             .clickable {
-                onEvent(ReminderEvent.SaveReminder)
+                onEvent(ReminderEvent.SaveReminder(title = title, description = description))
             }
             .padding(end = 10.dp, top = 5.dp)
     )

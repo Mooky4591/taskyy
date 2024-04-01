@@ -184,7 +184,14 @@ fun DateSelectionAndUserInitialsButton(
             DateSelection(
                 isMonthExpanded = isMonthExpanded,
                 selectedMonth = selectedMonth,
-                onEvent = onEvent
+                datePickerExpanded = { onEvent(AgendaEvent.OnMonthExpanded(isMonthExpanded)) },
+                userSelectedDate = { userSelectedDate: Long ->
+                    onEvent(
+                        AgendaEvent.OnDateSelected(
+                            userSelectedDate
+                        )
+                    )
+                }
             )
         }
         CircleWithInitials(
@@ -262,7 +269,12 @@ fun AddAgendaItem(onEvent: (AgendaEvent) -> Unit, isAgendaItemExpanded: Boolean)
 }
 
 @Composable
-fun DateSelection(selectedMonth: String, onEvent: (AgendaEvent) -> Unit, isMonthExpanded: Boolean) {
+fun DateSelection(
+    selectedMonth: String,
+    datePickerExpanded: (AgendaEvent) -> Unit,
+    userSelectedDate: (Long) -> Unit,
+    isMonthExpanded: Boolean
+) {
     if (selectedMonth == "") {
         MonthText(selectedMonth = LocalDateTime.now().month.toString())
     } else {
@@ -275,10 +287,10 @@ fun DateSelection(selectedMonth: String, onEvent: (AgendaEvent) -> Unit, isMonth
     if (isMonthExpanded) {
         ShowDatePicker(
             onItemSelected = { selectedMonth ->
-                onEvent(AgendaEvent.OnDateSelected(selectedMonth))
+                userSelectedDate(selectedMonth)
             },
             cancelled = { isMonthExpanded ->
-                onEvent(AgendaEvent.OnMonthExpanded(isMonthExpanded))
+                datePickerExpanded(AgendaEvent.OnMonthExpanded(isMonthExpanded))
             },
             isDatePickerExpanded = isMonthExpanded
         )

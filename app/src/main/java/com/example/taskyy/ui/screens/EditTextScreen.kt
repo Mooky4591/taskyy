@@ -2,6 +2,7 @@ package com.example.taskyy.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Scaffold
@@ -46,7 +47,9 @@ fun EditTextScreen(state: EditTextState, onEvent: (EditTextEvent) -> Unit) {
                         onEvent(EditTextEvent.TextUpdated(description))
                     },
                     textStyle = TextStyle(fontSize = 20.sp),
-                    modifier = Modifier.padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
+                    modifier = Modifier
+                        .padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
+                        .fillMaxWidth()
                 )
             }
         }

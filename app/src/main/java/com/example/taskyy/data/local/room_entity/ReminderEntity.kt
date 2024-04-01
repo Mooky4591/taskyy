@@ -3,11 +3,11 @@ package com.example.taskyy.data.local.room_entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity(tableName = "reminder_table")
 data class ReminderEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: String,
-    val description: String?,
+    @PrimaryKey
+    val id: Int,
+    val description: String,
     val remindAt: Long,
     val time: Long,
     val title: String

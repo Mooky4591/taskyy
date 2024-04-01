@@ -113,6 +113,7 @@ fun Nav() {
             composable(route = Screen.Reminder.route + "/{dateString}") {
                 val reminderViewModel = hiltViewModel<ReminderViewModel>()
                 val state by reminderViewModel.state.collectAsState()
+                val context = LocalContext.current
                 val editedRemindDescription = navController
                     .currentBackStackEntry
                     ?.savedStateHandle
@@ -133,6 +134,22 @@ fun Nav() {
                     reminderViewModel.setReminderTitle(
                         editedRemindTitle?.value ?: "Reminder Title"
                     )
+                }
+
+                ObserveAsEvents(reminderViewModel.events) { event ->
+                    when (event) {
+                        is ReminderEvent.SaveFailed -> Toast.makeText(
+                            context,
+                            event.errorMessage.asString(context),
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        is ReminderEvent.SaveSuccessful -> {
+                            navController.navigate(Screen.Agenda.route)
+                        }
+
+                        else -> {}
+                    }
                 }
 
                 ReminderScreen(
@@ -179,7 +196,7 @@ fun Nav() {
                                     "reminderTitle",
                                     state.enteredText
                                 )
-                                navController.navigateUp()
+                                navController.popBackStack()
                             }
 
                             else -> {
