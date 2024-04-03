@@ -6,6 +6,7 @@ import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AgendaRepositoryImpl
 import com.example.taskyy.domain.repository.AgendaRepository
+import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.domain.usecases.LogoutUseCase
 import dagger.Module
 import dagger.Provides
@@ -22,9 +23,15 @@ object AgendaModule {
     fun providesAgendaRepo(
         api: TaskyyApi,
         userDao: UserDao,
-        agendaDao: AgendaActivityDao
+        agendaDao: AgendaActivityDao,
+        userPreferences: UserPreferences
     ): AgendaRepository {
-        return AgendaRepositoryImpl(retrofit = api, userDao = userDao, agendaDao = agendaDao)
+        return AgendaRepositoryImpl(
+            retrofit = api,
+            userDao = userDao,
+            agendaDao = agendaDao,
+            userPreferences = userPreferences
+        )
     }
 
     @Provides
@@ -38,5 +45,4 @@ object AgendaModule {
     fun provideAgendaActivityDao(db: TaskyyDatabase): AgendaActivityDao {
         return db.agendaDao()
     }
-
 }

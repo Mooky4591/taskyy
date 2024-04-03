@@ -1,4 +1,4 @@
-package com.example.taskyy.data.local.room_entity
+package com.example.taskyy.data.local.room_entity.agenda_entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -22,4 +22,12 @@
     <string name="request_timeout">Request has timed out. Please check your internet connection and try again</string>
     <string name="unknown_host_exception">No network connection. Try again</string>
     <string name="incorrect_password_or_email">Incorrect password or email</string>
+
+    <string name="permission_denied">Incorrect password or email</string>
+    <string name="file_not_found">Incorrect password or email</string>
+    <string name="io_error">Incorrect password or email</string>
+    <string name="connection_refused">Incorrect password or email</string>
+    <string name="unknown">Unknown error occurred</string>
+    <string name="disk_full">Disk is full</string>
+
 </resources>

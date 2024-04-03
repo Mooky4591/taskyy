@@ -4,5 +4,6 @@ open class AgendaEventItem(
     val title: String,
     val description: String,
     val alarmType: Long,
+    val eventId: String
 ) {
 }

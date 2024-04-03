@@ -23,6 +23,34 @@ fun PasswordValidator.PasswordError.asUiText(): UiText {
     }
 }
 
+fun DataError.Local.asUiText(): UiText {
+    return when (this) {
+        DataError.Local.DISK_FULL -> UiText.StringResource(
+            R.string.disk_full
+        )
+
+        DataError.Local.PERMISSION_DENIED -> UiText.StringResource(
+            R.string.permission_denied
+        )
+
+        DataError.Local.FILE_NOT_FOUND -> UiText.StringResource(
+            R.string.file_not_found
+        )
+
+        DataError.Local.INPUT_OUTPUT_ERROR -> UiText.StringResource(
+            R.string.io_error
+        )
+
+        DataError.Local.CONNECTION_REFUSED -> UiText.StringResource(
+            R.string.connection_refused
+        )
+
+        DataError.Local.UNKNOWN -> UiText.StringResource(
+            R.string.unknown
+        )
+    }
+}
+
 fun DataError.Network.asUiText(): UiText {
     return when (this) {
         DataError.Network.UNKNOWN -> UiText.StringResource(

@@ -32,6 +32,7 @@ import com.example.taskyy.ui.viewmodels.EditTextViewModel
 import com.example.taskyy.ui.viewmodels.LoginViewModel
 import com.example.taskyy.ui.viewmodels.RegisterViewModel
 import com.example.taskyy.ui.viewmodels.ReminderViewModel
+import java.time.ZoneId
 
 
 @RequiresApi(Build.VERSION_CODES.Q)
@@ -99,21 +100,24 @@ fun Nav() {
             composable(route = Screen.Agenda.route) {
                 val agendaViewModel = hiltViewModel<AgendaViewModel>()
                 val state = agendaViewModel.state
+                val timeDateState = agendaViewModel.timeDateState
+
                 AgendaScreen(
                     state = state,
                     onEvent = { event ->
                         when (event) {
-                            is AgendaEvent.ReminderItemSelected -> navController.navigate(Screen.Reminder.route + "/${state.dateString}")
+                            is AgendaEvent.ReminderItemSelected -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}")
                             else -> agendaViewModel.onEvent(event)
                         }
-                    }
+                    },
+                    timeDateState = timeDateState
                 )
             }
 
             composable(route = Screen.Reminder.route + "/{dateString}") {
                 val reminderViewModel = hiltViewModel<ReminderViewModel>()
                 val state by reminderViewModel.state.collectAsState()
-                val context = LocalContext.current
+                val timeDateState by reminderViewModel.timeAndDateState.collectAsState()
                 val editedRemindDescription = navController
                     .currentBackStackEntry
                     ?.savedStateHandle
@@ -138,13 +142,14 @@ fun Nav() {
 
                 ObserveAsEvents(reminderViewModel.events) { event ->
                     when (event) {
-                        is ReminderEvent.SaveFailed -> Toast.makeText(
-                            context,
-                            event.errorMessage.asString(context),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        is ReminderEvent.SaveFailed -> {
+                        }
 
                         is ReminderEvent.SaveSuccessful -> {
+                            //this doesn't save into the saveStateHandle on the Agenda Screen for some reason
+                            navController.getBackStackEntry(Screen.Agenda.route).savedStateHandle["selectedDate"] =
+                                timeDateState.dateTime.toLocalDate()
+                                    .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
                             navController.navigate(Screen.Agenda.route)
                         }
 
@@ -153,8 +158,9 @@ fun Nav() {
                 }
 
                 ReminderScreen(
-                    state = state
-                ) { event ->
+                    state = state,
+                    onEvent =
+                    { event ->
                     when (event) {
                         is ReminderEvent.EnterReminderDescription -> {
                             navController.navigate(Screen.EditText.route + "/${event.editDescription}")
@@ -166,7 +172,9 @@ fun Nav() {
 
                         else -> reminderViewModel.onEvent(event)
                     }
-                }
+                    },
+                    timeDateState = timeDateState
+                )
             }
 
             composable(route = Screen.EditText.route + "/{screenType}",

@@ -4,5 +4,5 @@ data class Day(
     var dayOfTheWeek: String,
     var dayOfTheMonth: String,
     var index: Int,
-    var date: String
+    var date: Long
 )

@@ -9,8 +9,10 @@ import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.ApiKeyInterceptor
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AuthRepositoryImpl
+import com.example.taskyy.data.repositories.UserPreferencesImpl
 import com.example.taskyy.domain.error.PasswordValidator
 import com.example.taskyy.domain.repository.AuthRepository
+import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.domain.usecases.RegisterUseCase
 import com.squareup.moshi.Moshi
@@ -31,8 +33,12 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(userDao: UserDao, api: TaskyyApi): AuthRepository {
-        return AuthRepositoryImpl(userDao, api)
+    fun provideAuthRepository(
+        userDao: UserDao,
+        api: TaskyyApi,
+        userPreferences: UserPreferences
+    ): AuthRepository {
+        return AuthRepositoryImpl(userDao, api, userPreferences)
     }
 
     @Provides
@@ -54,6 +60,12 @@ object AuthModule {
     @Singleton
     fun provideUserDao(db: TaskyyDatabase): UserDao {
         return db.userDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserPreferences(sharedPreferences: SharedPreferences): UserPreferences {
+        return UserPreferencesImpl(sharedPreferences)
     }
 
     @Provides

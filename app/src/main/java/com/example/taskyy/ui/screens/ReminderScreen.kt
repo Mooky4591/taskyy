@@ -34,6 +34,7 @@ import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,11 +53,26 @@ import com.example.taskyy.ui.enums.ReminderType
 import com.example.taskyy.ui.events.EditTextEvent
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.viewmodels.ReminderState
+import com.example.taskyy.ui.viewmodels.TimeAndDateState
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
+fun ReminderScreen(
+    state: ReminderState,
+    onEvent: (ReminderEvent) -> Unit,
+    timeDateState: TimeAndDateState
+) {
     Scaffold {
+        val formattedTitleDate = remember(timeDateState.dateTime) {
+            DateTimeFormatter.ofPattern("dd MMMM yyyy").format(timeDateState.dateTime)
+        }
+        val formattedTime = remember(timeDateState.dateTime) {
+            DateTimeFormatter.ofPattern("HH:mm a").format(timeDateState.dateTime)
+        }
+        val formattedDateForDatePicker = remember(timeDateState.dateTime) {
+            DateTimeFormatter.ofPattern("MMM dd yyyy").format(timeDateState.dateTime)
+        }
         Column(
             verticalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier
@@ -65,7 +81,7 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
                 .padding(it.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr))
         ) {
             TopBar(
-                title = state.dateString,
+                title = formattedTitleDate,
                 color = Color.White,
                 saveFunction = {
                     SaveReminder(
@@ -110,7 +126,9 @@ fun ReminderScreen(state: ReminderState, onEvent: (ReminderEvent) -> Unit) {
                     },
                     onDateSelected = { selectedDate ->
                         onEvent(selectedDate)
-                    }
+                    },
+                    formattedDate = formattedDateForDatePicker,
+                    formattedTime = formattedTime
                 )
             }
         }
@@ -128,6 +146,8 @@ private fun ReminderScreenContent(
     onDateSelected: (ReminderEvent) -> Unit,
     alarmTypeDropDownSelected: (ReminderEvent) -> Unit,
     alarmTimeTextSelected: (ReminderType) -> Unit,
+    formattedDate: String,
+    formattedTime: String,
     state: ReminderState
 ) {
     Row(
@@ -155,9 +175,9 @@ private fun ReminderScreenContent(
             })
         RowDivider()
         TimeAndDateRow(
-            dateString = state.dateString,
+            dateString = formattedDate,
             isDatePickerExpanded = state.isDatePickerExpanded,
-            timeString = state.selectedTime,
+            timeString = formattedTime,
             isTimePickerExpanded = state.isTimePickerSelectionExpanded,
             onDateExpanded = { onDateExpanded(state.isDatePickerExpanded) },
             onTimeExpanded = { onTimeExpanded(state.isTimePickerSelectionExpanded) },

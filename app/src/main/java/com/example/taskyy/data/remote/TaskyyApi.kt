@@ -1,8 +1,8 @@
 package com.example.taskyy.data.remote
 
-import com.example.taskyy.data.local.room_entity.EventEntity
-import com.example.taskyy.data.local.room_entity.ReminderEntity
-import com.example.taskyy.data.local.room_entity.TaskEntity
+import com.example.taskyy.data.local.room_entity.agenda_entities.EventEntity
+import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
+import com.example.taskyy.data.local.room_entity.agenda_entities.TaskEntity
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
@@ -29,7 +29,7 @@ interface TaskyyApi {
     // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>
 
     @GET("/logout")
-    suspend fun logoutUser()
+    suspend fun logoutUser(): retrofit2.Call<Void>
 
     //@GET("/agenda")
     //fun getAgenda(@Query("key") key: String, @Query("timezone") timeZone: TimeZone, @Query("time") time: Time): retrofit2.Response<AgendaResponse>
