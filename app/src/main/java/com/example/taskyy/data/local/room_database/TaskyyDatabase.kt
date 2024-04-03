@@ -9,7 +9,7 @@ import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.local.room_entity.user.UserEntity
 
-@Database(entities = [UserEntity::class, ReminderEntity::class], version = 5, exportSchema = false)
+@Database(entities = [UserEntity::class, ReminderEntity::class], version = 1, exportSchema = false)
 abstract class TaskyyDatabase: RoomDatabase() {
 
     abstract fun userDao(): UserDao

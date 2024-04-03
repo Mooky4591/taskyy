@@ -115,8 +115,8 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateSta
                                 .height(250.dp)
                                 .wrapContentHeight(Alignment.CenterVertically)
                         )
-                        ListOfAgendaEvents(state.listOfAgendaEvents)
                     }
+                        ListOfAgendaEvents(state.listOfAgendaEvents)
                 }
             }
         },
@@ -131,13 +131,17 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateSta
 
 @Composable
 fun ListOfAgendaEvents(reminders: List<AgendaEventItem>) {
-    LazyColumn {
-        items(items = reminders, key = { item -> item.title }) { item ->
+    LazyColumn(
+        modifier = Modifier.padding(top = 180.dp, start = 20.dp, end = 20.dp)
+    ) {
+        items(items = reminders, key = { item -> item.eventId }) { item ->
             AgendaDisplayItem(
                 title = item.title,
                 description = item.description,
                 date = item.alarmType.toString(),
-                onEllipsisClick = { /*TODO*/ })
+                onEllipsisClick = { /*TODO*/ }
+            )
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
@@ -145,11 +149,11 @@ fun ListOfAgendaEvents(reminders: List<AgendaEventItem>) {
 @Preview
 @Composable
 fun AgendaScreenPreview() {
-    // Sample data for preview
+    // Create a sample state for preview
     val state = AgendaState(
         isMonthExpanded = false,
         isUserDropDownExpanded = false,
-        selectedMonth = "March 2024",
+        selectedMonth = "April",
         initials = "JD",
         selectedDayList = listOf(
             Day("Monday", "1", 0, 1704102400000),
@@ -160,17 +164,19 @@ fun AgendaScreenPreview() {
             Day("Saturday", "6", 5, 1704534400000),
         ),
         selectedIndex = 0,
+        listOfAgendaEvents = listOf(
+            AgendaEventItem("Event 1", "Description 1", alarmType = 0, ";akjshf"),
+            AgendaEventItem("Event 2", "Description 2", alarmType = 1, "a;sdjhfapk")
+        ),
         isAddAgendaItemExpanded = false
     )
-    val timeDateState = TimeDateState(
-        dateTime = LocalDateTime.now()
-    )
 
-    // Preview the AgendaScreen composable with sample data
+    // Create a sample TimeDateState for preview
+    val timeDateState = TimeDateState(dateTime = LocalDateTime.now())
+
+    // Preview the AgendaScreen with the sample state
     AgendaScreen(state = state, onEvent = {}, timeDateState = timeDateState)
 }
-
-
 
 @Composable
 fun RowOfDaysToDisplay(

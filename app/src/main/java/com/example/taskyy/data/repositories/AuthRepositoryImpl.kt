@@ -34,11 +34,11 @@ class AuthRepositoryImpl @Inject constructor(
             com.example.taskyy.domain.error.Result.Success(user)
         } catch (e: HttpException) {
             when (e.code()) {
-                408 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.REQUEST_TIMEOUT)
-                429 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.TOO_MANY_REQUESTS)
-                413 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
-                500 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERVER_ERROR)
                 400 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERIALIZATION)
+                408 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                413 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                429 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                500 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERVER_ERROR)
                 else -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN)
             }
         }

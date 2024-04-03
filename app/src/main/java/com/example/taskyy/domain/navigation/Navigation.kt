@@ -146,11 +146,10 @@ fun Nav() {
                         }
 
                         is ReminderEvent.SaveSuccessful -> {
-                            navController.previousBackStackEntry?.savedStateHandle?.set(
-                                "selectedDate",
+                            //this doesn't save into the saveStateHandle on the Agenda Screen for some reason
+                            navController.getBackStackEntry(Screen.Agenda.route).savedStateHandle["selectedDate"] =
                                 timeDateState.dateTime.toLocalDate()
                                     .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                            )
                             navController.navigate(Screen.Agenda.route)
                         }
 

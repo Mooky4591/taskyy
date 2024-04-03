@@ -44,14 +44,12 @@ class AgendaViewModel @Inject constructor(
 
     init {
         setUserInitials()
-        val selectedDate =
-            savedStateHandle.get<LocalDate>("selectedDate")?.atStartOfDay(ZoneId.systemDefault())
-                ?.toInstant()?.toEpochMilli() ?: 0
-        checkForReminders(
-            userPreferences.getUserId("userId"),
-            savedStateHandle.get<LocalDate>("selectedDate")?.atStartOfDay(ZoneId.systemDefault())
-                ?.toInstant()?.toEpochMilli() ?: 0
-        )
+        LocalDate.now().atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()?.let {
+            checkForReminders(
+                userPreferences.getUserId("userId"),
+                it
+            )
+        }
     }
 
     private fun checkForReminders(userId: String, currentTimeMillis: Long) {
@@ -77,6 +75,7 @@ class AgendaViewModel @Inject constructor(
             is AgendaEvent.OnDateSelected -> {
                 formatSelectedDate(event.date)
                 generateSelectableDaysRow(event.date)
+                checkForReminders("userId", timeDateState.dateTime.toMillis())
             }
             is AgendaEvent.OnUserInitialsClicked -> state =
                 state.copy(isUserDropDownExpanded = event.isUserDropDownExpanded)
