@@ -1,5 +1,8 @@
 package com.example.taskyy.ui.events
 
+import com.example.taskyy.ui.enums.AgendaItemType
+import com.example.taskyy.ui.objects.AgendaEventItem
+
 
 sealed interface AgendaEvent {
     data class OnMonthExpanded(val isMonthExpanded: Boolean) : AgendaEvent
@@ -11,7 +14,10 @@ sealed interface AgendaEvent {
     data class UpdateDate(val date: Long) : AgendaEvent
     data object LogoutSuccessful : AgendaEvent
     data class SelectedDayIndex(val index: Int) : AgendaEvent
-    data object EventItemSelected : AgendaEvent
-    data object TaskItemSelected : AgendaEvent
-    data object ReminderItemSelected : AgendaEvent
+    data class MenuItemSelected(val itemType: AgendaItemType, val eventItemId: String?) :
+        AgendaEvent
+
+    data class EditExistingReminder(val agendaItem: AgendaEventItem) : AgendaEvent
+    data object DeleteExistingReminder : AgendaEvent
+    data class IsEllipsisMenuExpanded(val isEllipsisMenuExpanded: Boolean) : AgendaEvent
 }

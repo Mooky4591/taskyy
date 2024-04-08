@@ -1,5 +1,6 @@
 package com.example.taskyy.ui.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.taskyy.R
+import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.enums.EditTextScreenType
 import com.example.taskyy.ui.enums.ReminderType
 import com.example.taskyy.ui.events.EditTextEvent
@@ -56,6 +58,7 @@ import com.example.taskyy.ui.viewmodels.ReminderState
 import com.example.taskyy.ui.viewmodels.TimeAndDateState
 import java.time.format.DateTimeFormatter
 
+@SuppressLint("RememberReturnType")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderScreen(
@@ -155,8 +158,22 @@ private fun ReminderScreenContent(
             .fillMaxSize()
             .padding(top = 25.dp, start = 20.dp)
     ) {
-        ItemBox("#f2f6ff", 30, borderColor = "#d0d2d9")
-        ItemBoxTitle("Reminder")
+        when (state.agendaItemType) {
+            AgendaItemType.REMINDER_ITEM -> {
+                ItemBox("#f2f6ff", 30, borderColor = "#d0d2d9")
+                ItemBoxTitle("Reminder")
+            }
+
+            AgendaItemType.TASK_ITEM -> {
+                ItemBox("#f2f6ff", 30, borderColor = "#d0d2d9")
+                ItemBoxTitle("Task")
+            }
+
+            AgendaItemType.EVENT_ITEM -> {
+                ItemBox("#f2f6ff", 30, borderColor = "#d0d2d9")
+                ItemBoxTitle("Event")
+            }
+        }
     }
     Column {
         NewItemRow(title = state.reminderTitleText,
@@ -556,7 +573,7 @@ fun NewItemRow(title: String, editTitle: (String) -> Unit) {
             .height(80.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        WhiteCircleWithBlackBorder()
+        CircleWithBlackBorder("#FFFFFF")
         Text(
             text = title,
             fontSize = 25.sp,
@@ -603,11 +620,13 @@ fun AlarmIconWithBackground() {
 }
 
 @Composable
-fun WhiteCircleWithBlackBorder() {
+fun CircleWithBlackBorder(color: String) {
     Box(
         modifier = Modifier
             .size(20.dp) // Adjust the size of the circle
-            .background(color = Color.White, shape = CircleShape)
+            .background(
+                color = Color(android.graphics.Color.parseColor(color)), shape = CircleShape
+            )
             .border(width = 2.dp, color = Color.Black, shape = CircleShape)
     )
 }

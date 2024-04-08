@@ -1,12 +1,15 @@
 package com.example.taskyy.ui.objects
 
+import com.example.taskyy.ui.enums.AgendaItemType
+
 class Reminder(
     title: String,
     description: String,
-    val timeInMillis: Long,
+    timeInMillis: Long,
     alarmType: Long,
-    val id: String,
-    val userId: String
-) : AgendaEventItem(title, description, alarmType, eventId = id) {
+    id: String,
+    color: String,
+    agendaItem: AgendaItemType
+) : AgendaEventItem(title, description, alarmType, id, color, timeInMillis, agendaItem) {
 
 }

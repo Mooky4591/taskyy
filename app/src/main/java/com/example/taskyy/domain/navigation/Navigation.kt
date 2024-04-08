@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.enums.EditTextScreenType
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.events.EditTextEvent
@@ -106,7 +107,13 @@ fun Nav() {
                     state = state,
                     onEvent = { event ->
                         when (event) {
-                            is AgendaEvent.ReminderItemSelected -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}")
+                            is AgendaEvent.MenuItemSelected ->
+                                when (event.itemType) {
+                                    AgendaItemType.REMINDER_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}")
+                                    AgendaItemType.TASK_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}")
+                                    AgendaItemType.EVENT_ITEM -> {}
+                                }
+//                            is AgendaEvent.EditExistingReminder -> navController.navigate(Screen.Reminder.route + "/${event.agendaItem.}")
                             else -> agendaViewModel.onEvent(event)
                         }
                     },
@@ -114,7 +121,7 @@ fun Nav() {
                 )
             }
 
-            composable(route = Screen.Reminder.route + "/{dateString}") {
+            composable(route = Screen.Reminder.route + "/{dateString}, {agendaItem}, {eventItemId}") {
                 val reminderViewModel = hiltViewModel<ReminderViewModel>()
                 val state by reminderViewModel.state.collectAsState()
                 val timeDateState by reminderViewModel.timeAndDateState.collectAsState()
@@ -146,7 +153,6 @@ fun Nav() {
                         }
 
                         is ReminderEvent.SaveSuccessful -> {
-                            //this doesn't save into the saveStateHandle on the Agenda Screen for some reason
                             navController.getBackStackEntry(Screen.Agenda.route).savedStateHandle["selectedDate"] =
                                 timeDateState.dateTime.toLocalDate()
                                     .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -168,6 +174,10 @@ fun Nav() {
 
                         is ReminderEvent.EnterSetTitleScreen -> {
                             navController.navigate(Screen.EditText.route + "/${event.editTitle}")
+                        }
+
+                        is ReminderEvent.Close -> {
+                            navController.popBackStack()
                         }
 
                         else -> reminderViewModel.onEvent(event)
@@ -204,6 +214,10 @@ fun Nav() {
                                     "reminderTitle",
                                     state.enteredText
                                 )
+                                navController.popBackStack()
+                            }
+
+                            is EditTextEvent.Back -> {
                                 navController.popBackStack()
                             }
 

@@ -29,5 +29,8 @@
     <string name="connection_refused">Incorrect password or email</string>
     <string name="unknown">Unknown error occurred</string>
     <string name="disk_full">Disk is full</string>
+    <string name="open">Open</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
 
 </resources>
