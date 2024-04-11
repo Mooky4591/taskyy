@@ -11,5 +11,4 @@ data class ReminderEntity(
     val remindAt: Long,
     val time: Long,
     val title: String,
-    val color: String
 )

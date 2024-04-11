@@ -88,12 +88,16 @@ fun ReminderScreen(
                 color = Color.White,
                 saveFunction = {
                     SaveReminder(
-                        onEvent = { reminder ->
+                        saveEvent = { reminder ->
+                            onEvent(reminder)
+                        },
+                        updateEvent = { reminder ->
                             onEvent(reminder)
                         },
                         title = state.reminderTitleText,
                         description = state.reminderDescription,
-                        alarmType = state.alarmReminderTimeSelection,
+                        isEventBeingEdited = state.isEditingEvent,
+                        eventId = state.eventId
                     )
                 },
                 onClose = { (onEvent(ReminderEvent.Close)) }
@@ -176,9 +180,11 @@ private fun ReminderScreenContent(
         }
     }
     Column {
-        NewItemRow(title = state.reminderTitleText,
+        NewItemRow(
+            title = state.reminderTitleText,
             editTitle =
-            { enterItemTitle(ReminderEvent.EnterSetTitleScreen(EditTextScreenType.EDIT_TITLE)) }
+            { enterItemTitle(ReminderEvent.EnterSetTitleScreen(EditTextScreenType.EDIT_TITLE)) },
+            isEventBeingEdited = state.isEditingEvent
         )
         RowDivider()
         ItemDescription(
@@ -189,10 +195,13 @@ private fun ReminderScreenContent(
                         EditTextScreenType.EDIT_DETAILS
                     )
                 )
-            })
+            },
+            isEventBeingEdited = state.isEditingEvent
+        )
         RowDivider()
         TimeAndDateRow(
             dateString = formattedDate,
+            isEventBeingEdited = state.isEditingEvent,
             isDatePickerExpanded = state.isDatePickerExpanded,
             timeString = formattedTime,
             isTimePickerExpanded = state.isTimePickerSelectionExpanded,
@@ -218,7 +227,8 @@ private fun ReminderScreenContent(
             },
             setAlarmType = {
                 alarmTimeTextSelected(it)
-            }
+            },
+            isEventBeingEdited = state.isEditingEvent
         )
         RowDivider()
     }
@@ -282,6 +292,7 @@ fun DropDownItemSetUp(
 fun SetAlarmTimeRow(
     isAlarmSelectionExpanded: Boolean,
     alarmTimeSelectionText: String,
+    isEventBeingEdited: Boolean,
     toggleAlarmExpanded: (Boolean) -> Unit,
     setAlarmType: (ReminderType) -> Unit
 ) {
@@ -289,7 +300,7 @@ fun SetAlarmTimeRow(
         modifier =
         Modifier
             .padding(start = 20.dp)
-            .clickable {
+            .clickable(enabled = isEventBeingEdited) {
                 toggleAlarmExpanded(!isAlarmSelectionExpanded)
             }
             .fillMaxWidth()
@@ -326,7 +337,7 @@ fun SetAlarmTimeRow(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            ChevronForward()
+            ChevronForward(isEventBeingEdited)
         }
     }
 }
@@ -336,11 +347,12 @@ fun DateSection(
     datePickerExpanded: (ReminderEvent) -> Unit,
     dateString: String,
     isDatePickerExpanded: Boolean,
+    isEventBeingEdited: Boolean,
     userSelectedDate: (Long) -> Unit
 ) {
     Row(
         modifier = Modifier
-            .clickable {
+            .clickable(enabled = isEventBeingEdited) {
                 datePickerExpanded(ReminderEvent.DatePickerSelcted(!isDatePickerExpanded))
             }
             .height(40.dp),
@@ -356,7 +368,7 @@ fun DateSection(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            ChevronForward()
+            ChevronForward(isEventBeingEdited)
         }
     }
     if (isDatePickerExpanded) {
@@ -376,6 +388,7 @@ fun DateSection(
 @Composable
 fun TimeAndDateRow(
     dateString: String,
+    isEventBeingEdited: Boolean,
     onDateExpanded: (Boolean) -> Unit,
     onTimeExpanded: (ReminderEvent) -> Unit,
     onTimeSelected: (TimePickerState) -> Unit,
@@ -396,13 +409,15 @@ fun TimeAndDateRow(
             },
             userSelectedTime = { selectedTime ->
                 onTimeSelected(selectedTime)
-            }
+            },
+            isEventBeingEdited = isEventBeingEdited
         )
         DateSection(
             isDatePickerExpanded = isDatePickerExpanded,
             datePickerExpanded = { onDateExpanded(isDatePickerExpanded) },
             userSelectedDate = { dateSelected: Long -> onDateSelected(dateSelected) },
             dateString = dateString,
+            isEventBeingEdited = isEventBeingEdited
         )
     }
 }
@@ -413,12 +428,13 @@ fun TimeSection(
     toggleTimePicker: (ReminderEvent) -> Unit,
     userSelectedTime: (TimePickerState) -> Unit,
     isTimePickerExpanded: Boolean,
+    isEventBeingEdited: Boolean,
     selectedTime: String
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .clickable {
+            .clickable(enabled = isEventBeingEdited) {
                 toggleTimePicker(ReminderEvent.TimePickerSelected(!isTimePickerExpanded))
             }
             .height(40.dp)
@@ -433,11 +449,13 @@ fun TimeSection(
             modifier = Modifier.padding(end = 40.dp),
             fontSize = 15.sp
         )
-        Image(
-            painter = painterResource(id = R.drawable.chevron_forward),
-            contentDescription = "proceed forward arrow",
-            modifier = Modifier.padding(end = 40.dp)
-        )
+        if (isEventBeingEdited) {
+            Image(
+                painter = painterResource(id = R.drawable.chevron_forward),
+                contentDescription = "proceed forward arrow",
+                modifier = Modifier.padding(end = 40.dp)
+            )
+        }
     }
     if (isTimePickerExpanded) {
         TimePickerDialog(
@@ -524,11 +542,15 @@ fun TimePickerDialog(
 
 
 @Composable
-fun ItemDescription(description: String, enterItemDescription: (ReminderEvent) -> Unit) {
+fun ItemDescription(
+    description: String,
+    enterItemDescription: (ReminderEvent) -> Unit,
+    isEventBeingEdited: Boolean
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .clickable
+            .clickable(enabled = isEventBeingEdited)
             {
                 enterItemDescription(ReminderEvent.EnterReminderDescription(EditTextScreenType.EDIT_DETAILS))
             }
@@ -544,7 +566,7 @@ fun ItemDescription(description: String, enterItemDescription: (ReminderEvent) -
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            ChevronForward()
+            ChevronForward(isEventBeingEdited)
         }
     }
 }
@@ -562,12 +584,12 @@ fun RowDivider() {
 }
 
 @Composable
-fun NewItemRow(title: String, editTitle: (String) -> Unit) {
+fun NewItemRow(title: String, editTitle: (String) -> Unit, isEventBeingEdited: Boolean) {
     Row(
         modifier =
         Modifier
             .padding(top = 60.dp, start = 20.dp)
-            .clickable {
+            .clickable(enabled = isEventBeingEdited) {
                 editTitle(title)
             }
             .height(80.dp),
@@ -585,18 +607,20 @@ fun NewItemRow(title: String, editTitle: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            ChevronForward()
+            ChevronForward(isEventBeingEdited = isEventBeingEdited)
         }
     }
 }
 
 @Composable
-fun ChevronForward() {
-    Image(
-        painter = painterResource(id = R.drawable.chevron_forward),
-        contentDescription = "proceed forward arrow",
-        modifier = Modifier.padding(end = 15.dp)
-    )
+fun ChevronForward(isEventBeingEdited: Boolean) {
+    if (isEventBeingEdited) {
+        Image(
+            painter = painterResource(id = R.drawable.chevron_forward),
+            contentDescription = "proceed forward arrow",
+            modifier = Modifier.padding(end = 15.dp)
+        )
+    }
 }
 
 @Composable
@@ -697,10 +721,12 @@ fun TopBar(
 
 @Composable
 fun SaveReminder(
-    onEvent: (ReminderEvent.SaveReminder) -> Unit,
+    saveEvent: (ReminderEvent.SaveReminder) -> Unit,
+    updateEvent: (ReminderEvent.UpdateReminder) -> Unit,
     title: String,
     description: String,
-    alarmType: String,
+    isEventBeingEdited: Boolean,
+    eventId: String
 ) {
     Text(
         text = "SAVE",
@@ -709,7 +735,22 @@ fun SaveReminder(
         modifier =
         Modifier
             .clickable {
-                onEvent(ReminderEvent.SaveReminder(title = title, description = description))
+                if (isEventBeingEdited && eventId == "") {
+                    saveEvent(
+                        ReminderEvent.SaveReminder(
+                            title = title,
+                            description = description
+                        )
+                    )
+                } else {
+                    updateEvent(
+                        ReminderEvent.UpdateReminder(
+                            eventId = eventId,
+                            title = title,
+                            description = description
+                        )
+                    )
+                }
             }
             .padding(end = 10.dp, top = 5.dp)
     )

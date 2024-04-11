@@ -7,7 +7,6 @@ open class AgendaEventItem(
     val description: String,
     val alarmType: Long,
     val eventId: String,
-    val color: String,
     val timeInMillis: Long,
     val eventType: AgendaItemType
 ) {

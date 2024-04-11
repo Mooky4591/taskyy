@@ -11,6 +11,7 @@ import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.repository.AgendaRepository
 import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.ui.enums.AgendaItemType
+import com.example.taskyy.ui.objects.AgendaEventItem
 import com.example.taskyy.ui.objects.Reminder
 import retrofit2.HttpException
 import java.io.IOException
@@ -57,11 +58,66 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateReminderOnDb(reminder: Reminder): Result<Reminder, DataError.Local> {
+        return try {
+            agendaDao.updateReminder(
+                eventId = reminder.eventId,
+                description = reminder.description,
+                title = reminder.title,
+                time = reminder.timeInMillis,
+                remindTime = reminder.alarmType
+            )
+            Result.Success(reminder)
+        } catch (e: IOException) {
+            when (e.message) {
+                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
+                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
+                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
+                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
+                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
+                else -> Result.Error(DataError.Local.UNKNOWN)
+            }
+        }
+    }
+
     override suspend fun uploadReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network> {
         val reminderDTO = reminder.toReminderDto()
         return try {
             retrofit.createReminder(reminderDTO)
             Result.Success(reminder)
+        } catch (e: HttpException) {
+            when (e.code()) {
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> Result.Error(DataError.Network.SERIALIZATION)
+                else -> Result.Error(DataError.Network.UNKNOWN)
+            }
+        }
+    }
+
+    override suspend fun updateReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network> {
+        val reminderDTO = reminder.toReminderDto()
+        return try {
+            retrofit.updateReminder(reminderDTO)
+            Result.Success(reminder)
+        } catch (e: HttpException) {
+            when (e.code()) {
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> Result.Error(DataError.Network.SERIALIZATION)
+                else -> Result.Error(DataError.Network.UNKNOWN)
+            }
+        }
+    }
+
+    override suspend fun deleteReminderOnApi(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Network> {
+        return try {
+            retrofit.deleteReminder(agendaEventItem.eventId)
+            Result.Success(true)
         } catch (e: HttpException) {
             when (e.code()) {
                 408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
@@ -108,6 +164,32 @@ class AgendaRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override suspend fun deleteReminderInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local> {
+        return try {
+            agendaDao.deleteReminder(reminderEntity = agendaEventItem.toReminderEntity())
+            Result.Success(true)
+        } catch (e: IOException) {
+            when (e.message) {
+                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
+                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
+                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
+                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
+                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
+                else -> Result.Error(DataError.Local.UNKNOWN)
+            }
+        }
+    }
+}
+
+private fun AgendaEventItem.toReminderEntity(): ReminderEntity {
+    return ReminderEntity(
+        id = eventId,
+        description = description,
+        title = title,
+        remindAt = alarmType,
+        time = timeInMillis,
+    )
 }
 
 fun ReminderEntity.transformToReminder(): Reminder {
@@ -117,7 +199,6 @@ fun ReminderEntity.transformToReminder(): Reminder {
         time,
         remindAt,
         id,
-        "#f2f6ff",
         AgendaItemType.REMINDER_ITEM
     )
 }
@@ -130,7 +211,6 @@ fun List<ReminderEntity>.transformToReminder(): List<Reminder> {
             reminderEntity.time,
             reminderEntity.remindAt,
             reminderEntity.id,
-            color = "#f2f6ff",
             AgendaItemType.REMINDER_ITEM
         )
     }
@@ -143,7 +223,6 @@ fun Reminder.toReminderEntity(): ReminderEntity {
         title = title,
         remindAt = alarmType,
         time = timeInMillis,
-        color = color
     )
 }
 
