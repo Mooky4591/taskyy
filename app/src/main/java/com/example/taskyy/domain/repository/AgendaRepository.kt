@@ -9,5 +9,10 @@ interface AgendaRepository {
     suspend fun getUserName(email: String): String
     suspend fun saveReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local>
     suspend fun uploadReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network>
-    suspend fun getReminders(userId: String, time: Long): Result<List<Reminder>, DataError.Local>
+    suspend fun getReminders(
+        startDate: Long,
+        endDate: Long
+    ): Result<List<Reminder>, DataError.Local>
+
+    suspend fun getReminderByEventId(eventId: String): Result<Reminder, DataError.Local>
 }

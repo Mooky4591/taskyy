@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.repository.AgendaRepository
 import com.example.taskyy.domain.repository.UserPreferences
+import com.example.taskyy.domain.usecases.CheckForRemindersUseCase
 import com.example.taskyy.domain.usecases.LogoutUseCase
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.objects.AgendaEventItem
@@ -20,7 +21,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.io.Serializable
 import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -32,7 +32,8 @@ class AgendaViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val agendaRepository: AgendaRepository,
     private val userPreferences: UserPreferences,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val checkForRemindersUseCase: CheckForRemindersUseCase
 ): ViewModel() {
     var state by mutableStateOf(AgendaState())
         private set
@@ -44,24 +45,19 @@ class AgendaViewModel @Inject constructor(
 
     init {
         setUserInitials()
-        LocalDate.now().atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()?.let {
             checkForReminders(
-                userPreferences.getUserId("userId"),
-                it
+                LocalDateTime.now()
             )
         }
-    }
 
-    private fun checkForReminders(userId: String, currentTimeMillis: Long) {
+    private fun checkForReminders(dateTime: LocalDateTime) {
         viewModelScope.launch {
-            when (val reminderList = agendaRepository.getReminders(userId, currentTimeMillis)) {
+            when (val reminderList = checkForRemindersUseCase.checkForReminders(dateTime)) {
                 is Result.Success -> {
                     state = state.copy(listOfAgendaEvents = reminderList.data)
-
                 }
 
                 is Result.Error -> {
-
                 }
             }
         }
@@ -75,7 +71,6 @@ class AgendaViewModel @Inject constructor(
             is AgendaEvent.OnDateSelected -> {
                 formatSelectedDate(event.date)
                 generateSelectableDaysRow(event.date)
-                checkForReminders("userId", timeDateState.dateTime.toMillis())
             }
             is AgendaEvent.OnUserInitialsClicked -> state =
                 state.copy(isUserDropDownExpanded = event.isUserDropDownExpanded)
@@ -90,18 +85,20 @@ class AgendaViewModel @Inject constructor(
             is AgendaEvent.LogoutSuccessful -> {}
             is AgendaEvent.SelectedDayIndex -> state =
                 state.copy(selectedIndex = event.index)
-            is AgendaEvent.ReminderItemSelected -> {
-            }
 
-            is AgendaEvent.TaskItemSelected -> {
+            is AgendaEvent.MenuItemSelected -> {
             }
-
-            is AgendaEvent.EventItemSelected -> {
-            }
-
             is AgendaEvent.UpdateDate -> {
                 formatSelectedDate(event.date)
             }
+
+            is AgendaEvent.IsEllipsisMenuExpanded -> {
+                state =
+                    state.copy(isEllipsisMenuExpanded = event.isEllipsisMenuExpanded)
+            }
+
+            is AgendaEvent.DeleteExistingReminder -> {}
+            is AgendaEvent.EditExistingReminder -> {}
         }
     }
 
@@ -109,23 +106,25 @@ class AgendaViewModel @Inject constructor(
         val instant = Instant.ofEpochMilli(date)
         val localDateTime = LocalDateTime.ofInstant(
             instant,
-            ZoneId.of("UTC")
+            ZoneId.systemDefault()
         )
         timeDateState = timeDateState.copy(dateTime = localDateTime)
+        checkForReminders(timeDateState.dateTime)
+
     }
 
     private fun generateSelectableDaysRow(date: Long) {
         val instant = Instant.ofEpochMilli(date)
         val localDateTime = LocalDateTime.ofInstant(
             instant,
-            ZoneId.of("UTC"),
-        ).minusDays(1)
+            ZoneId.systemDefault()
+        )
 
         val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
         val dayOfTheMonthFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
         val dayOfTheWeekFormatter = DateTimeFormatter.ofPattern("E", Locale.ENGLISH)
 
-        val days = (1..6).map {
+        val days = (0..5).map {
             val date = localDateTime.plusDays(it.toLong())
             Day(
                 dayOfTheMonth = dayOfTheMonthFormatter.format(date),
@@ -183,6 +182,7 @@ data class AgendaState(
     var selectedAgendaDay: Boolean = false,
     var selectedIndex: Int = 0,
     var listOfAgendaEvents: List<AgendaEventItem> = listOf<AgendaEventItem>(),
+    var isEllipsisMenuExpanded: Boolean = false
 ) : Serializable
 
 data class TimeDateState(

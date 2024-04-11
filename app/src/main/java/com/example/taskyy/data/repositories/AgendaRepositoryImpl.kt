@@ -10,6 +10,7 @@ import com.example.taskyy.domain.error.DataError
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.repository.AgendaRepository
 import com.example.taskyy.domain.repository.UserPreferences
+import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.objects.Reminder
 import retrofit2.HttpException
 import java.io.IOException
@@ -40,7 +41,7 @@ class AgendaRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local> {
-        val reminderEntity = reminder.toReminderEntity(userPreferences.getUserId("userId"))
+        val reminderEntity = reminder.toReminderEntity()
         return try {
             agendaDao.insertReminder(reminderEntity)
             Result.Success(reminder)
@@ -74,12 +75,28 @@ class AgendaRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getReminders(
-        userId: String,
-        time: Long
+        startDate: Long,
+        endDate: Long
     ): Result<List<Reminder>, DataError.Local> {
         return try {
-            val list = agendaDao.getReminders(userId, time)
+            val list = agendaDao.getReminders(startTime = startDate, endTime = endDate)
             Result.Success(list.transformToReminder())
+        } catch (e: IOException) {
+            when (e.message) {
+                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
+                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
+                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
+                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
+                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
+                else -> Result.Error(DataError.Local.UNKNOWN)
+            }
+        }
+    }
+
+    override suspend fun getReminderByEventId(eventId: String): Result<Reminder, DataError.Local> {
+        return try {
+            val reminderEntity = agendaDao.getReminderByEventId(eventId)
+            Result.Success(reminderEntity.transformToReminder())
         } catch (e: IOException) {
             when (e.message) {
                 "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
@@ -93,6 +110,18 @@ class AgendaRepositoryImpl @Inject constructor(
     }
 }
 
+fun ReminderEntity.transformToReminder(): Reminder {
+    return Reminder(
+        title,
+        description,
+        time,
+        remindAt,
+        id,
+        "#f2f6ff",
+        AgendaItemType.REMINDER_ITEM
+    )
+}
+
 fun List<ReminderEntity>.transformToReminder(): List<Reminder> {
     return map { reminderEntity ->
         Reminder(
@@ -101,25 +130,26 @@ fun List<ReminderEntity>.transformToReminder(): List<Reminder> {
             reminderEntity.time,
             reminderEntity.remindAt,
             reminderEntity.id,
-            reminderEntity.userId!!
+            color = "#f2f6ff",
+            AgendaItemType.REMINDER_ITEM
         )
     }
 }
 
-fun Reminder.toReminderEntity(userId: String?): ReminderEntity {
+fun Reminder.toReminderEntity(): ReminderEntity {
     return ReminderEntity(
-        id = id,
+        id = eventId,
         description = description,
-        userId = userId,
         title = title,
         remindAt = alarmType,
-        time = timeInMillis
+        time = timeInMillis,
+        color = color
     )
 }
 
 fun Reminder.toReminderDto(): ReminderDTO {
     return ReminderDTO(
-        id = id,
+        id = eventId,
         description = description,
         title = title,
         time = timeInMillis,

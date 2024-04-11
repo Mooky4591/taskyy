@@ -7,6 +7,7 @@ import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AgendaRepositoryImpl
 import com.example.taskyy.domain.repository.AgendaRepository
 import com.example.taskyy.domain.repository.UserPreferences
+import com.example.taskyy.domain.usecases.CheckForRemindersUseCase
 import com.example.taskyy.domain.usecases.LogoutUseCase
 import dagger.Module
 import dagger.Provides
@@ -44,5 +45,11 @@ object AgendaModule {
     @Singleton
     fun provideAgendaActivityDao(db: TaskyyDatabase): AgendaActivityDao {
         return db.agendaDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCheckForRemindersUseCase(agendaRepository: AgendaRepository): CheckForRemindersUseCase {
+        return CheckForRemindersUseCase(agendaRepository)
     }
 }

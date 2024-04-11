@@ -10,7 +10,10 @@ interface AgendaActivityDao {
     @Upsert
     suspend fun insertReminder(reminderEntity: ReminderEntity)
 
-    @androidx.room.Query("SELECT * FROM reminder_table WHERE userId = :userId and time = :time")
-    suspend fun getReminders(userId: String, time: Long): List<ReminderEntity>
+    @androidx.room.Query("SELECT * FROM reminder_table WHERE time BETWEEN :startTime AND :endTime")
+    suspend fun getReminders(startTime: Long, endTime: Long): List<ReminderEntity>
+
+    @androidx.room.Query("SELECT * FROM reminder_table WHERE id = :eventID")
+    suspend fun getReminderByEventId(eventID: String): ReminderEntity
 
 }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -52,11 +53,13 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.taskyy.R
+import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.objects.AgendaEventItem
 import com.example.taskyy.ui.objects.Day
 import com.example.taskyy.ui.viewmodels.AgendaState
 import com.example.taskyy.ui.viewmodels.TimeDateState
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -116,7 +119,15 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateSta
                                 .wrapContentHeight(Alignment.CenterVertically)
                         )
                     }
-                        ListOfAgendaEvents(state.listOfAgendaEvents)
+                    Box {
+                        ListOfAgendaEvents(
+                            reminders = state.listOfAgendaEvents,
+                            onEllipsisClick = onEvent,
+                            onItemSelected = onEvent,
+                            isEllipsisMenuExpanded = state.isEllipsisMenuExpanded,
+                            menuItemSelected = onEvent
+                        )
+                    }
                 }
             }
         },
@@ -130,17 +141,27 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateSta
 }
 
 @Composable
-fun ListOfAgendaEvents(reminders: List<AgendaEventItem>) {
+fun ListOfAgendaEvents(
+    reminders: List<AgendaEventItem>,
+    onEllipsisClick: (AgendaEvent) -> Unit,
+    onItemSelected: (AgendaEvent) -> Unit,
+    menuItemSelected: (AgendaEvent) -> Unit,
+    isEllipsisMenuExpanded: Boolean
+) {
     LazyColumn(
         modifier = Modifier.padding(top = 180.dp, start = 20.dp, end = 20.dp)
     ) {
         items(items = reminders, key = { item -> item.eventId }) { item ->
-            AgendaDisplayItem(
-                title = item.title,
-                description = item.description,
-                date = item.alarmType.toString(),
-                onEllipsisClick = { /*TODO*/ }
-            )
+            Box {
+                AgendaDisplayItem(
+                    agendaEventItem = item,
+                    onEllipsisClick = { onEllipsisClick(AgendaEvent.IsEllipsisMenuExpanded(it)) },
+                    onItemSelected = onItemSelected,
+                    isEllipsisMenuExpanded = isEllipsisMenuExpanded,
+                    navToSelectedReminder = onEllipsisClick,
+                    menuItemSelected = menuItemSelected
+                )
+            }
             Spacer(modifier = Modifier.height(10.dp))
         }
     }
@@ -165,8 +186,24 @@ fun AgendaScreenPreview() {
         ),
         selectedIndex = 0,
         listOfAgendaEvents = listOf(
-            AgendaEventItem("Event 1", "Description 1", alarmType = 0, ";akjshf"),
-            AgendaEventItem("Event 2", "Description 2", alarmType = 1, "a;sdjhfapk")
+            AgendaEventItem(
+                "Event 1",
+                "Description 1",
+                alarmType = 0,
+                ";akjshf",
+                color = "#FFFFFF",
+                timeInMillis = LocalDateTime.now().toMillis(),
+                eventType = AgendaItemType.REMINDER_ITEM
+            ),
+            AgendaEventItem(
+                "Event 2",
+                "Description 2",
+                alarmType = 1,
+                "a;sdjhfapk",
+                color = "#FFFFFF",
+                timeInMillis = LocalDateTime.now().toMillis(),
+                eventType = AgendaItemType.REMINDER_ITEM
+            )
         ),
         isAddAgendaItemExpanded = false
     )
@@ -316,19 +353,19 @@ fun AddAgendaItem(onEvent: (AgendaEvent) -> Unit, isAgendaItemExpanded: Boolean)
             DropdownMenuItem(
                 text = { Text(text = "Event") },
                 onClick = {
-                    onEvent(AgendaEvent.EventItemSelected)
+                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.EVENT_ITEM, null))
                 }
             )
             DropdownMenuItem(
                 text = { Text(text = "Task") },
                 onClick = {
-                    onEvent(AgendaEvent.TaskItemSelected)
+                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.TASK_ITEM, null))
                 }
             )
             DropdownMenuItem(
                 text = { Text(text = "Reminder") },
                 onClick = {
-                    onEvent(AgendaEvent.ReminderItemSelected)
+                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.REMINDER_ITEM, null))
                 }
             )
         }
@@ -434,18 +471,31 @@ fun MonthText(selectedMonth: String) {
 
 @Composable
 fun AgendaDisplayItem(
-    title: String,
-    description: String,
-    date: String,
-    onEllipsisClick: () -> Unit,
+    agendaEventItem: AgendaEventItem,
+    onEllipsisClick: (Boolean) -> Unit,
+    onItemSelected: (AgendaEvent) -> Unit,
+    navToSelectedReminder: (AgendaEvent) -> Unit,
     modifier: Modifier = Modifier,
+    isEllipsisMenuExpanded: Boolean,
+    menuItemSelected: (AgendaEvent) -> Unit
 ) {
-
+    val instant = Instant.ofEpochMilli(agendaEventItem.timeInMillis)
+    val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+    val formattedDate = DateTimeFormatter.ofPattern("MMMM dd, HH:mm").format(date)
     Card(
+        colors = CardDefaults.cardColors(Color(android.graphics.Color.parseColor(agendaEventItem.color))),
         modifier = modifier
             .clip(MaterialTheme.shapes.medium)
-            .clickable { TODO() }
-            .wrapContentSize(), // Wraps the card content
+            .wrapContentSize() // Wraps the card content
+            .clickable {
+                onItemSelected(AgendaEvent.UpdateDate(agendaEventItem.timeInMillis))
+                navToSelectedReminder(
+                    AgendaEvent.MenuItemSelected(
+                        agendaEventItem.eventType,
+                        agendaEventItem.eventId
+                    )
+                )
+            }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -453,29 +503,30 @@ fun AgendaDisplayItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                WhiteCircleWithBlackBorder()
+                CircleWithBlackBorder(agendaEventItem.color)
                 Text(
-                    text = title,
+                    text = agendaEventItem.title,
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 5.dp)
                 )
-                IconButton(
-                    onClick = onEllipsisClick,
-                    modifier = Modifier.padding(start = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "More options",
-                        modifier = Modifier
-                            .rotate(90f)
-                            .clickable { TODO() }
-                    )
+                Column {
+                    IconButton(
+                        onClick = { onEllipsisClick(!isEllipsisMenuExpanded) },
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "More options",
+                            modifier = Modifier
+                                .rotate(90f)
+                        )
+                    }
                 }
             }
             Text(
-                text = description,
+                text = agendaEventItem.description,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -484,24 +535,53 @@ fun AgendaDisplayItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = date,
+                    text = formattedDate,
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
             }
         }
+        if (isEllipsisMenuExpanded) {
+            AgendaItemDropDown(
+                expanded = isEllipsisMenuExpanded,
+                menuItemSelected = menuItemSelected,
+                eventId = agendaEventItem.eventId
+            )
+        }
     }
 }
 
-@Preview
 @Composable
-fun PreviewRoundedCard() {
-    AgendaDisplayItem(
-        title = "Title",
-        description = "This is a sample description for the rounded card UI model.",
-        date = "March 28, 2024",
-        onEllipsisClick = {}
-    )
+fun AgendaItemDropDown(
+    expanded: Boolean,
+    menuItemSelected: (AgendaEvent) -> Unit,
+    eventId: String
+) {
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { menuItemSelected(AgendaEvent.IsEllipsisMenuExpanded(!expanded)) }
+    ) {
+        DropdownMenuItem(
+            text = { Text(text = stringResource(R.string.open)) },
+            onClick = {
+                menuItemSelected(
+                    AgendaEvent.MenuItemSelected(
+                        AgendaItemType.REMINDER_ITEM,
+                        eventId
+                    )
+                )
+            }
+        )
+        DropdownMenuItem(
+            text = { Text(text = stringResource(R.string.edit)) },
+            onClick = { TODO() }
+        )
+        DropdownMenuItem(
+            text = { Text(text = stringResource(R.string.delete)) },
+            onClick = { menuItemSelected(AgendaEvent.DeleteExistingReminder) }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
