@@ -6,10 +6,16 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.taskyy.data.local.data_access_objects.AgendaActivityDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.room_entity.agenda_entities.EventEntity
 import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
+import com.example.taskyy.data.local.room_entity.agenda_entities.TaskEntity
 import com.example.taskyy.data.local.room_entity.user.UserEntity
 
-@Database(entities = [UserEntity::class, ReminderEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [UserEntity::class, ReminderEntity::class, TaskEntity::class, EventEntity::class],
+    version = 1,
+    exportSchema = false
+)
 abstract class TaskyyDatabase: RoomDatabase() {
 
     abstract fun userDao(): UserDao

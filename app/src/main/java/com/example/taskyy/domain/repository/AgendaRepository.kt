@@ -9,7 +9,6 @@ interface AgendaRepository {
     suspend fun logout(): Boolean
     suspend fun getUserName(email: String): String
     suspend fun saveReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local>
-    suspend fun updateReminderOnDb(reminder: Reminder): Result<Reminder, DataError.Local>
     suspend fun uploadReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network>
     suspend fun updateReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network>
     suspend fun getReminders(

@@ -152,7 +152,7 @@ class ReminderViewModel @Inject constructor(
                 agendaItem = AgendaItemType.REMINDER_ITEM
             )
         viewModelScope.launch {
-            when (val updateDb = agendaRepository.updateReminderOnDb(newReminder)) {
+            when (val updateDb = agendaRepository.saveReminderToDB(newReminder)) {
                 is Result.Success -> {
                     eventChannel.send(ReminderEvent.SaveSuccessful)
                     when (val updateAPI = agendaRepository.updateReminderToApi(newReminder)) {

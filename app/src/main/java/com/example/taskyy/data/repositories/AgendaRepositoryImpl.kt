@@ -58,28 +58,6 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateReminderOnDb(reminder: Reminder): Result<Reminder, DataError.Local> {
-        return try {
-            agendaDao.updateReminder(
-                eventId = reminder.eventId,
-                description = reminder.description,
-                title = reminder.title,
-                time = reminder.timeInMillis,
-                remindTime = reminder.alarmType
-            )
-            Result.Success(reminder)
-        } catch (e: IOException) {
-            when (e.message) {
-                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
-                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
-                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
-                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
-                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
-                else -> Result.Error(DataError.Local.UNKNOWN)
-            }
-        }
-    }
-
     override suspend fun uploadReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network> {
         val reminderDTO = reminder.toReminderDto()
         return try {
