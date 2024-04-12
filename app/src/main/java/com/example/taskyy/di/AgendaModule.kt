@@ -1,6 +1,7 @@
 package com.example.taskyy.di
 
 import com.example.taskyy.data.local.data_access_objects.AgendaActivityDao
+import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.TaskyyApi
@@ -25,13 +26,15 @@ object AgendaModule {
         api: TaskyyApi,
         userDao: UserDao,
         agendaDao: AgendaActivityDao,
-        userPreferences: UserPreferences
+        userPreferences: UserPreferences,
+        pendingReminderRetryDao: PendingReminderRetryDao
     ): AgendaRepository {
         return AgendaRepositoryImpl(
             retrofit = api,
             userDao = userDao,
             agendaDao = agendaDao,
-            userPreferences = userPreferences
+            userPreferences = userPreferences,
+            pendingReminderRetryDao = pendingReminderRetryDao
         )
     }
 
@@ -45,6 +48,12 @@ object AgendaModule {
     @Singleton
     fun provideAgendaActivityDao(db: TaskyyDatabase): AgendaActivityDao {
         return db.agendaDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePendingReminderRetryDao(db: TaskyyDatabase): PendingReminderRetryDao {
+        return db.pendingReminderRetryDao()
     }
 
     @Provides

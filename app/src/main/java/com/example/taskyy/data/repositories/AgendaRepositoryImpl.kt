@@ -2,7 +2,9 @@ package com.example.taskyy.data.repositories
 
 import android.util.Log
 import com.example.taskyy.data.local.data_access_objects.AgendaActivityDao
+import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.room_entity.agenda_entities.PendingReminderRetryEntity
 import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
@@ -20,6 +22,7 @@ import javax.inject.Inject
 class AgendaRepositoryImpl @Inject constructor(
     private val retrofit: TaskyyApi,
     private val agendaDao: AgendaActivityDao,
+    private val pendingReminderRetryDao: PendingReminderRetryDao,
     private val userDao: UserDao,
     private val userPreferences: UserPreferences
 ): AgendaRepository {
@@ -58,12 +61,13 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun uploadReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network> {
+    override suspend fun saveReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network> {
         val reminderDTO = reminder.toReminderDto()
         return try {
             retrofit.createReminder(reminderDTO)
             Result.Success(reminder)
         } catch (e: HttpException) {
+            pendingReminderRetryDao.insertPendingReminder(reminder.toPendingReminderRetryEntity())
             when (e.code()) {
                 408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
                 429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
@@ -81,6 +85,7 @@ class AgendaRepositoryImpl @Inject constructor(
             retrofit.updateReminder(reminderDTO)
             Result.Success(reminder)
         } catch (e: HttpException) {
+            pendingReminderRetryDao.insertPendingReminder(reminder.toPendingReminderRetryEntity())
             when (e.code()) {
                 408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
                 429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
@@ -97,6 +102,7 @@ class AgendaRepositoryImpl @Inject constructor(
             retrofit.deleteReminder(agendaEventItem.eventId)
             Result.Success(true)
         } catch (e: HttpException) {
+            pendingReminderRetryDao.insertPendingReminder(agendaEventItem.toPendingReminderRetryEntity())
             when (e.code()) {
                 408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
                 429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
@@ -106,6 +112,30 @@ class AgendaRepositoryImpl @Inject constructor(
                 else -> Result.Error(DataError.Network.UNKNOWN)
             }
         }
+    }
+
+    override suspend fun addFailedReminderToRetry(reminder: Reminder): Result<Reminder, DataError.Local> {
+        return try {
+            pendingReminderRetryDao.insertPendingReminder(reminder.toPendingReminderRetryEntity())
+            Result.Success(reminder)
+        } catch (e: IOException) {
+            when (e.message) {
+                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
+                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
+                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
+                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
+                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
+                else -> Result.Error(DataError.Local.UNKNOWN)
+            }
+        }
+    }
+
+    override suspend fun addFailedTaskToRetry() {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun addFailedEventToRetry() {
+        TODO("Not yet implemented")
     }
 
     override suspend fun getReminders(
@@ -160,16 +190,6 @@ class AgendaRepositoryImpl @Inject constructor(
     }
 }
 
-private fun AgendaEventItem.toReminderEntity(): ReminderEntity {
-    return ReminderEntity(
-        id = eventId,
-        description = description,
-        title = title,
-        remindAt = alarmType,
-        time = timeInMillis,
-    )
-}
-
 fun ReminderEntity.transformToReminder(): Reminder {
     return Reminder(
         title,
@@ -177,7 +197,8 @@ fun ReminderEntity.transformToReminder(): Reminder {
         time,
         remindAt,
         id,
-        AgendaItemType.REMINDER_ITEM
+        AgendaItemType.REMINDER_ITEM,
+        action
     )
 }
 
@@ -189,9 +210,21 @@ fun List<ReminderEntity>.transformToReminder(): List<Reminder> {
             reminderEntity.time,
             reminderEntity.remindAt,
             reminderEntity.id,
-            AgendaItemType.REMINDER_ITEM
+            AgendaItemType.REMINDER_ITEM,
+            reminderEntity.action
         )
     }
+}
+
+private fun AgendaEventItem.toReminderEntity(): ReminderEntity {
+    return ReminderEntity(
+        id = eventId,
+        description = description,
+        title = title,
+        remindAt = alarmType,
+        time = timeInMillis,
+        action = agendaAction
+    )
 }
 
 fun Reminder.toReminderEntity(): ReminderEntity {
@@ -201,6 +234,7 @@ fun Reminder.toReminderEntity(): ReminderEntity {
         title = title,
         remindAt = alarmType,
         time = timeInMillis,
+        action = agendaAction
     )
 }
 
@@ -211,5 +245,27 @@ fun Reminder.toReminderDto(): ReminderDTO {
         title = title,
         time = timeInMillis,
         remindAt = alarmType
+    )
+}
+
+fun Reminder.toPendingReminderRetryEntity(): PendingReminderRetryEntity {
+    return PendingReminderRetryEntity(
+        id = eventId,
+        description = title,
+        action = agendaAction,
+        remindAt = alarmType,
+        title = title,
+        time = timeInMillis,
+    )
+}
+
+private fun AgendaEventItem.toPendingReminderRetryEntity(): PendingReminderRetryEntity {
+    return PendingReminderRetryEntity(
+        id = eventId,
+        description = title,
+        action = agendaAction,
+        remindAt = alarmType,
+        title = title,
+        time = timeInMillis,
     )
 }

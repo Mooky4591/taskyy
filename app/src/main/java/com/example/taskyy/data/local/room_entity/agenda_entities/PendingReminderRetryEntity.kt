@@ -4,8 +4,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.taskyy.ui.enums.AgendaItemAction
 
-@Entity(tableName = "reminder_table")
-data class ReminderEntity(
+@Entity(tableName = "pending_event_reminder_table")
+data class PendingReminderRetryEntity(
     @PrimaryKey
     val id: String,
     val description: String,
@@ -13,4 +13,5 @@ data class ReminderEntity(
     val time: Long,
     val title: String,
     val action: AgendaItemAction
+
 )

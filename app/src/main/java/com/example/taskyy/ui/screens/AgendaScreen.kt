@@ -1,5 +1,7 @@
 package com.example.taskyy.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,12 +41,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,20 +56,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.taskyy.R
+import com.example.taskyy.data.remote.Workers.AgendaItemWorker
+import com.example.taskyy.ui.enums.AgendaItemAction
 import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.objects.AgendaEventItem
 import com.example.taskyy.ui.objects.Day
 import com.example.taskyy.ui.viewmodels.AgendaState
 import com.example.taskyy.ui.viewmodels.TimeDateState
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateState: TimeDateState) {
+    StartWorkManager()
     Scaffold(
         content = {
             val formattedTitleDate = remember(timeDateState.dateTime) {
@@ -140,6 +156,31 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateSta
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun StartWorkManager() {
+    val context = LocalContext.current
+    LaunchedEffect(key1 = Unit) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val workRequest = PeriodicWorkRequestBuilder<AgendaItemWorker>(
+            repeatInterval = 2,
+            repeatIntervalTimeUnit = TimeUnit.MINUTES
+        ).setBackoffCriteria(
+            backoffPolicy = BackoffPolicy.LINEAR,
+            duration = Duration.ofSeconds(15)
+        ).setConstraints(constraints)
+            .build()
+        val workManager = WorkManager.getInstance(context)
+        workManager.enqueueUniquePeriodicWork(
+            "AgendaItemWorker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+}
+
 @Composable
 fun ListOfAgendaEvents(
     reminders: List<AgendaEventItem>,
@@ -167,6 +208,7 @@ fun ListOfAgendaEvents(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview
 @Composable
 fun AgendaScreenPreview() {
@@ -192,7 +234,8 @@ fun AgendaScreenPreview() {
                 alarmType = 0,
                 ";akjshf",
                 timeInMillis = LocalDateTime.now().toMillis(),
-                eventType = AgendaItemType.REMINDER_ITEM
+                eventType = AgendaItemType.REMINDER_ITEM,
+                agendaAction = AgendaItemAction.CREATE
             ),
             AgendaEventItem(
                 "Event 2",
@@ -200,7 +243,8 @@ fun AgendaScreenPreview() {
                 alarmType = 1,
                 "a;sdjhfapk",
                 timeInMillis = LocalDateTime.now().toMillis(),
-                eventType = AgendaItemType.REMINDER_ITEM
+                eventType = AgendaItemType.REMINDER_ITEM,
+                agendaAction = AgendaItemAction.UPDATE
             )
         ),
         isAddAgendaItemExpanded = false
