@@ -17,15 +17,6 @@ interface AgendaActivityDao {
     @androidx.room.Query("SELECT * FROM reminder_table WHERE id = :eventID")
     suspend fun getReminderByEventId(eventID: String): ReminderEntity
 
-    @androidx.room.Query("UPDATE reminder_table SET description = :description, time = :time, remindAt = :remindTime, title = :title WHERE id = :eventId")
-    suspend fun updateReminder(
-        description: String,
-        time: Long,
-        title: String,
-        remindTime: Long,
-        eventId: String
-    )
-
     @Delete
     suspend fun deleteReminder(reminderEntity: ReminderEntity)
 

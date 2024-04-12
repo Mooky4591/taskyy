@@ -9,8 +9,7 @@ interface AgendaRepository {
     suspend fun logout(): Boolean
     suspend fun getUserName(email: String): String
     suspend fun saveReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local>
-    suspend fun updateReminderOnDb(reminder: Reminder): Result<Reminder, DataError.Local>
-    suspend fun uploadReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network>
+    suspend fun saveReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network>
     suspend fun updateReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network>
     suspend fun getReminders(
         startDate: Long,
@@ -20,4 +19,7 @@ interface AgendaRepository {
     suspend fun getReminderByEventId(eventId: String): Result<Reminder, DataError.Local>
     suspend fun deleteReminderInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local>
     suspend fun deleteReminderOnApi(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Network>
+    suspend fun addFailedReminderToRetry(reminder: Reminder): Result<Reminder, DataError.Local>
+    suspend fun addFailedTaskToRetry()
+    suspend fun addFailedEventToRetry()
 }

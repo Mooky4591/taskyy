@@ -1,5 +1,6 @@
 package com.example.taskyy.ui.objects
 
+import com.example.taskyy.ui.enums.AgendaItemAction
 import com.example.taskyy.ui.enums.AgendaItemType
 
 open class AgendaEventItem(
@@ -8,6 +9,7 @@ open class AgendaEventItem(
     val alarmType: Long,
     val eventId: String,
     val timeInMillis: Long,
-    val eventType: AgendaItemType
+    val eventType: AgendaItemType,
+    var agendaAction: AgendaItemAction
 ) {
 }

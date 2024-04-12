@@ -11,9 +11,12 @@ import com.example.taskyy.domain.repository.AgendaRepository
 import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.domain.usecases.CheckForRemindersUseCase
 import com.example.taskyy.domain.usecases.LogoutUseCase
+import com.example.taskyy.ui.enums.AgendaItemAction
+import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.events.AgendaEvent
 import com.example.taskyy.ui.objects.AgendaEventItem
 import com.example.taskyy.ui.objects.Day
+import com.example.taskyy.ui.objects.Reminder
 import com.example.taskyy.ui.screens.toMillis
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -104,6 +107,7 @@ class AgendaViewModel @Inject constructor(
     }
 
     private fun deleteReminder(agendaEventItem: AgendaEventItem) {
+        agendaEventItem.agendaAction = AgendaItemAction.DELETE
         viewModelScope.launch {
             when (val delete = agendaRepository.deleteReminderInDb(agendaEventItem)) {
                 is Result.Success -> {
@@ -113,6 +117,7 @@ class AgendaViewModel @Inject constructor(
                         }
 
                         is Result.Error -> {
+                            agendaRepository.addFailedReminderToRetry(agendaEventItem.toReminder())
                         }
                     }
                 }
@@ -190,6 +195,19 @@ class AgendaViewModel @Inject constructor(
             }
         }
     }
+
+private fun AgendaEventItem.toReminder(): Reminder {
+    return Reminder(
+        id = eventId,
+        description = description,
+        agendaAction = agendaAction,
+        agendaItem = AgendaItemType.REMINDER_ITEM,
+        title = title,
+        timeInMillis = timeInMillis,
+        alarmType = alarmType
+    )
+}
+
 data class AgendaState(
     var name: String = "",
     var initials: String = "",

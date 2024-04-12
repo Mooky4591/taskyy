@@ -1,5 +1,6 @@
 package com.example.taskyy.ui.objects
 
+import com.example.taskyy.ui.enums.AgendaItemAction
 import com.example.taskyy.ui.enums.AgendaItemType
 
 class Reminder(
@@ -8,7 +9,8 @@ class Reminder(
     timeInMillis: Long,
     alarmType: Long,
     id: String,
-    agendaItem: AgendaItemType
-) : AgendaEventItem(title, description, alarmType, id, timeInMillis, agendaItem) {
+    agendaItem: AgendaItemType,
+    agendaAction: AgendaItemAction
+) : AgendaEventItem(title, description, alarmType, id, timeInMillis, agendaItem, agendaAction) {
 
 }
