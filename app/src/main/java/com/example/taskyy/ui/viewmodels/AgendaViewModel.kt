@@ -1,5 +1,6 @@
 package com.example.taskyy.ui.viewmodels
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -103,6 +104,15 @@ class AgendaViewModel @Inject constructor(
                 deleteReminder(event.agendaEventItem)
             }
             is AgendaEvent.EditExistingReminder -> {}
+            is AgendaEvent.StartWorkManager -> {
+                startWorkManager(event.context)
+            }
+        }
+    }
+
+    private fun startWorkManager(context: Context) {
+        viewModelScope.launch {
+            agendaRepository.startWorkManager(context)
         }
     }
 

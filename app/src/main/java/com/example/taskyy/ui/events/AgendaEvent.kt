@@ -1,5 +1,6 @@
 package com.example.taskyy.ui.events
 
+import android.content.Context
 import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.objects.AgendaEventItem
 
@@ -24,4 +25,5 @@ sealed interface AgendaEvent {
     data class EditExistingReminder(val agendaItem: AgendaEventItem) : AgendaEvent
     data class DeleteExistingReminder(val agendaEventItem: AgendaEventItem) : AgendaEvent
     data class IsEllipsisMenuExpanded(val isEllipsisMenuExpanded: Boolean) : AgendaEvent
+    data class StartWorkManager(val context: Context) : AgendaEvent
 }
