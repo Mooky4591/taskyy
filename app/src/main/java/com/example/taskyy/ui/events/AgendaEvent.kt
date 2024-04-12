@@ -14,10 +14,14 @@ sealed interface AgendaEvent {
     data class UpdateDate(val date: Long) : AgendaEvent
     data object LogoutSuccessful : AgendaEvent
     data class SelectedDayIndex(val index: Int) : AgendaEvent
-    data class MenuItemSelected(val itemType: AgendaItemType, val eventItemId: String?) :
+    data class MenuItemSelected(
+        val itemType: AgendaItemType,
+        val eventItemId: String?,
+        val isEditing: Boolean
+    ) :
         AgendaEvent
 
     data class EditExistingReminder(val agendaItem: AgendaEventItem) : AgendaEvent
-    data object DeleteExistingReminder : AgendaEvent
+    data class DeleteExistingReminder(val agendaEventItem: AgendaEventItem) : AgendaEvent
     data class IsEllipsisMenuExpanded(val isEllipsisMenuExpanded: Boolean) : AgendaEvent
 }

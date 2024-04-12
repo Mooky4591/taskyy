@@ -51,8 +51,13 @@ class ReminderViewModel @Inject constructor(
     val events = eventChannel.receiveAsFlow()
 
     init {
-        if (savedStateHandle.get<String>("eventItemId") != null) {
-            _state.update { it.copy(eventId = savedStateHandle.get<String>("eventItemId")!!) }
+        if (savedStateHandle.get<String>("eventItemId") != "null") {
+            _state.update {
+                it.copy(
+                    eventId = savedStateHandle.get<String>("eventItemId")!!,
+                    isEditingEvent = savedStateHandle.get<String>("isEditing").toBoolean()
+                )
+            }
             getEvent(_state.value.eventId)
         }
         if (savedStateHandle.get<String>("dateString") != null) {
@@ -61,8 +66,6 @@ class ReminderViewModel @Inject constructor(
         }
         if (savedStateHandle.get<AgendaItemType>("agendaItem") != null) {
             val item = savedStateHandle.get<String>("agendaItem")
-            //I am trying to pass this as a AgendaItemType enum but for some reason it is coming in as a string.
-            //in order to make it work the way I wanted, I needed to create this extension function
             _state.update {
                 it.copy(
                     agendaItemType = savedStateHandle.get<String>("agendaItem")
@@ -121,6 +124,9 @@ class ReminderViewModel @Inject constructor(
             is ReminderEvent.UpdateDateSelection -> {
                 formatDateString(event.selectedDate)
             }
+            is ReminderEvent.UpdateReminder -> {
+                updateEvent(event.eventId, event.description, event.title)
+            }
         }
     }
 
@@ -135,6 +141,38 @@ class ReminderViewModel @Inject constructor(
         }
     }
 
+    private fun updateEvent(eventId: String, description: String, title: String) {
+        val newReminder =
+            Reminder(
+                alarmType = _state.value.formattedReminderTime,
+                title = title,
+                description = description,
+                id = eventId,
+                timeInMillis = _dateTimeState.value.dateTime.toMillis(),
+                agendaItem = AgendaItemType.REMINDER_ITEM
+            )
+        viewModelScope.launch {
+            when (val updateDb = agendaRepository.updateReminderOnDb(newReminder)) {
+                is Result.Success -> {
+                    eventChannel.send(ReminderEvent.SaveSuccessful)
+                    when (val updateAPI = agendaRepository.updateReminderToApi(newReminder)) {
+                        is Result.Success -> {
+
+                        }
+
+                        is Result.Error -> {
+
+                        }
+                    }
+                }
+
+                is Result.Error -> {
+
+                }
+            }
+        }
+    }
+
     private fun save(title: String, description: String) {
         val newReminder =
             Reminder(
@@ -143,7 +181,6 @@ class ReminderViewModel @Inject constructor(
                 description = description,
                 timeInMillis = _dateTimeState.value.dateTime.toMillis(),
                 id = UUID.randomUUID().toString(),
-                color = "#f2f6ff",
                 agendaItem = AgendaItemType.REMINDER_ITEM
 
             )
@@ -170,8 +207,6 @@ class ReminderViewModel @Inject constructor(
     private fun getEvent(eventId: String) {
         viewModelScope.launch {
             when (val event = agendaRepository.getReminderByEventId(eventId = eventId)) {
-                //I am setting the values after I'm already landed on the reminder page. I need to
-                //set this value before loading the page
                 is Result.Success -> {
                     _state.update {
                         it.copy(
@@ -334,22 +369,10 @@ class ReminderViewModel @Inject constructor(
 }
 
 private fun String?.toAgendaItemType(item: String?): AgendaItemType {
-    return when (item) {
-        AgendaItemType.REMINDER_ITEM.toString() -> {
-            AgendaItemType.REMINDER_ITEM
-        }
-
-        AgendaItemType.TASK_ITEM.toString() -> {
-            AgendaItemType.TASK_ITEM
-        }
-
-        AgendaItemType.EVENT_ITEM.toString() -> {
-            AgendaItemType.EVENT_ITEM
-        }
-
-        else -> {
-            AgendaItemType.REMINDER_ITEM
-        }
+    return if (item != null) {
+        AgendaItemType.valueOf(item)
+    } else {
+        AgendaItemType.REMINDER_ITEM
     }
 }
 
@@ -364,7 +387,8 @@ data class ReminderState(
     var reminderTitleText: String = "New Reminder",
     var saveFailedMessage: String = "",
     var agendaItemType: AgendaItemType = AgendaItemType.REMINDER_ITEM,
-    var eventId: String = ""
+    var eventId: String = "",
+    var isEditingEvent: Boolean = true
 )
 
 data class TimeAndDateState(

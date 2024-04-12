@@ -109,8 +109,8 @@ fun Nav() {
                         when (event) {
                             is AgendaEvent.MenuItemSelected ->
                                 when (event.itemType) {
-                                    AgendaItemType.REMINDER_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}")
-                                    AgendaItemType.TASK_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}")
+                                    AgendaItemType.REMINDER_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}, ${event.isEditing}")
+                                    AgendaItemType.TASK_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}, ${event.isEditing}")
                                     AgendaItemType.EVENT_ITEM -> {}
                                 }
 //                            is AgendaEvent.EditExistingReminder -> navController.navigate(Screen.Reminder.route + "/${event.agendaItem.}")
@@ -121,29 +121,31 @@ fun Nav() {
                 )
             }
 
-            composable(route = Screen.Reminder.route + "/{dateString}, {agendaItem}, {eventItemId}") {
+            composable(route = Screen.Reminder.route + "/{dateString}, {agendaItem}, {eventItemId}, {isEditing}") {
                 val reminderViewModel = hiltViewModel<ReminderViewModel>()
                 val state by reminderViewModel.state.collectAsState()
                 val timeDateState by reminderViewModel.timeAndDateState.collectAsState()
                 val editedRemindDescription = navController
                     .currentBackStackEntry
                     ?.savedStateHandle
-                    ?.getStateFlow<String>("reminderDescription", "Reminder Description")
+                    ?.getStateFlow<String>("reminderDescription", "")
                     ?.collectAsStateWithLifecycle()
                 val editedRemindTitle = navController
                     .currentBackStackEntry
                     ?.savedStateHandle
-                    ?.getStateFlow("reminderTitle", "New Reminder")
+                    ?.getStateFlow("reminderTitle", "")
                     ?.collectAsStateWithLifecycle()
 
                 LaunchedEffect(editedRemindDescription) {
+                    if (editedRemindDescription?.value != "")
                     reminderViewModel.setReminderDescription(
-                        editedRemindDescription?.value ?: "Reminder Description"
+                        editedRemindDescription?.value ?: ""
                     )
                 }
                 LaunchedEffect(editedRemindTitle) {
+                    if (editedRemindTitle?.value != "")
                     reminderViewModel.setReminderTitle(
-                        editedRemindTitle?.value ?: "Reminder Title"
+                        editedRemindTitle?.value ?: ""
                     )
                 }
 
@@ -169,15 +171,15 @@ fun Nav() {
                     { event ->
                     when (event) {
                         is ReminderEvent.EnterReminderDescription -> {
-                            navController.navigate(Screen.EditText.route + "/${event.editDescription}")
+                            navController.navigate(Screen.EditText.route + "/${event.editDescription}, ${state.reminderDescription}")
                         }
 
                         is ReminderEvent.EnterSetTitleScreen -> {
-                            navController.navigate(Screen.EditText.route + "/${event.editTitle}")
+                            navController.navigate(Screen.EditText.route + "/${event.editTitle}, ${state.reminderTitleText}")
                         }
 
                         is ReminderEvent.Close -> {
-                            navController.popBackStack()
+                            navController.navigateUp()
                         }
 
                         else -> reminderViewModel.onEvent(event)
@@ -187,10 +189,14 @@ fun Nav() {
                 )
             }
 
-            composable(route = Screen.EditText.route + "/{screenType}",
+            composable(
+                route = Screen.EditText.route + "/{screenType}, {textToEdit}",
                 arguments = listOf(
                     navArgument("screenType") {
                         type = NavType.EnumType<EditTextScreenType>(EditTextScreenType::class.java)
+                    },
+                    navArgument("textToEdit") {
+                        type = NavType.StringType
                     }
                 )
             ) {
@@ -218,7 +224,7 @@ fun Nav() {
                             }
 
                             is EditTextEvent.Back -> {
-                                navController.popBackStack()
+                                navController.navigateUp()
                             }
 
                             else -> {

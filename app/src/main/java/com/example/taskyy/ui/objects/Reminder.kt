@@ -8,8 +8,7 @@ class Reminder(
     timeInMillis: Long,
     alarmType: Long,
     id: String,
-    color: String,
     agendaItem: AgendaItemType
-) : AgendaEventItem(title, description, alarmType, id, color, timeInMillis, agendaItem) {
+) : AgendaEventItem(title, description, alarmType, id, timeInMillis, agendaItem) {
 
 }

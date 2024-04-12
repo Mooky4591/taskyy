@@ -191,7 +191,6 @@ fun AgendaScreenPreview() {
                 "Description 1",
                 alarmType = 0,
                 ";akjshf",
-                color = "#FFFFFF",
                 timeInMillis = LocalDateTime.now().toMillis(),
                 eventType = AgendaItemType.REMINDER_ITEM
             ),
@@ -200,7 +199,6 @@ fun AgendaScreenPreview() {
                 "Description 2",
                 alarmType = 1,
                 "a;sdjhfapk",
-                color = "#FFFFFF",
                 timeInMillis = LocalDateTime.now().toMillis(),
                 eventType = AgendaItemType.REMINDER_ITEM
             )
@@ -353,19 +351,19 @@ fun AddAgendaItem(onEvent: (AgendaEvent) -> Unit, isAgendaItemExpanded: Boolean)
             DropdownMenuItem(
                 text = { Text(text = "Event") },
                 onClick = {
-                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.EVENT_ITEM, null))
+                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.EVENT_ITEM, null, false))
                 }
             )
             DropdownMenuItem(
                 text = { Text(text = "Task") },
                 onClick = {
-                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.TASK_ITEM, null))
+                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.TASK_ITEM, null, false))
                 }
             )
             DropdownMenuItem(
                 text = { Text(text = "Reminder") },
                 onClick = {
-                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.REMINDER_ITEM, null))
+                    onEvent(AgendaEvent.MenuItemSelected(AgendaItemType.REMINDER_ITEM, null, false))
                 }
             )
         }
@@ -482,8 +480,14 @@ fun AgendaDisplayItem(
     val instant = Instant.ofEpochMilli(agendaEventItem.timeInMillis)
     val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
     val formattedDate = DateTimeFormatter.ofPattern("MMMM dd, HH:mm").format(date)
+    val color: Color =
+        if (agendaEventItem.eventType == AgendaItemType.REMINDER_ITEM) {
+            Color(android.graphics.Color.parseColor("#f2f6ff"))
+        } else {
+            Color(android.graphics.Color.parseColor("#FFFFFF"))
+        }
     Card(
-        colors = CardDefaults.cardColors(Color(android.graphics.Color.parseColor(agendaEventItem.color))),
+        colors = CardDefaults.cardColors(color),
         modifier = modifier
             .clip(MaterialTheme.shapes.medium)
             .wrapContentSize() // Wraps the card content
@@ -492,7 +496,8 @@ fun AgendaDisplayItem(
                 navToSelectedReminder(
                     AgendaEvent.MenuItemSelected(
                         agendaEventItem.eventType,
-                        agendaEventItem.eventId
+                        agendaEventItem.eventId,
+                        false
                     )
                 )
             }
@@ -503,7 +508,7 @@ fun AgendaDisplayItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CircleWithBlackBorder(agendaEventItem.color)
+                CircleWithBlackBorder(color = "#f2f6ff")
                 Text(
                     text = agendaEventItem.title,
                     style = MaterialTheme.typography.titleLarge,
@@ -545,7 +550,8 @@ fun AgendaDisplayItem(
             AgendaItemDropDown(
                 expanded = isEllipsisMenuExpanded,
                 menuItemSelected = menuItemSelected,
-                eventId = agendaEventItem.eventId
+                eventId = agendaEventItem.eventId,
+                agendaEventItem = agendaEventItem
             )
         }
     }
@@ -555,7 +561,8 @@ fun AgendaDisplayItem(
 fun AgendaItemDropDown(
     expanded: Boolean,
     menuItemSelected: (AgendaEvent) -> Unit,
-    eventId: String
+    eventId: String,
+    agendaEventItem: AgendaEventItem
 ) {
 
     DropdownMenu(
@@ -568,18 +575,27 @@ fun AgendaItemDropDown(
                 menuItemSelected(
                     AgendaEvent.MenuItemSelected(
                         AgendaItemType.REMINDER_ITEM,
-                        eventId
+                        eventId,
+                        false
                     )
                 )
             }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.edit)) },
-            onClick = { TODO() }
+            onClick = {
+                menuItemSelected(
+                    AgendaEvent.MenuItemSelected(
+                        AgendaItemType.REMINDER_ITEM,
+                        eventId,
+                        true
+                    )
+                )
+            }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.delete)) },
-            onClick = { menuItemSelected(AgendaEvent.DeleteExistingReminder) }
+            onClick = { menuItemSelected(AgendaEvent.DeleteExistingReminder(agendaEventItem)) }
         )
     }
 }

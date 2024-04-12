@@ -24,7 +24,11 @@ interface ReminderEvent {
         var title: String,
         var description: String
     ) : ReminderEvent
-
+    data class UpdateReminder(
+        var eventId: String,
+        var title: String,
+        var description: String
+    ) : ReminderEvent
     data object Close : ReminderEvent
     data object SaveSuccessful : ReminderEvent
     data class SaveFailed(val errorMessage: UiText) : ReminderEvent

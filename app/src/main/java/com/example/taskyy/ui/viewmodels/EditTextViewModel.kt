@@ -20,7 +20,12 @@ class EditTextViewModel @Inject constructor(
 
     init {
         val screenType = savedStateHandle.get<EditTextScreenType>("screenType")
-        _state.update { it.copy(screenType = screenType) }
+        _state.update {
+            it.copy(
+                screenType = screenType,
+                enteredText = savedStateHandle.get<String>("textToEdit") ?: "edit"
+            )
+        }
     }
 
     fun onEvent(event: EditTextEvent) {
@@ -41,7 +46,7 @@ class EditTextViewModel @Inject constructor(
 }
 
 data class EditTextState(
-    var enteredText: String = "Edit",
+    var enteredText: String = "",
     var title: String = "",
     var screenType: EditTextScreenType? = null
 )

@@ -56,7 +56,6 @@ class AgendaViewModel @Inject constructor(
                 is Result.Success -> {
                     state = state.copy(listOfAgendaEvents = reminderList.data)
                 }
-
                 is Result.Error -> {
                 }
             }
@@ -97,8 +96,30 @@ class AgendaViewModel @Inject constructor(
                     state.copy(isEllipsisMenuExpanded = event.isEllipsisMenuExpanded)
             }
 
-            is AgendaEvent.DeleteExistingReminder -> {}
+            is AgendaEvent.DeleteExistingReminder -> {
+                deleteReminder(event.agendaEventItem)
+            }
             is AgendaEvent.EditExistingReminder -> {}
+        }
+    }
+
+    private fun deleteReminder(agendaEventItem: AgendaEventItem) {
+        viewModelScope.launch {
+            when (val delete = agendaRepository.deleteReminderInDb(agendaEventItem)) {
+                is Result.Success -> {
+                    checkForReminders(timeDateState.dateTime)
+                    when (val delete = agendaRepository.deleteReminderOnApi(agendaEventItem)) {
+                        is Result.Success -> {
+                        }
+
+                        is Result.Error -> {
+                        }
+                    }
+                }
+
+                is Result.Error -> {
+                }
+            }
         }
     }
 

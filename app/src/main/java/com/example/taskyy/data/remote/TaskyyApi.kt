@@ -71,11 +71,11 @@ interface TaskyyApi {
     fun deleteTask(@Query("key") key: String, @Query("task_id") taskId: String)
 
     @PUT("/reminder")
-    fun updateReminder(@Query("key") key: String)
+    fun updateReminder(@Body body: ReminderDTO): retrofit2.Call<Void>
 
     @GET("/reminder")
     fun getReminder(@Query("key") key: String, @Query("reminder_id") reminderId: String): retrofit2.Response<ReminderEntity>
 
     @DELETE("/reminder")
-    fun deleteReminder(@Query("key") key: String, @Query("reminder_id") reminderId: String)
+    fun deleteReminder(@Query("reminder_id") reminderId: String): retrofit2.Call<Void>
 }
