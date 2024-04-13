@@ -4,10 +4,9 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.taskyy.data.local.room_database.TaskyyDatabase
-import com.example.taskyy.data.local.room_entity.agenda_entities.PendingReminderRetryEntity
+import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
-import com.example.taskyy.domain.error.Result
 import com.example.taskyy.ui.enums.AgendaItemAction
 import retrofit2.HttpException
 
@@ -37,25 +36,37 @@ class AgendaItemWorker(
                 when (reminder.action) {
                     AgendaItemAction.CREATE -> {
                         try {
-                            taskyyApi.createReminder(reminder.toReminderDTO())
+                            taskyyApi.createReminder(
+                                taskyyDatabase.agendaDao().getReminderByEventId(reminder.id)
+                                    .toReminderDTO()
+                            )
+                            taskyyDatabase.pendingReminderRetryDao().removePendingReminder(reminder)
+                            return Result.success()
                         } catch (e: HttpException) {
-                            return Result.retry()
+                            return shouldTryAgainOrFail(e.code())
                         }
                     }
 
                     AgendaItemAction.UPDATE -> {
                         try {
-                            taskyyApi.updateReminder(reminder.toReminderDTO())
+                            taskyyApi.updateReminder(
+                                taskyyDatabase.agendaDao().getReminderByEventId(reminder.id)
+                                    .toReminderDTO()
+                            )
+                            taskyyDatabase.pendingReminderRetryDao().removePendingReminder(reminder)
+                            return Result.success()
                         } catch (e: HttpException) {
-                            return Result.retry()
+                            return shouldTryAgainOrFail(e.code())
                         }
                     }
 
                     AgendaItemAction.DELETE -> {
                         try {
                             taskyyApi.deleteReminder(reminder.id)
+                            taskyyDatabase.pendingReminderRetryDao().removePendingReminder(reminder)
+                            return Result.success()
                         } catch (e: HttpException) {
-                            return Result.retry()
+                            return shouldTryAgainOrFail(e.code())
                         }
                     }
                 }
@@ -63,14 +74,26 @@ class AgendaItemWorker(
         }
         return Result.success()
     }
+
+    private fun shouldTryAgainOrFail(code: Int): Result {
+        return when (code) {
+            in 500..504 -> Result.retry()
+            429 -> Result.retry()
+            in 400..410 -> Result.failure()
+            else -> {
+                Result.failure()
+            }
+        }
+
+    }
 }
 
-private fun PendingReminderRetryEntity.toReminderDTO(): ReminderDTO {
+private fun ReminderEntity.toReminderDTO(): ReminderDTO {
     return ReminderDTO(
-        id,
-        description,
-        title,
-        time,
-        remindAt
+        id = id,
+        remindAt = remindAt,
+        description = description,
+        title = title,
+        time = time
     )
 }

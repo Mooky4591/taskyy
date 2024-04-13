@@ -1,12 +1,22 @@
 package com.example.taskyy.data.repositories
 
+import android.content.Context
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.taskyy.data.local.data_access_objects.AgendaActivityDao
 import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_entity.agenda_entities.PendingReminderRetryEntity
 import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.remote.TaskyyApi
+import com.example.taskyy.data.remote.Workers.AgendaItemWorker
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.domain.error.DataError
 import com.example.taskyy.domain.error.Result
@@ -17,6 +27,8 @@ import com.example.taskyy.ui.objects.AgendaEventItem
 import com.example.taskyy.ui.objects.Reminder
 import retrofit2.HttpException
 import java.io.IOException
+import java.time.Duration
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class AgendaRepositoryImpl @Inject constructor(
@@ -138,6 +150,27 @@ class AgendaRepositoryImpl @Inject constructor(
         TODO("Not yet implemented")
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun startWorkManager(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val workRequest = PeriodicWorkRequestBuilder<AgendaItemWorker>(
+            repeatInterval = 2,
+            repeatIntervalTimeUnit = TimeUnit.MINUTES
+        ).setBackoffCriteria(
+            backoffPolicy = BackoffPolicy.LINEAR,
+            duration = Duration.ofSeconds(15)
+        ).setConstraints(constraints)
+            .build()
+        val workManager = WorkManager.getInstance(context)
+        workManager.enqueueUniquePeriodicWork(
+            "AgendaItemWorker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+
     override suspend fun getReminders(
         startDate: Long,
         endDate: Long
@@ -190,7 +223,7 @@ class AgendaRepositoryImpl @Inject constructor(
     }
 }
 
-fun ReminderEntity.transformToReminder(): Reminder {
+private fun ReminderEntity.transformToReminder(): Reminder {
     return Reminder(
         title,
         description,
@@ -202,7 +235,7 @@ fun ReminderEntity.transformToReminder(): Reminder {
     )
 }
 
-fun List<ReminderEntity>.transformToReminder(): List<Reminder> {
+private fun List<ReminderEntity>.transformToReminder(): List<Reminder> {
     return map { reminderEntity ->
         Reminder(
             reminderEntity.title,
@@ -227,7 +260,7 @@ private fun AgendaEventItem.toReminderEntity(): ReminderEntity {
     )
 }
 
-fun Reminder.toReminderEntity(): ReminderEntity {
+private fun Reminder.toReminderEntity(): ReminderEntity {
     return ReminderEntity(
         id = eventId,
         description = description,
@@ -238,7 +271,7 @@ fun Reminder.toReminderEntity(): ReminderEntity {
     )
 }
 
-fun Reminder.toReminderDto(): ReminderDTO {
+private fun Reminder.toReminderDto(): ReminderDTO {
     return ReminderDTO(
         id = eventId,
         description = description,
@@ -248,24 +281,16 @@ fun Reminder.toReminderDto(): ReminderDTO {
     )
 }
 
-fun Reminder.toPendingReminderRetryEntity(): PendingReminderRetryEntity {
+private fun Reminder.toPendingReminderRetryEntity(): PendingReminderRetryEntity {
     return PendingReminderRetryEntity(
         id = eventId,
-        description = title,
         action = agendaAction,
-        remindAt = alarmType,
-        title = title,
-        time = timeInMillis,
     )
 }
 
 private fun AgendaEventItem.toPendingReminderRetryEntity(): PendingReminderRetryEntity {
     return PendingReminderRetryEntity(
         id = eventId,
-        description = title,
         action = agendaAction,
-        remindAt = alarmType,
-        title = title,
-        time = timeInMillis,
     )
 }

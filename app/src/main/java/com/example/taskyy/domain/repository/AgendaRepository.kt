@@ -1,5 +1,6 @@
 package com.example.taskyy.domain.repository
 
+import android.content.Context
 import com.example.taskyy.domain.error.DataError
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.ui.objects.AgendaEventItem
@@ -22,4 +23,5 @@ interface AgendaRepository {
     suspend fun addFailedReminderToRetry(reminder: Reminder): Result<Reminder, DataError.Local>
     suspend fun addFailedTaskToRetry()
     suspend fun addFailedEventToRetry()
+    suspend fun startWorkManager(context: Context)
 }

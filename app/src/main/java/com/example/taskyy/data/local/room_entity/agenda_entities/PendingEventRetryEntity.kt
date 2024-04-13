@@ -8,10 +8,6 @@ import com.example.taskyy.ui.enums.AgendaItemAction
 data class PendingEventRetryEntity(
     @PrimaryKey
     val id: String,
-    val description: String,
-    val remindAt: Long,
-    val time: Long,
-    val title: String,
     val action: AgendaItemAction
 
 )
