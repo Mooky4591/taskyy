@@ -40,6 +40,7 @@ class AgendaItemWorker(
                                 taskyyDatabase.agendaDao().getReminderByEventId(reminder.id)
                                     .toReminderDTO()
                             )
+                            taskyyDatabase.pendingReminderRetryDao().removePendingReminder(reminder)
                             return Result.success()
                         } catch (e: HttpException) {
                             return shouldTryAgainOrFail(e.code())
@@ -52,6 +53,7 @@ class AgendaItemWorker(
                                 taskyyDatabase.agendaDao().getReminderByEventId(reminder.id)
                                     .toReminderDTO()
                             )
+                            taskyyDatabase.pendingReminderRetryDao().removePendingReminder(reminder)
                             return Result.success()
                         } catch (e: HttpException) {
                             return shouldTryAgainOrFail(e.code())
@@ -61,6 +63,7 @@ class AgendaItemWorker(
                     AgendaItemAction.DELETE -> {
                         try {
                             taskyyApi.deleteReminder(reminder.id)
+                            taskyyDatabase.pendingReminderRetryDao().removePendingReminder(reminder)
                             return Result.success()
                         } catch (e: HttpException) {
                             return shouldTryAgainOrFail(e.code())
