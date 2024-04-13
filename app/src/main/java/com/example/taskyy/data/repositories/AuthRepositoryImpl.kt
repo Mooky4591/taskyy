@@ -6,11 +6,15 @@ import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
 import com.example.taskyy.domain.error.DataError
+import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.domain.repository.UserPreferences
+import retrofit2.Call
+import retrofit2.Callback
 import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 import javax.inject.Inject
 
@@ -21,7 +25,6 @@ class AuthRepositoryImpl @Inject constructor(
 ): AuthRepository {
 
     override suspend fun addTokenAndIdToDatabase(token: String, userId: String, email: String) {
-        //need to determine why userId is empty
         userPreferences.addUserId("userId", "userId")
         userPreferences.addUserToken(token, "token")
         userDao.update(token, userId, email)
@@ -31,15 +34,15 @@ class AuthRepositoryImpl @Inject constructor(
         val userDto = user.toUserDTO()
         return try {
             retrofit.registerUser(userDto)
-            com.example.taskyy.domain.error.Result.Success(user)
+            Result.Success(user)
         } catch (e: HttpException) {
             when (e.code()) {
-                400 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERIALIZATION)
-                408 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.REQUEST_TIMEOUT)
-                413 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
-                429 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.TOO_MANY_REQUESTS)
-                500 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERVER_ERROR)
-                else -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN)
+                400 -> Result.Error(DataError.Network.SERIALIZATION)
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                500 -> Result.Error(DataError.Network.SERVER_ERROR)
+                else -> Result.Error(DataError.Network.UNKNOWN)
             }
         }
     }
@@ -53,30 +56,46 @@ class AuthRepositoryImpl @Inject constructor(
         return hasLowerCase && hasUpperCase && hasDigit && hasValidLength
     }
 
-    override suspend fun login(login: Login): com.example.taskyy.domain.error.Result<User, DataError.Network> {
+    override suspend fun login(login: Login): Result<User, DataError.Network> {
         return try {
             val loginUser = retrofit.loginUser(login)
             val user = loginUser.toUser()
             val userEntity = loginUser.toUserEntity(login.email, loginUser.userId)
             userDao.insertUser(userEntity)
             addTokenAndIdToDatabase(loginUser.token, loginUser.userId, login.email)
-            com.example.taskyy.domain.error.Result.Success(user)
+            Result.Success(user)
         } catch (e: HttpException) {
             when (e.code()) {
-                408 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.REQUEST_TIMEOUT)
-                409 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.INCORRECT_PASSWORD_OR_EMAIL)
-                429 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.TOO_MANY_REQUESTS)
-                413 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
-                500 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERVER_ERROR)
-                400 -> com.example.taskyy.domain.error.Result.Error(DataError.Network.SERIALIZATION)
-                else -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN)
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                409 -> Result.Error(DataError.Network.INCORRECT_PASSWORD_OR_EMAIL)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> Result.Error(DataError.Network.SERIALIZATION)
+                else -> Result.Error(DataError.Network.UNKNOWN)
             }
         } catch (e: IOException) {
             when (e.message) {
-                "UnknownHostException" -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN_HOST_EXCEPTION)
-                else -> com.example.taskyy.domain.error.Result.Error(DataError.Network.UNKNOWN)
+                "UnknownHostException" -> Result.Error(DataError.Network.UNKNOWN_HOST_EXCEPTION)
+                else -> Result.Error(DataError.Network.UNKNOWN)
             }
         }
+    }
+
+    override suspend fun validateToken(): Boolean {
+        val call = retrofit.checkTokenIsValid()
+        var returnValue = false
+        call.enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                returnValue = !response.isSuccessful
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                TODO("Not yet implemented")
+            }
+
+        })
+        return returnValue
     }
 
     private fun User.toUserDTO(): RegisterUserDTO {

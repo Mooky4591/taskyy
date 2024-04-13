@@ -25,8 +25,8 @@ interface TaskyyApi {
     @POST("/reminder")
     fun createReminder(@Body body: ReminderDTO): retrofit2.Call<Void>
 
-    //  @GET("/authenticate")
-    // fun checkTokenIsValid(@Query("key") key: String): retrofit2.Response<TokenResponse>
+    @GET("/authenticate")
+    fun checkTokenIsValid(): retrofit2.Call<Void>
 
     @GET("/logout")
     suspend fun logoutUser(): retrofit2.Call<Void>
