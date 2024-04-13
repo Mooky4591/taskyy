@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.error.asUiText
 import com.example.taskyy.domain.objects.Login
+import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.ui.UiText
@@ -21,13 +22,23 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
     var state by mutableStateOf(LoginState())
         private set
 
     private val eventChannel = Channel<LoginEvent>()
     val events = eventChannel.receiveAsFlow()
+
+    init {
+        viewModelScope.launch {
+            if (authRepository.validateToken()) {
+                eventChannel.send(LoginEvent.LoginSuccess(state.email))
+            }
+            state.copy(isReady = true)
+        }
+    }
 
     fun onEvent(event: LoginEvent) {
         when (event) {
@@ -78,6 +89,7 @@ data class LoginState(
     var isEmailValid: Boolean = false,
     var isPasswordVisible: Boolean = false,
     var isLoginSuccessful: Boolean = false,
-    var loginErrorMessage: UiText? = null
+    var loginErrorMessage: UiText? = null,
+    var isReady: Boolean = false
 )
 
