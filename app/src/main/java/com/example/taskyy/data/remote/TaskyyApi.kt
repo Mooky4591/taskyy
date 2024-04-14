@@ -7,6 +7,7 @@ import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
 import com.example.taskyy.domain.objects.Login
+import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -26,7 +27,7 @@ interface TaskyyApi {
     fun createReminder(@Body body: ReminderDTO): retrofit2.Call<Void>
 
     @GET("/authenticate")
-    fun checkTokenIsValid(): retrofit2.Call<Void>
+    fun checkTokenIsValid(): retrofit2.Call<ResponseBody>
 
     @GET("/logout")
     suspend fun logoutUser(): retrofit2.Call<Void>

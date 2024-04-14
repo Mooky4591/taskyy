@@ -11,10 +11,7 @@ import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.domain.repository.UserPreferences
-import retrofit2.Call
-import retrofit2.Callback
 import retrofit2.HttpException
-import retrofit2.Response
 import java.io.IOException
 import javax.inject.Inject
 
@@ -30,7 +27,7 @@ class AuthRepositoryImpl @Inject constructor(
         userDao.update(token, userId, email)
     }
 
-    override suspend fun registerUser(user: User): com.example.taskyy.domain.error.Result<User, DataError.Network> {
+    override suspend fun registerUser(user: User): Result<User, DataError.Network> {
         val userDto = user.toUserDTO()
         return try {
             retrofit.registerUser(userDto)
@@ -82,20 +79,21 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun validateToken(): Boolean {
-        val call = retrofit.checkTokenIsValid()
-        var returnValue = false
-        call.enqueue(object : Callback<Void> {
-            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                returnValue = !response.isSuccessful
+    override suspend fun validateToken(): Result<Boolean, DataError.Network> {
+        return try {
+            retrofit.checkTokenIsValid()
+            Result.Success(true)
+        } catch (e: HttpException) {
+            when (e.code()) {
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                409 -> Result.Error(DataError.Network.INCORRECT_PASSWORD_OR_EMAIL)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> Result.Error(DataError.Network.SERIALIZATION)
+                else -> Result.Error(DataError.Network.UNKNOWN)
             }
-
-            override fun onFailure(call: Call<Void>, t: Throwable) {
-                TODO("Not yet implemented")
-            }
-
-        })
-        return returnValue
+        }
     }
 
     private fun User.toUserDTO(): RegisterUserDTO {

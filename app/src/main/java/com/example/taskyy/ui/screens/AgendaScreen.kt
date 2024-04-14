@@ -1,6 +1,5 @@
 package com.example.taskyy.ui.screens
 
-import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -48,7 +47,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -72,7 +70,6 @@ import java.time.format.DateTimeFormatter
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateState: TimeDateState) {
-    StartWorkManager(onEvent)
     Scaffold(
         content = {
             val formattedTitleDate = remember(timeDateState.dateTime) {
@@ -145,14 +142,6 @@ fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateSta
             )
         },
     )
-}
-
-@Composable
-fun StartWorkManager(
-    startWorkManager: (AgendaEvent) -> Unit
-) {
-    val context: Context = LocalContext.current
-    startWorkManager(AgendaEvent.StartWorkManager(context))
 }
 
 @Composable

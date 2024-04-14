@@ -19,6 +19,7 @@ import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.Workers.AgendaItemWorker
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.domain.error.DataError
+import com.example.taskyy.domain.error.LocalDataErrorHelper
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.repository.AgendaRepository
 import com.example.taskyy.domain.repository.UserPreferences
@@ -62,15 +63,10 @@ class AgendaRepositoryImpl @Inject constructor(
             agendaDao.insertReminder(reminderEntity)
             Result.Success(reminder)
         } catch (e: IOException) {
-            when (e.message) {
-                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
-                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
-                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
-                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
-                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
-                else -> Result.Error(DataError.Local.UNKNOWN)
-            }
-        }
+            (
+                    LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!)
+                    )
+        } as Result<Reminder, DataError.Local>
     }
 
     override suspend fun saveReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network> {
@@ -126,30 +122,6 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addFailedReminderToRetry(reminder: Reminder): Result<Reminder, DataError.Local> {
-        return try {
-            pendingReminderRetryDao.insertPendingReminder(reminder.toPendingReminderRetryEntity())
-            Result.Success(reminder)
-        } catch (e: IOException) {
-            when (e.message) {
-                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
-                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
-                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
-                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
-                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
-                else -> Result.Error(DataError.Local.UNKNOWN)
-            }
-        }
-    }
-
-    override suspend fun addFailedTaskToRetry() {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun addFailedEventToRetry() {
-        TODO("Not yet implemented")
-    }
-
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun startWorkManager(context: Context) {
         val constraints = Constraints.Builder()
@@ -179,31 +151,21 @@ class AgendaRepositoryImpl @Inject constructor(
             val list = agendaDao.getReminders(startTime = startDate, endTime = endDate)
             Result.Success(list.transformToReminder())
         } catch (e: IOException) {
-            when (e.message) {
-                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
-                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
-                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
-                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
-                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
-                else -> Result.Error(DataError.Local.UNKNOWN)
-            }
+            (
+                    LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!)
+                    )
+        } as Result<List<Reminder>, DataError.Local>
         }
-    }
 
     override suspend fun getReminderByEventId(eventId: String): Result<Reminder, DataError.Local> {
         return try {
             val reminderEntity = agendaDao.getReminderByEventId(eventId)
             Result.Success(reminderEntity.transformToReminder())
         } catch (e: IOException) {
-            when (e.message) {
-                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
-                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
-                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
-                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
-                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
-                else -> Result.Error(DataError.Local.UNKNOWN)
-            }
-        }
+            (
+                    LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!)
+                    )
+        } as Result<Reminder, DataError.Local>
     }
 
     override suspend fun deleteReminderInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local> {
@@ -211,15 +173,10 @@ class AgendaRepositoryImpl @Inject constructor(
             agendaDao.deleteReminder(reminderEntity = agendaEventItem.toReminderEntity())
             Result.Success(true)
         } catch (e: IOException) {
-            when (e.message) {
-                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
-                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
-                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
-                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
-                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
-                else -> Result.Error(DataError.Local.UNKNOWN)
-            }
-        }
+            (
+                    LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!)
+                    )
+        } as Result<Boolean, DataError.Local>
     }
 }
 

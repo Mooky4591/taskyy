@@ -52,6 +52,7 @@ class AgendaViewModel @Inject constructor(
             checkForReminders(
                 LocalDateTime.now()
             )
+        startWorkManager(Context.)
         }
 
     private fun checkForReminders(dateTime: LocalDateTime) {
@@ -104,9 +105,6 @@ class AgendaViewModel @Inject constructor(
                 deleteReminder(event.agendaEventItem)
             }
             is AgendaEvent.EditExistingReminder -> {}
-            is AgendaEvent.StartWorkManager -> {
-                startWorkManager(event.context)
-            }
         }
     }
 
@@ -127,11 +125,9 @@ class AgendaViewModel @Inject constructor(
                         }
 
                         is Result.Error -> {
-                            agendaRepository.addFailedReminderToRetry(agendaEventItem.toReminder())
                         }
                     }
                 }
-
                 is Result.Error -> {
                 }
             }
@@ -193,8 +189,17 @@ class AgendaViewModel @Inject constructor(
     private fun setUserInitials() {
             viewModelScope.launch {
                 val email = userPreferences.getUserEmail("email")
-                val name = agendaRepository.getUserName(email)
-                userPreferences.addUserFullName(fullName = name, key = "name")
+                var name: String = ""
+                when (userPreferences.isTokenValid("token")) {
+                    is Result.Error -> {
+                        name = agendaRepository.getUserName(email)
+                        userPreferences.addUserFullName(name, "name")
+                    }
+
+                    is Result.Success -> {
+                        name = userPreferences.getUserId("name")
+                    }
+                }
 
                 state = state.copy(name = name)
                 state = state.copy(initials = name

@@ -20,8 +20,5 @@ interface AgendaRepository {
     suspend fun getReminderByEventId(eventId: String): Result<Reminder, DataError.Local>
     suspend fun deleteReminderInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local>
     suspend fun deleteReminderOnApi(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Network>
-    suspend fun addFailedReminderToRetry(reminder: Reminder): Result<Reminder, DataError.Local>
-    suspend fun addFailedTaskToRetry()
-    suspend fun addFailedEventToRetry()
     suspend fun startWorkManager(context: Context)
 }
