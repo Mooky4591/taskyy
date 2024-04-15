@@ -5,6 +5,7 @@ import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.local.room_entity.agenda_entities.TaskEntity
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
+import com.example.taskyy.data.remote.data_transfer_objects.TaskDTO
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
 import com.example.taskyy.domain.objects.Login
 import retrofit2.http.Body
@@ -59,16 +60,16 @@ interface TaskyyApi {
     fun deleteAttendee(@Query("key") key: String, @Query("event_id") eventId: String)
 
     @POST("/task")
-    fun createTask(@Query("key") key: String)
+    fun createTask(@Body body: TaskDTO): retrofit2.Call<Void>
 
     @PUT("/task")
-    fun updateTask(@Query("key") key: String)
+    fun updateTask(@Body body: TaskDTO): retrofit2.Call<Void>
 
     @GET("/task")
     fun getTask(@Query("key") key: String, @Query("task_id") taskId: String): retrofit2.Response<TaskEntity>
 
     @DELETE("/task")
-    fun deleteTask(@Query("key") key: String, @Query("task_id") taskId: String)
+    fun deleteTask(@Query("task_id") taskId: String): retrofit2.Call<Void>
 
     @PUT("/reminder")
     fun updateReminder(@Body body: ReminderDTO): retrofit2.Call<Void>

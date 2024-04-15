@@ -1,12 +1,10 @@
-package com.example.taskyy.data.remote.Workers
+package com.example.taskyy.data.remote.workers
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.taskyy.data.local.room_database.TaskyyDatabase
-import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.remote.TaskyyApi
-import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.ui.enums.AgendaItemAction
 import retrofit2.HttpException
 
@@ -37,7 +35,7 @@ class AgendaItemWorker(
                     AgendaItemAction.CREATE -> {
                         try {
                             taskyyApi.createReminder(
-                                taskyyDatabase.agendaDao().getReminderByEventId(reminder.id)
+                                taskyyDatabase.reminderDao().getReminderByEventId(reminder.id)
                                     .toReminderDTO()
                             )
                             taskyyDatabase.pendingReminderRetryDao().removePendingReminder(reminder)
@@ -50,7 +48,7 @@ class AgendaItemWorker(
                     AgendaItemAction.UPDATE -> {
                         try {
                             taskyyApi.updateReminder(
-                                taskyyDatabase.agendaDao().getReminderByEventId(reminder.id)
+                                taskyyDatabase.reminderDao().getReminderByEventId(reminder.id)
                                     .toReminderDTO()
                             )
                             taskyyDatabase.pendingReminderRetryDao().removePendingReminder(reminder)
@@ -77,7 +75,7 @@ class AgendaItemWorker(
 
     private fun shouldTryAgainOrFail(code: Int): Result {
         return when (code) {
-            in 500..504 -> Result.retry()
+            in 500..599 -> Result.retry()
             429 -> Result.retry()
             in 400..410 -> Result.failure()
             else -> {
@@ -86,14 +84,4 @@ class AgendaItemWorker(
         }
 
     }
-}
-
-private fun ReminderEntity.toReminderDTO(): ReminderDTO {
-    return ReminderDTO(
-        id = id,
-        remindAt = remindAt,
-        description = description,
-        title = title,
-        time = time
-    )
 }

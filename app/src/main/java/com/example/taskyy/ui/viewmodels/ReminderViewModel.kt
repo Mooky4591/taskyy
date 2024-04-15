@@ -14,6 +14,7 @@ import com.example.taskyy.ui.enums.ReminderType
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.objects.Day
 import com.example.taskyy.ui.objects.Reminder
+import com.example.taskyy.ui.objects.Task
 import com.example.taskyy.ui.screens.toMillis
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -52,15 +53,6 @@ class ReminderViewModel @Inject constructor(
     val events = eventChannel.receiveAsFlow()
 
     init {
-        if (savedStateHandle.get<String>("eventItemId") != "null") {
-            _state.update {
-                it.copy(
-                    eventId = savedStateHandle.get<String>("eventItemId")!!,
-                    isEditingEvent = savedStateHandle.get<String>("isEditing").toBoolean()
-                )
-            }
-            getEvent(_state.value.eventId)
-        }
         if (savedStateHandle.get<String>("dateString") != null) {
             val date = savedStateHandle.get<String>("dateString")!!
             formatDateTimeStringFromSavedStateHandle(date)
@@ -70,9 +62,25 @@ class ReminderViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     agendaItemType = savedStateHandle.get<String>("agendaItem")
-                        .toAgendaItemType(item)
+                        .toAgendaItemType()
                 )
             }
+            if (_state.value.agendaItemType == AgendaItemType.TASK_ITEM) {
+                _state.update {
+                    it.copy(
+                        reminderTitleText = "New Task"
+                    )
+                }
+            }
+        }
+        if (savedStateHandle.get<String>("eventItemId") != "null") {
+            _state.update {
+                it.copy(
+                    eventId = savedStateHandle.get<String>("eventItemId")!!,
+                    isEditingEvent = savedStateHandle.get<String>("isEditing").toBoolean()
+                )
+            }
+            getEvent(_state.value.eventId, _state.value.agendaItemType)
         }
     }
 
@@ -89,7 +97,7 @@ class ReminderViewModel @Inject constructor(
             }
 
             is ReminderEvent.SaveReminder -> {
-                save(event.title, event.description)
+                save(event.title, event.description, event.isDone)
             }
 
             is ReminderEvent.Close -> {
@@ -171,51 +179,114 @@ class ReminderViewModel @Inject constructor(
         }
     }
 
-    private fun save(title: String, description: String) {
-        val newReminder =
-            Reminder(
-                alarmType = _state.value.formattedReminderTime,
-                title = title,
-                description = description,
-                timeInMillis = _dateTimeState.value.dateTime.toMillis(),
-                id = UUID.randomUUID().toString(),
-                agendaItem = AgendaItemType.REMINDER_ITEM,
-                agendaAction = AgendaItemAction.CREATE
-            )
-        viewModelScope.launch {
-            when (val save = agendaRepository.saveReminderToDB(newReminder)) {
-                is Result.Success -> {
-                    when (val save = agendaRepository.saveReminderToApi(newReminder)) {
+    private fun save(title: String, description: String, isDone: Boolean?) {
+        when (savedStateHandle.get<String>("agendaItem").toAgendaItemType()) {
+            AgendaItemType.REMINDER_ITEM -> {
+                val newReminder =
+                    Reminder(
+                        alarmType = _state.value.formattedReminderTime,
+                        title = title,
+                        description = description,
+                        timeInMillis = _dateTimeState.value.dateTime.toMillis(),
+                        id = UUID.randomUUID().toString(),
+                        agendaItem = AgendaItemType.REMINDER_ITEM,
+                        agendaAction = AgendaItemAction.CREATE
+                    )
+                viewModelScope.launch {
+                    when (val save = agendaRepository.saveReminderToDB(newReminder)) {
                         is Result.Success -> {
-                            eventChannel.send(ReminderEvent.SaveSuccessful)
+                            when (val save = agendaRepository.saveReminderToApi(newReminder)) {
+                                is Result.Success -> {
+                                    eventChannel.send(ReminderEvent.SaveSuccessful)
+                                }
+
+                                is Result.Error -> {
+                                    agendaRepository.addFailedReminderToRetry(newReminder)
+                                    eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
+                                }
+                            }
                         }
+
                         is Result.Error -> {
-                            agendaRepository.addFailedReminderToRetry(newReminder)
                             eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
                         }
                     }
                 }
-                is Result.Error -> {
-                    eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
-                }
             }
+
+            AgendaItemType.TASK_ITEM -> {
+                val newTask =
+                    Task(
+                        alarmType = _state.value.formattedReminderTime,
+                        title = title,
+                        isDone = isDone!!,
+                        description = description,
+                        timeInMillis = _dateTimeState.value.dateTime.toMillis(),
+                        id = UUID.randomUUID().toString(),
+                        agendaItem = AgendaItemType.REMINDER_ITEM,
+                        agendaAction = AgendaItemAction.CREATE,
+                    )
+                viewModelScope.launch {
+                    when (val save = agendaRepository.saveTaskToDB(newTask)) {
+                        is Result.Success -> {
+                            when (val save = agendaRepository.saveTaskToDB(newTask)) {
+                                is Result.Success -> {
+                                    eventChannel.send(ReminderEvent.SaveSuccessful)
+                                }
+
+                                is Result.Error -> {
+                                    agendaRepository.addFailedTaskToRetry(newTask)
+                                    eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
+                                }
+                            }
+                        }
+
+                        is Result.Error -> {
+                            eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
+                        }
+                    }
+                }
+
+            }
+
+            AgendaItemType.EVENT_ITEM -> TODO()
+            null -> TODO()
         }
     }
 
-    private fun getEvent(eventId: String) {
+    private fun getEvent(eventId: String, agendaItemType: AgendaItemType) {
         viewModelScope.launch {
-            when (val event = agendaRepository.getReminderByEventId(eventId = eventId)) {
-                is Result.Success -> {
-                    _state.update {
-                        it.copy(
-                            reminderDescription = event.data.description,
-                            reminderTitleText = event.data.title,
-                            formattedReminderTime = event.data.alarmType,
-                        )
+            if (agendaItemType == AgendaItemType.REMINDER_ITEM) {
+                when (val event = agendaRepository.getReminderByEventId(eventId = eventId)) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                reminderDescription = event.data.description,
+                                reminderTitleText = event.data.title,
+                                formattedReminderTime = event.data.alarmType,
+                            )
+                        }
+                    }
+
+                    is Result.Error -> {
+                        val error = "error"
                     }
                 }
-                is Result.Error -> {
-                    val error = "error"
+            } else {
+                when (val event = agendaRepository.getTaskByEventId(eventId = eventId)) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                reminderDescription = event.data.description,
+                                reminderTitleText = event.data.title,
+                                formattedReminderTime = event.data.alarmType,
+                            )
+                        }
+                    }
+
+                    is Result.Error -> {
+                        val error = "error"
+                    }
                 }
             }
         }
@@ -365,9 +436,9 @@ class ReminderViewModel @Inject constructor(
     }
 }
 
-private fun String?.toAgendaItemType(item: String?): AgendaItemType {
-    return if (item != null) {
-        AgendaItemType.valueOf(item)
+private fun String?.toAgendaItemType(): AgendaItemType {
+    return if (this != null) {
+        AgendaItemType.valueOf(this)
     } else {
         AgendaItemType.REMINDER_ITEM
     }
@@ -385,7 +456,8 @@ data class ReminderState(
     var saveFailedMessage: String = "",
     var agendaItemType: AgendaItemType = AgendaItemType.REMINDER_ITEM,
     var eventId: String = "",
-    var isEditingEvent: Boolean = true
+    var isEditingEvent: Boolean = true,
+    var isDone: Boolean = false
 )
 
 data class TimeAndDateState(
