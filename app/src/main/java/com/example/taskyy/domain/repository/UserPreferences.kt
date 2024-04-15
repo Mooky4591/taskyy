@@ -1,7 +1,5 @@
 package com.example.taskyy.domain.repository
 
-import com.example.taskyy.domain.error.DataError
-import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.objects.AuthenticatedUser
 
 interface UserPreferences {
@@ -15,5 +13,4 @@ interface UserPreferences {
     fun getUserId(key: String): String
     fun addUserToken(token: String, key: String)
     fun getUserToken(key: String): String
-    suspend fun isTokenValid(key: String): Result<Boolean, DataError.Network>
 }

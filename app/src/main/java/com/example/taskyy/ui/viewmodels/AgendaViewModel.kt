@@ -1,6 +1,5 @@
 package com.example.taskyy.ui.viewmodels
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.repository.AgendaRepository
+import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.domain.usecases.CheckForRemindersUseCase
 import com.example.taskyy.domain.usecases.LogoutUseCase
@@ -35,6 +35,7 @@ import javax.inject.Inject
 class AgendaViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val agendaRepository: AgendaRepository,
+    private val authRepository: AuthRepository,
     private val userPreferences: UserPreferences,
     private val savedStateHandle: SavedStateHandle,
     private val checkForRemindersUseCase: CheckForRemindersUseCase
@@ -52,7 +53,7 @@ class AgendaViewModel @Inject constructor(
             checkForReminders(
                 LocalDateTime.now()
             )
-        startWorkManager(Context.)
+        startWorkManager()
         }
 
     private fun checkForReminders(dateTime: LocalDateTime) {
@@ -108,9 +109,9 @@ class AgendaViewModel @Inject constructor(
         }
     }
 
-    private fun startWorkManager(context: Context) {
+    private fun startWorkManager() {
         viewModelScope.launch {
-            agendaRepository.startWorkManager(context)
+            agendaRepository.startWorkManager()
         }
     }
 
@@ -189,17 +190,8 @@ class AgendaViewModel @Inject constructor(
     private fun setUserInitials() {
             viewModelScope.launch {
                 val email = userPreferences.getUserEmail("email")
-                var name: String = ""
-                when (userPreferences.isTokenValid("token")) {
-                    is Result.Error -> {
-                        name = agendaRepository.getUserName(email)
-                        userPreferences.addUserFullName(name, "name")
-                    }
-
-                    is Result.Success -> {
-                        name = userPreferences.getUserId("name")
-                    }
-                }
+                val name: String = agendaRepository.getUserName(email)
+                userPreferences.addUserFullName(name, "name")
 
                 state = state.copy(name = name)
                 state = state.copy(initials = name

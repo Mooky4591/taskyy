@@ -1,17 +1,12 @@
 package com.example.taskyy.data.repositories
 
 import android.content.SharedPreferences
-import com.example.taskyy.domain.error.DataError
-import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.objects.AuthenticatedUser
-import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.domain.repository.UserPreferences
 import com.google.gson.Gson
-import retrofit2.HttpException
 
 class UserPreferencesImpl(
     private val sharedPref: SharedPreferences,
-    private val authRepository: AuthRepository
 ) : UserPreferences {
     override fun saveAuthenticatedUser(user: AuthenticatedUser, key: String) {
         val gson = Gson()
@@ -58,22 +53,5 @@ class UserPreferencesImpl(
     override fun getUserToken(key: String): String {
         val token = sharedPref.getString(key, "")
         return token!!
-    }
-
-    override suspend fun isTokenValid(key: String): Result<Boolean, DataError.Network> {
-        return try {
-            authRepository.validateToken()
-            Result.Success(true)
-        } catch (e: HttpException) {
-            when (e.code()) {
-                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
-                409 -> Result.Error(DataError.Network.INCORRECT_PASSWORD_OR_EMAIL)
-                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
-                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
-                500 -> Result.Error(DataError.Network.SERVER_ERROR)
-                400 -> Result.Error(DataError.Network.SERIALIZATION)
-                else -> Result.Error(DataError.Network.UNKNOWN)
-            }
-        }
     }
 }

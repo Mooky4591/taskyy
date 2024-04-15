@@ -33,12 +33,17 @@ class LoginViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            when (val validateToken = userPreferences.isTokenValid("token")) {
+            when (authRepository.validateToken()) {
                 is Result.Error -> {
                 }
 
                 is Result.Success -> {
-                    eventChannel.send(LoginEvent.LoginSuccess(state.email))
+                    if (userPreferences.getUserFullName("name") != "" && userPreferences.getUserEmail(
+                            "email"
+                        ) != ""
+                    ) {
+                        eventChannel.send(LoginEvent.LoginSuccess(userPreferences.getUserEmail("email")))
+                    }
                 }
             }
             state.copy(isReady = true)

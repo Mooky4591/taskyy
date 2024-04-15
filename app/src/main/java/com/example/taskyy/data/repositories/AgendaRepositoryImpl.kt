@@ -37,7 +37,8 @@ class AgendaRepositoryImpl @Inject constructor(
     private val agendaDao: AgendaActivityDao,
     private val pendingReminderRetryDao: PendingReminderRetryDao,
     private val userDao: UserDao,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val context: Context
 ): AgendaRepository {
 
     override suspend fun logout(): Boolean {
@@ -123,7 +124,7 @@ class AgendaRepositoryImpl @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun startWorkManager(context: Context) {
+    override suspend fun startWorkManager() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
@@ -142,7 +143,6 @@ class AgendaRepositoryImpl @Inject constructor(
             workRequest
         )
     }
-
     override suspend fun getReminders(
         startDate: Long,
         endDate: Long
@@ -205,6 +205,7 @@ private fun List<ReminderEntity>.transformToReminder(): List<Reminder> {
         )
     }
 }
+
 
 private fun AgendaEventItem.toReminderEntity(): ReminderEntity {
     return ReminderEntity(
