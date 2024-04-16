@@ -25,6 +25,7 @@ import com.example.taskyy.domain.error.DataError
 import com.example.taskyy.domain.error.LocalDataErrorHelper
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.repository.AgendaRepository
+import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.objects.AgendaEventItem
 import com.example.taskyy.ui.objects.Reminder
@@ -272,12 +273,13 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTasks(startDate: Long,
+    override suspend fun getTasks(
+        startDate: Long,
         endDate: Long
     ): Result<MutableList<Task>, DataError.Local> {
         return try {
             val list = taskDao.getTasks(startTime = startDate, endTime = endDate)
-            Result.Success(list.transformToReminderList())
+            Result.Success(list.transformToTaskList())
         } catch (e: IOException) {
             when (e.message) {
                 "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
@@ -310,19 +312,6 @@ class AgendaRepositoryImpl @Inject constructor(
             workRequest
         )
     }
-    override suspend fun getReminders(
-        startDate: Long,
-        endDate: Long
-    ): Result<MutableList<Task>, DataError.Local> {
-        return try {
-            val list = taskDao.getTasks(startTime = startDate, endTime = endDate)
-            Result.Success(list.transformToTaskList())
-        } catch (e: IOException) {
-            (
-                    LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!)
-                    )
-        } as Result<List<Reminder>, DataError.Local>
-        }
 
     override suspend fun getTaskByEventId(eventId: String): Result<Task, DataError.Local> {
         return try {
@@ -332,7 +321,7 @@ class AgendaRepositoryImpl @Inject constructor(
             (
                     LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!)
                     )
-        } as Result<Reminder, DataError.Local>
+        } as Result<Task, DataError.Local>
     }
 
     override suspend fun deleteTaskInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local> {
@@ -366,7 +355,7 @@ class AgendaRepositoryImpl @Inject constructor(
             }
         }
     }
-
+}
 
 private fun AgendaEventItem.toReminderEntity(): ReminderEntity {
     return ReminderEntity(
