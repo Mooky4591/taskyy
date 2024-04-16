@@ -152,6 +152,10 @@ fun ListOfAgendaEvents(
     menuItemSelected: (AgendaEvent) -> Unit,
     isEllipsisMenuExpanded: Boolean
 ) {
+
+    //This lazy column is giving me key issues when I click on an agenda item. When it was just reminders it worked
+    //now that I've added tasks to the list, I get this key error. I've verified that the keys are different so I assume
+    //this is probably a recomposition issue
     LazyColumn(
         modifier = Modifier.padding(top = 180.dp, start = 20.dp, end = 20.dp)
     ) {
@@ -190,7 +194,7 @@ fun AgendaScreenPreview() {
             Day("Saturday", "6", 5, 1704534400000),
         ),
         selectedIndex = 0,
-        listOfAgendaEvents = listOf(
+        listOfAgendaEvents = mutableListOf(
             AgendaEventItem(
                 "Event 1",
                 "Description 1",
@@ -488,10 +492,18 @@ fun AgendaDisplayItem(
     val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
     val formattedDate = DateTimeFormatter.ofPattern("MMMM dd, HH:mm").format(date)
     val color: Color =
-        if (agendaEventItem.eventType == AgendaItemType.REMINDER_ITEM) {
-            Color(android.graphics.Color.parseColor("#f2f6ff"))
-        } else {
-            Color(android.graphics.Color.parseColor("#FFFFFF"))
+        when (agendaEventItem.eventType) {
+            AgendaItemType.REMINDER_ITEM -> {
+                Color(android.graphics.Color.parseColor("#f2f6ff"))
+            }
+
+            AgendaItemType.TASK_ITEM -> {
+                Color(android.graphics.Color.parseColor("#289c74"))
+            }
+
+            else -> {
+                Color(android.graphics.Color.parseColor("#FFFFFF"))
+            }
         }
     Card(
         colors = CardDefaults.cardColors(color),

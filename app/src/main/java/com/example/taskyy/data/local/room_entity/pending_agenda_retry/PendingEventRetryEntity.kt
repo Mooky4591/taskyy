@@ -1,4 +1,4 @@
-package com.example.taskyy.data.local.room_entity.agenda_entities
+package com.example.taskyy.data.local.room_entity.pending_agenda_retry
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

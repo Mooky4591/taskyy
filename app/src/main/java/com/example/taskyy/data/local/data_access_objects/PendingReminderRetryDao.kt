@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
-import com.example.taskyy.data.local.room_entity.agenda_entities.PendingReminderRetryEntity
+import com.example.taskyy.data.local.room_entity.pending_agenda_retry.PendingReminderRetryEntity
 
 @Dao
 interface PendingReminderRetryDao {

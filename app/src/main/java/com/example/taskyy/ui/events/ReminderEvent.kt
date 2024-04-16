@@ -20,9 +20,11 @@ interface ReminderEvent {
     data class ReminderTitleTextUpdated(var reminderTitleText: String) : ReminderEvent
     data class UpdateDateSelection(var selectedDate: Long) : ReminderEvent
     data class DatePickerSelcted(var datePickerExpanded: Boolean) : ReminderEvent
+    data class MarkTaskDone(var isDone: Boolean) : ReminderEvent
     data class SaveReminder(
         var title: String,
-        var description: String
+        var description: String,
+        var isDone: Boolean?
     ) : ReminderEvent
     data class UpdateReminder(
         var eventId: String,

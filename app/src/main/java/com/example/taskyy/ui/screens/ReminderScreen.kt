@@ -97,7 +97,9 @@ fun ReminderScreen(
                         title = state.reminderTitleText,
                         description = state.reminderDescription,
                         isEventBeingEdited = state.isEditingEvent,
-                        eventId = state.eventId
+                        eventId = state.eventId,
+                        agendaItemType = state.agendaItemType,
+                        isDone = state.isDone
                     )
                 },
                 onClose = { (onEvent(ReminderEvent.Close)) }
@@ -117,6 +119,9 @@ fun ReminderScreen(
                         )
                     },
                     onDateExpanded = { onEvent(ReminderEvent.DatePickerSelcted(datePickerExpanded = !state.isDatePickerExpanded)) },
+                    markTaskDone = { isDone ->
+                        onEvent(ReminderEvent.MarkTaskDone(isDone))
+                    },
                     onTimeExpanded = { onEvent(ReminderEvent.TimePickerSelected(timePickerSelected = !state.isTimePickerSelectionExpanded)) },
                     alarmTimeTextSelected = { selectedAlarmType ->
                         onEvent(ReminderEvent.AlarmTimeTextSelected(selectedAlarmType))
@@ -153,6 +158,7 @@ private fun ReminderScreenContent(
     onDateSelected: (ReminderEvent) -> Unit,
     alarmTypeDropDownSelected: (ReminderEvent) -> Unit,
     alarmTimeTextSelected: (ReminderType) -> Unit,
+    markTaskDone: (Boolean) -> Unit,
     formattedDate: String,
     formattedTime: String,
     state: ReminderState
@@ -169,12 +175,12 @@ private fun ReminderScreenContent(
             }
 
             AgendaItemType.TASK_ITEM -> {
-                ItemBox("#f2f6ff", 30, borderColor = "#d0d2d9")
+                ItemBox("#289c74", 30, borderColor = "#289c74")
                 ItemBoxTitle("Task")
             }
 
             AgendaItemType.EVENT_ITEM -> {
-                ItemBox("#f2f6ff", 30, borderColor = "#d0d2d9")
+                ItemBox("#d0ec44", 30, borderColor = "#d0ec44")
                 ItemBoxTitle("Event")
             }
         }
@@ -184,7 +190,10 @@ private fun ReminderScreenContent(
             title = state.reminderTitleText,
             editTitle =
             { enterItemTitle(ReminderEvent.EnterSetTitleScreen(EditTextScreenType.EDIT_TITLE)) },
-            isEventBeingEdited = state.isEditingEvent
+            isEventBeingEdited = state.isEditingEvent,
+            isDone = state.isDone,
+            agendaItemType = state.agendaItemType,
+            onEvent = { isDone -> markTaskDone(isDone) }
         )
         RowDivider()
         ItemDescription(
@@ -584,7 +593,14 @@ fun RowDivider() {
 }
 
 @Composable
-fun NewItemRow(title: String, editTitle: (String) -> Unit, isEventBeingEdited: Boolean) {
+fun NewItemRow(
+    title: String,
+    editTitle: (String) -> Unit,
+    isEventBeingEdited: Boolean,
+    isDone: Boolean,
+    agendaItemType: AgendaItemType,
+    onEvent: (Boolean) -> Unit
+) {
     Row(
         modifier =
         Modifier
@@ -595,7 +611,7 @@ fun NewItemRow(title: String, editTitle: (String) -> Unit, isEventBeingEdited: B
             .height(80.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CircleWithBlackBorder("#FFFFFF")
+        CircleWithBlackBorder(color = "#FFFFFF")
         Text(
             text = title,
             fontSize = 25.sp,
@@ -652,6 +668,7 @@ fun CircleWithBlackBorder(color: String) {
                 color = Color(android.graphics.Color.parseColor(color)), shape = CircleShape
             )
             .border(width = 2.dp, color = Color.Black, shape = CircleShape)
+
     )
 }
 
@@ -726,7 +743,9 @@ fun SaveReminder(
     title: String,
     description: String,
     isEventBeingEdited: Boolean,
-    eventId: String
+    eventId: String,
+    isDone: Boolean,
+    agendaItemType: AgendaItemType
 ) {
     Text(
         text = "SAVE",
@@ -736,12 +755,23 @@ fun SaveReminder(
         Modifier
             .clickable {
                 if (isEventBeingEdited && eventId == "") {
-                    saveEvent(
-                        ReminderEvent.SaveReminder(
-                            title = title,
-                            description = description
+                    if (agendaItemType == AgendaItemType.REMINDER_ITEM) {
+                        saveEvent(
+                            ReminderEvent.SaveReminder(
+                                title = title,
+                                description = description,
+                                isDone = null
+                            )
                         )
-                    )
+                    } else {
+                        saveEvent(
+                            ReminderEvent.SaveReminder(
+                                title = title,
+                                description = description,
+                                isDone = isDone
+                            )
+                        )
+                    }
                 } else {
                     updateEvent(
                         ReminderEvent.UpdateReminder(

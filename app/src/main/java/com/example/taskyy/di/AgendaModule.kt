@@ -1,14 +1,16 @@
 package com.example.taskyy.di
 
 import android.content.Context
-import com.example.taskyy.data.local.data_access_objects.AgendaActivityDao
+
 import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
+import com.example.taskyy.data.local.data_access_objects.PendingTaskRetryDao
+import com.example.taskyy.data.local.data_access_objects.ReminderDao
+import com.example.taskyy.data.local.data_access_objects.TaskDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AgendaRepositoryImpl
 import com.example.taskyy.domain.repository.AgendaRepository
-import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.domain.usecases.CheckForRemindersUseCase
 import com.example.taskyy.domain.usecases.LogoutUseCase
 import dagger.Module
@@ -24,18 +26,25 @@ object AgendaModule {
 
     @Provides
     @Singleton
-    fun providesAgendaRepo(
+    fun provideAgendaRepo(
         api: TaskyyApi,
         userDao: UserDao,
-        agendaDao: AgendaActivityDao,
+        reminderDao: ReminderDao,
+        taskDao: TaskDao,
+        pendingReminderRetryDao: PendingReminderRetryDao,
+        pendingTaskRetryDao: PendingTaskRetryDao,
         userPreferences: UserPreferences,
         pendingReminderRetryDao: PendingReminderRetryDao,
+
         @ApplicationContext context: Context
     ): AgendaRepository {
         return AgendaRepositoryImpl(
             retrofit = api,
             userDao = userDao,
-            agendaDao = agendaDao,
+            reminderDao = reminderDao,
+            pendingReminderRetryDao = pendingReminderRetryDao,
+            pendingTaskRetryDao = pendingTaskRetryDao,
+            taskDao = taskDao,
             userPreferences = userPreferences,
             pendingReminderRetryDao = pendingReminderRetryDao,
             context = context
@@ -50,14 +59,26 @@ object AgendaModule {
 
     @Provides
     @Singleton
-    fun provideAgendaActivityDao(db: TaskyyDatabase): AgendaActivityDao {
-        return db.agendaDao()
+    fun provideReminderDao(db: TaskyyDatabase): ReminderDao {
+        return db.reminderDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTaskDao(db: TaskyyDatabase): TaskDao {
+        return db.taskDao()
     }
 
     @Provides
     @Singleton
     fun providePendingReminderRetryDao(db: TaskyyDatabase): PendingReminderRetryDao {
         return db.pendingReminderRetryDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePendingTaskRetryDao(db: TaskyyDatabase): PendingTaskRetryDao {
+        return db.pendingTaskRetryDao()
     }
 
     @Provides
