@@ -24,4 +24,5 @@ interface AgendaRepository {
     suspend fun addFailedTaskToRetry()
     suspend fun addFailedEventToRetry()
     suspend fun startWorkManager(context: Context)
+    suspend fun getAllAgendaItemsWithFutureNotifications(): Result<List<AgendaEventItem>, DataError.Local>
 }

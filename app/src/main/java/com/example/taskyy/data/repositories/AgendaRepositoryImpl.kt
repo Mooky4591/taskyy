@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import com.example.taskyy.data.local.data_access_objects.AgendaActivityDao
 import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.notifications.NotificationScheduler
 import com.example.taskyy.data.local.room_entity.agenda_entities.PendingReminderRetryEntity
 import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.remote.TaskyyApi
@@ -25,6 +26,8 @@ import com.example.taskyy.domain.repository.UserPreferences
 import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.objects.AgendaEventItem
 import com.example.taskyy.ui.objects.Reminder
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
 import java.io.IOException
 import java.time.Duration
@@ -36,6 +39,7 @@ class AgendaRepositoryImpl @Inject constructor(
     private val agendaDao: AgendaActivityDao,
     private val pendingReminderRetryDao: PendingReminderRetryDao,
     private val userDao: UserDao,
+    private val notificationScheduler: NotificationScheduler,
     private val userPreferences: UserPreferences
 ): AgendaRepository {
 
@@ -112,6 +116,7 @@ class AgendaRepositoryImpl @Inject constructor(
     override suspend fun deleteReminderOnApi(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Network> {
         return try {
             retrofit.deleteReminder(agendaEventItem.eventId)
+            notificationScheduler.cancelScheduledNotificationAndPendingIntent(agendaEventItem)
             Result.Success(true)
         } catch (e: HttpException) {
             pendingReminderRetryDao.insertPendingReminder(agendaEventItem.toPendingReminderRetryEntity())
@@ -219,6 +224,44 @@ class AgendaRepositoryImpl @Inject constructor(
                 "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
                 else -> Result.Error(DataError.Local.UNKNOWN)
             }
+        }
+    }
+
+
+    override suspend fun getAllAgendaItemsWithFutureNotifications(): Result<List<AgendaEventItem>, DataError.Local> {
+        return coroutineScope {
+            val tasks =
+                async {
+                    agendaDao.findEntitiesAfterCurrentTime(
+                        currentTime = System.currentTimeMillis() + 600000,
+                        // add ten mins as the min reminder time is 10 mins before event
+                    ).map {
+                        it.toTask()
+                    }
+                }
+
+            val reminders =
+                async {
+                    taskyDataBase.reminderDAO().findEntitiesAfterCurrentTime(
+                        currentTime = System.currentTimeMillis() + 600000,
+                        // add ten mins as the min reminder time is 10 mins before event
+                    ).map {
+                        it.toReminder()
+                    }
+                }
+
+            val events =
+                async {
+                    taskyDataBase.eventDAO().findEntitiesAfterCurrentTime(
+                        currentTime = System.currentTimeMillis() + 600000,
+                        // add ten mins as the min reminder time is 10 mins before event
+                    ).map {
+                        it.toEvent()
+                    }
+                }
+
+            val result = tasks.await() + events.await() + reminders.await()
+            Result.Success(result.sortedBy { it.time })
         }
     }
 }
