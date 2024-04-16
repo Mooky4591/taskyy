@@ -113,7 +113,6 @@ fun Nav() {
                                     AgendaItemType.TASK_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}, ${event.isEditing}")
                                     AgendaItemType.EVENT_ITEM -> navController.navigate(Screen.Event.route)
                                 }
-//                            is AgendaEvent.EditExistingReminder -> navController.navigate(Screen.Reminder.route + "/${event.agendaItem.}")
                             else -> agendaViewModel.onEvent(event)
                         }
                     },

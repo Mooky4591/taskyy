@@ -33,8 +33,18 @@ class LoginViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            if (authRepository.validateToken()) {
-                eventChannel.send(LoginEvent.LoginSuccess(state.email))
+            when (authRepository.validateToken()) {
+                is Result.Error -> {
+                }
+
+                is Result.Success -> {
+                    if (userPreferences.getUserFullName("name") != "" && userPreferences.getUserEmail(
+                            "email"
+                        ) != ""
+                    ) {
+                        eventChannel.send(LoginEvent.LoginSuccess(userPreferences.getUserEmail("email")))
+                    }
+                }
             }
             state.copy(isReady = true)
         }

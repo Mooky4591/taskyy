@@ -1,6 +1,7 @@
 package com.example.taskyy.di
 
 import android.content.Context
+
 import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
 import com.example.taskyy.data.local.data_access_objects.PendingTaskRetryDao
 import com.example.taskyy.data.local.data_access_objects.ReminderDao
@@ -32,6 +33,9 @@ object AgendaModule {
         taskDao: TaskDao,
         pendingReminderRetryDao: PendingReminderRetryDao,
         pendingTaskRetryDao: PendingTaskRetryDao,
+        userPreferences: UserPreferences,
+        pendingReminderRetryDao: PendingReminderRetryDao,
+
         @ApplicationContext context: Context
     ): AgendaRepository {
         return AgendaRepositoryImpl(
@@ -41,6 +45,8 @@ object AgendaModule {
             pendingReminderRetryDao = pendingReminderRetryDao,
             pendingTaskRetryDao = pendingTaskRetryDao,
             taskDao = taskDao,
+            userPreferences = userPreferences,
+            pendingReminderRetryDao = pendingReminderRetryDao,
             context = context
         )
     }
