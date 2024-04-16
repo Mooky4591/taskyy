@@ -77,7 +77,7 @@ class AgendaItemWorker(
 
     private fun shouldTryAgainOrFail(code: Int): Result {
         return when (code) {
-            in 500..504 -> Result.retry()
+            in 500..599 -> Result.retry()
             429 -> Result.retry()
             in 400..410 -> Result.failure()
             else -> {

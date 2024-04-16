@@ -1,5 +1,6 @@
 package com.example.taskyy.di
 
+import android.content.Context
 import com.example.taskyy.data.local.data_access_objects.AgendaActivityDao
 import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
@@ -13,6 +14,7 @@ import com.example.taskyy.domain.usecases.LogoutUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -27,14 +29,16 @@ object AgendaModule {
         userDao: UserDao,
         agendaDao: AgendaActivityDao,
         userPreferences: UserPreferences,
-        pendingReminderRetryDao: PendingReminderRetryDao
+        pendingReminderRetryDao: PendingReminderRetryDao,
+        @ApplicationContext context: Context
     ): AgendaRepository {
         return AgendaRepositoryImpl(
             retrofit = api,
             userDao = userDao,
             agendaDao = agendaDao,
             userPreferences = userPreferences,
-            pendingReminderRetryDao = pendingReminderRetryDao
+            pendingReminderRetryDao = pendingReminderRetryDao,
+            context = context
         )
     }
 

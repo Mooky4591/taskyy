@@ -16,6 +16,7 @@ import com.example.taskyy.ui.objects.Day
 import com.example.taskyy.ui.objects.Reminder
 import com.example.taskyy.ui.screens.toMillis
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +41,7 @@ import kotlin.time.DurationUnit
 class ReminderViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val agendaRepository: AgendaRepository,
+    private val applicationScope: CoroutineScope
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ReminderState())
@@ -52,7 +54,7 @@ class ReminderViewModel @Inject constructor(
     val events = eventChannel.receiveAsFlow()
 
     init {
-        if (savedStateHandle.get<String>("eventItemId") != "null") {
+        if (savedStateHandle.get<String>("eventItemId") != null) {
             _state.update {
                 it.copy(
                     eventId = savedStateHandle.get<String>("eventItemId")!!,
@@ -156,14 +158,16 @@ class ReminderViewModel @Inject constructor(
         viewModelScope.launch {
             when (val updateDb = agendaRepository.saveReminderToDB(newReminder)) {
                 is Result.Success -> {
-                    eventChannel.send(ReminderEvent.SaveSuccessful)
-                    when (val updateAPI = agendaRepository.updateReminderToApi(newReminder)) {
-                        is Result.Success -> {
+                    applicationScope.launch {
+                        eventChannel.send(ReminderEvent.SaveSuccessful)
+                        when (val updateAPI = agendaRepository.updateReminderToApi(newReminder)) {
+                            is Result.Success -> {
+                            }
+
+                            is Result.Error -> {
+                            }
                         }
-                        is Result.Error -> {
-                            agendaRepository.addFailedReminderToRetry(newReminder)
-                        }
-                    }
+                    }.join()
                 }
                 is Result.Error -> {
                 }
@@ -185,15 +189,17 @@ class ReminderViewModel @Inject constructor(
         viewModelScope.launch {
             when (val save = agendaRepository.saveReminderToDB(newReminder)) {
                 is Result.Success -> {
-                    when (val save = agendaRepository.saveReminderToApi(newReminder)) {
-                        is Result.Success -> {
-                            eventChannel.send(ReminderEvent.SaveSuccessful)
+                    applicationScope.launch {
+                        when (val save = agendaRepository.saveReminderToApi(newReminder)) {
+                            is Result.Success -> {
+                                eventChannel.send(ReminderEvent.SaveSuccessful)
+                            }
+
+                            is Result.Error -> {
+                                eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
+                            }
                         }
-                        is Result.Error -> {
-                            agendaRepository.addFailedReminderToRetry(newReminder)
-                            eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
-                        }
-                    }
+                    }.join()
                 }
                 is Result.Error -> {
                     eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))

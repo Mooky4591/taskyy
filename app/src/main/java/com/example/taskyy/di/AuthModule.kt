@@ -1,8 +1,10 @@
 package com.example.taskyy.di
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
+import com.example.taskyy.App
 import com.example.taskyy.R
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_database.TaskyyDatabase
@@ -22,6 +24,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -115,5 +118,11 @@ object AuthModule {
     @Singleton
     fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
         return context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+    }
+
+    @Provides
+    @Singleton
+    fun provideApplicationScope(app: Application): CoroutineScope {
+        return (app as App).applicationScope
     }
 }

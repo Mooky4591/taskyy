@@ -6,7 +6,7 @@ import com.example.taskyy.domain.repository.UserPreferences
 import com.google.gson.Gson
 
 class UserPreferencesImpl(
-    private val sharedPref: SharedPreferences
+    private val sharedPref: SharedPreferences,
 ) : UserPreferences {
     override fun saveAuthenticatedUser(user: AuthenticatedUser, key: String) {
         val gson = Gson()
