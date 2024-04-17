@@ -15,6 +15,7 @@ data class TaskEntity(
     val remindAt: Long,
     val time: Long,
     val title: String,
+    val eventType: AgendaItemType,
     val action: AgendaItemAction
 ) {
     fun transformToTask(): Task {
@@ -25,7 +26,7 @@ data class TaskEntity(
             alarmType = remindAt,
             timeInMillis = time,
             id = id,
-            agendaItem = AgendaItemType.TASK_ITEM,
+            agendaItem = eventType,
             agendaAction = action
         )
     }

@@ -60,7 +60,8 @@ class AgendaViewModel @Inject constructor(
 
     private fun checkForExistingAgendaItems(dateTime: LocalDateTime) {
         viewModelScope.launch {
-            val agendaItemList: MutableList<AgendaEventItem> = state.listOfAgendaEvents
+            val agendaItemList: MutableList<AgendaEventItem> =
+                state.listOfAgendaEvents.toMutableList()
             val reminderList = checkForRemindersUseCase.checkForReminders(dateTime)
             val taskList = checkForTasksUseCase.checkForTasks(dateTime)
             when (reminderList) {
@@ -136,7 +137,7 @@ class AgendaViewModel @Inject constructor(
     private fun deleteReminder(agendaEventItem: AgendaEventItem) {
         agendaEventItem.agendaAction = AgendaItemAction.DELETE
         viewModelScope.launch {
-            when (val delete = agendaRepository.deleteReminderInDb(agendaEventItem)) {
+            when (agendaRepository.deleteReminderInDb(agendaEventItem)) {
                 is Result.Success -> {
                     checkForExistingAgendaItems(timeDateState.dateTime)
                     when (val delete = agendaRepository.deleteReminderOnApi(agendaEventItem)) {
@@ -207,9 +208,9 @@ class AgendaViewModel @Inject constructor(
 
     private fun setUserInitials() {
             viewModelScope.launch {
-                val email = userPreferences.getUserEmail("email")
+                val email = userPreferences.getUserEmail()
                 val name: String = agendaRepository.getUserName(email)
-                userPreferences.addUserFullName(name, "name")
+                userPreferences.addUserFullName(name)
 
                 state = state.copy(name = name)
                 state = state.copy(initials = name
@@ -245,7 +246,7 @@ data class AgendaState(
     var isAddAgendaItemExpanded: Boolean = false,
     var selectedAgendaDay: Boolean = false,
     var selectedIndex: Int = 0,
-    var listOfAgendaEvents: MutableList<AgendaEventItem> = mutableListOf<AgendaEventItem>(),
+    var listOfAgendaEvents: List<AgendaEventItem> = listOf(),
     var isEllipsisMenuExpanded: Boolean = false,
     var isDoneClicked: Boolean = false
 ) : Serializable

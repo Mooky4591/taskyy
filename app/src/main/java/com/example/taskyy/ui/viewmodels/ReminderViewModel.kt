@@ -164,18 +164,9 @@ class ReminderViewModel @Inject constructor(
                 agendaAction = AgendaItemAction.UPDATE
             )
         viewModelScope.launch {
-            when (val updateDb = agendaRepository.saveReminderToDB(newReminder)) {
+            when (agendaRepository.updateReminderToDB(newReminder)) {
                 is Result.Success -> {
-                    applicationScope.launch {
-                        eventChannel.send(ReminderEvent.SaveSuccessful)
-                        when (val updateAPI = agendaRepository.updateReminderToApi(newReminder)) {
-                            is Result.Success -> {
-                            }
-
-                            is Result.Error -> {
-                            }
-                        }
-                    }.join()
+                    eventChannel.send(ReminderEvent.SaveSuccessful)
                 }
                 is Result.Error -> {
                 }
@@ -199,20 +190,12 @@ class ReminderViewModel @Inject constructor(
                 viewModelScope.launch {
                     when (val save = agendaRepository.saveReminderToDB(newReminder)) {
                         is Result.Success -> {
-                            applicationScope.launch {
-                                when (val save = agendaRepository.saveReminderToApi(newReminder)) {
-                                    is Result.Success -> {
-                                        eventChannel.send(ReminderEvent.SaveSuccessful)
-                                    }
-
-                                    is Result.Error -> {
-                                        eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
-                                    }
-                                }
-                            }.join()
+                            eventChannel.send(ReminderEvent.SaveSuccessful)
                         }
 
-                        is Result.Error -> {}
+                        is Result.Error -> {
+
+                        }
                     }
                 }
             }
@@ -231,18 +214,7 @@ class ReminderViewModel @Inject constructor(
                 viewModelScope.launch {
                     when (val save = agendaRepository.saveTaskToDB(newTask)) {
                         is Result.Success -> {
-                            applicationScope.launch {
-                                when (val save = agendaRepository.saveTaskToApi(newTask)) {
-                                    is Result.Success -> {
-                                        eventChannel.send(ReminderEvent.SaveSuccessful)
-                                    }
-
-                                    is Result.Error -> {
-                                        agendaRepository.addFailedTaskToRetry(newTask)
-                                        eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
-                                    }
-                                }
-                            }
+                            eventChannel.send(ReminderEvent.SaveSuccessful)
                         }
 
                         is Result.Error -> {
@@ -252,7 +224,6 @@ class ReminderViewModel @Inject constructor(
                 }
 
             }
-
             AgendaItemType.EVENT_ITEM -> TODO()
         }
     }

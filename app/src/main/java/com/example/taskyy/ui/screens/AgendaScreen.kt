@@ -72,6 +72,7 @@ import java.time.format.DateTimeFormatter
 fun AgendaScreen(state: AgendaState, onEvent: (AgendaEvent) -> Unit, timeDateState: TimeDateState) {
     Scaffold(
         content = {
+            CheckForNotificationPermissions()
             val formattedTitleDate = remember(timeDateState.dateTime) {
                 DateTimeFormatter.ofPattern("MMMM dd, yyyy").format(timeDateState.dateTime)
             }

@@ -15,6 +15,7 @@ data class ReminderEntity(
     val remindAt: Long,
     val time: Long,
     val title: String,
+    val eventType: AgendaItemType,
     val action: AgendaItemAction
 ) {
     fun transformToReminder(): Reminder {
@@ -24,7 +25,7 @@ data class ReminderEntity(
             time,
             remindAt,
             id,
-            AgendaItemType.REMINDER_ITEM,
+            eventType,
             action
         )
     }

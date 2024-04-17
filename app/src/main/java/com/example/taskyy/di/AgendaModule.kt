@@ -6,6 +6,7 @@ import com.example.taskyy.data.local.data_access_objects.PendingTaskRetryDao
 import com.example.taskyy.data.local.data_access_objects.ReminderDao
 import com.example.taskyy.data.local.data_access_objects.TaskDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.notifications.NotificationScheduler
 import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.repositories.AgendaRepositoryImpl
@@ -34,7 +35,7 @@ object AgendaModule {
         pendingTaskRetryDao: PendingTaskRetryDao,
         userPreferences: UserPreferences,
         pendingReminderRetryDao: PendingReminderRetryDao,
-
+        notificationScheduler: NotificationScheduler,
         @ApplicationContext context: Context
     ): AgendaRepository {
         return AgendaRepositoryImpl(
@@ -45,7 +46,8 @@ object AgendaModule {
             pendingTaskRetryDao = pendingTaskRetryDao,
             taskDao = taskDao,
             userPreferences = userPreferences,
-            context = context
+            context = context,
+            notificationScheduler = notificationScheduler
         )
     }
 
@@ -83,5 +85,11 @@ object AgendaModule {
     @Singleton
     fun provideCheckForRemindersUseCase(agendaRepository: AgendaRepository): CheckForRemindersUseCase {
         return CheckForRemindersUseCase(agendaRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationScheduler(@ApplicationContext context: Context): NotificationScheduler {
+        return NotificationScheduler(context = context)
     }
 }

@@ -44,7 +44,8 @@ open class AgendaEventItem(
             title = title,
             remindAt = alarmType,
             time = timeInMillis,
-            action = agendaAction
+            action = agendaAction,
+            eventType = eventType
         )
     }
 
@@ -56,7 +57,8 @@ open class AgendaEventItem(
             remindAt = alarmType,
             time = timeInMillis,
             action = agendaAction,
-            isDone = isDone
+            isDone = isDone,
+            eventType = eventType
         )
     }
 }

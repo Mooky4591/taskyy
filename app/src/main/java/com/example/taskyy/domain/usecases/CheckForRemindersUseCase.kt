@@ -12,7 +12,7 @@ class CheckForRemindersUseCase @Inject constructor(
     private val agendaRepository: AgendaRepository
 ) {
 
-    suspend fun checkForReminders(dateTime: LocalDateTime): Result<MutableList<Reminder>, DataError.Local> {
+    suspend fun checkForReminders(dateTime: LocalDateTime): Result<List<Reminder>, DataError.Local> {
         val startDateTime = dateTime.withHour(0).withMinute(0).withSecond(0).withNano(0)
         val endDateTime = dateTime.withHour(23).withMinute(59).withSecond(59).withNano(999_999_999)
 

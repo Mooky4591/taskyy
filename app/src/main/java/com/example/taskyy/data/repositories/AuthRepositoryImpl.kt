@@ -22,8 +22,8 @@ class AuthRepositoryImpl @Inject constructor(
 ): AuthRepository {
 
     override suspend fun addTokenAndIdToDatabase(token: String, userId: String, email: String) {
-        userPreferences.addUserId("userId", "userId")
-        userPreferences.addUserToken(token, "token")
+        userPreferences.addUserId(userId)
+        userPreferences.addUserToken(token)
         userDao.update(token, userId, email)
     }
 

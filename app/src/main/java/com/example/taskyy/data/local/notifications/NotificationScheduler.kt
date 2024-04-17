@@ -11,7 +11,6 @@ import com.example.taskyy.ui.objects.AgendaEventItem
 
 class NotificationScheduler(private val context: Context) {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
     @RequiresApi(Build.VERSION_CODES.S)
     fun scheduleNotification(agendaItem: AgendaEventItem) {
         alarmManager.apply {

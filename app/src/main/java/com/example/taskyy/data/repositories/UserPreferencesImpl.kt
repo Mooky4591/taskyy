@@ -18,40 +18,40 @@ class UserPreferencesImpl(
         sharedPref.edit().clear().apply()
     }
 
-    override fun addUserFullName(fullName: String, key: String) {
-        sharedPref.edit().putString(key, fullName).apply()
+    override fun addUserFullName(fullName: String) {
+        sharedPref.edit().putString("name", fullName).apply()
     }
 
-    override fun getUserFullName(key: String): String {
-        val name = sharedPref.getString(key, "")
+    override fun getUserFullName(): String {
+        val name = sharedPref.getString("name", "")
         return name!!
     }
 
-    override fun addUserEmail(email: String, key: String) {
-        sharedPref.edit().putString(key, email).apply()
+    override fun addUserEmail(email: String) {
+        sharedPref.edit().putString("email", email).apply()
 
     }
 
-    override fun getUserEmail(key: String): String {
-        val email = sharedPref.getString(key, "")
+    override fun getUserEmail(): String {
+        val email = sharedPref.getString("email", "")
         return email!!
     }
 
-    override fun addUserId(userId: String, key: String) {
-        sharedPref.edit().putString(key, userId).apply()
+    override fun addUserId(userId: String) {
+        sharedPref.edit().putString("id", userId).apply()
     }
 
-    override fun getUserId(key: String): String {
-        val userId = sharedPref.getString(key, "")
+    override fun getUserId(): String {
+        val userId = sharedPref.getString("id", "")
         return userId!!
     }
 
-    override fun addUserToken(token: String, key: String) {
-        sharedPref.edit().putString(key, token).apply()
+    override fun addUserToken(token: String) {
+        sharedPref.edit().putString("token", token).apply()
     }
 
-    override fun getUserToken(key: String): String {
-        val token = sharedPref.getString(key, "")
+    override fun getUserToken(): String {
+        val token = sharedPref.getString("token", "")
         return token!!
     }
 }
