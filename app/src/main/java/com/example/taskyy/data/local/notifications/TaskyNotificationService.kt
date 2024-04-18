@@ -1,15 +1,21 @@
 package com.example.taskyy.data.local.notifications
 
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.taskyy.R
 import com.example.taskyy.ui.enums.AgendaItemType
 
 class TaskyNotificationService {
+    @RequiresApi(Build.VERSION_CODES.O)
     fun showNotification(
         context: Context,
         notificationId: Int,
@@ -20,7 +26,12 @@ class TaskyNotificationService {
     ) {
         val notificationManager: NotificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val name = "My Notification Channel"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(TASKY_CHANNEL_ID, name, importance).apply {
+        }
 
+        notificationManager.createNotificationChannel(channel)
         val uri =
             Uri.parse(
                 "${baseUriGenerator(agendaType)}?zoneDateTime=${System.currentTimeMillis()}&isEditingMode=${false}&agendaItemId=$agendaId",
@@ -48,7 +59,18 @@ class TaskyNotificationService {
                 .setAutoCancel(true)
                 .build()
 
-        notificationManager.notify(notificationId, notification)
+        val hasNotificationPermission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.POST_NOTIFICATIONS,
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+        if (hasNotificationPermission) {
+            notificationManager.notify(notificationId, notification)
+        }
     }
 
     private fun baseUriGenerator(agendaType: String): String {

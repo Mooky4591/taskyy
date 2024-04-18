@@ -32,10 +32,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.DurationUnit
 
 
 @HiltViewModel
@@ -84,6 +80,8 @@ class ReminderViewModel @Inject constructor(
             }
             getEvent(_state.value.eventId, _state.value.agendaItemType)
         }
+
+        formatReminderTimeForDB("1 hour before", _dateTimeState.value.dateTime)
     }
 
     private fun formatDateTimeStringFromSavedStateHandle(date: String) {
@@ -143,11 +141,9 @@ class ReminderViewModel @Inject constructor(
 
     @OptIn(ExperimentalMaterial3Api::class)
     private fun formatTimeSelected(time: TimePickerState) {
-
         _dateTimeState.update {
             it.copy(
-                dateTime = _dateTimeState.value.dateTime.plusHours(time.hour.toLong())
-                    .plusMinutes(time.minute.toLong())
+                dateTime = _dateTimeState.value.dateTime.withHour(time.hour).withMinute(time.minute)
             )
         }
     }
@@ -170,6 +166,8 @@ class ReminderViewModel @Inject constructor(
                 }
                 is Result.Error -> {
                 }
+                else -> {}
+
             }
         }
     }
@@ -196,6 +194,8 @@ class ReminderViewModel @Inject constructor(
                         is Result.Error -> {
 
                         }
+                        else -> {}
+
                     }
                 }
             }
@@ -208,7 +208,7 @@ class ReminderViewModel @Inject constructor(
                         description = description,
                         timeInMillis = _dateTimeState.value.dateTime.toMillis(),
                         id = UUID.randomUUID().toString(),
-                        agendaItem = AgendaItemType.REMINDER_ITEM,
+                        agendaItem = AgendaItemType.TASK_ITEM,
                         agendaAction = AgendaItemAction.CREATE,
                     )
                 viewModelScope.launch {
@@ -220,6 +220,8 @@ class ReminderViewModel @Inject constructor(
                         is Result.Error -> {
                             eventChannel.send(ReminderEvent.SaveFailed(save.error.asUiText()))
                         }
+                        else -> {}
+
                     }
                 }
 
@@ -245,6 +247,7 @@ class ReminderViewModel @Inject constructor(
                     is Result.Error -> {
                         val error = "error"
                     }
+                    else -> {}
                 }
             } else {
                 when (val event = agendaRepository.getTaskByEventId(eventId = eventId)) {
@@ -261,6 +264,7 @@ class ReminderViewModel @Inject constructor(
                     is Result.Error -> {
                         val error = "error"
                     }
+                    else -> {}
                 }
             }
         }
@@ -271,11 +275,7 @@ class ReminderViewModel @Inject constructor(
             "10 minutes before" -> {
                 _state.update {
                     it.copy(
-                        formattedReminderTime = selectedDate.plusMinutes(
-                            10.minutes.toLong(
-                                DurationUnit.MILLISECONDS
-                            )
-                        ).toMillis()
+                        formattedReminderTime = selectedDate.minusMinutes(10).toMillis()
                     )
                 }
             }
@@ -283,11 +283,7 @@ class ReminderViewModel @Inject constructor(
             "30 minutes before" -> {
                 _state.update {
                     it.copy(
-                        formattedReminderTime = selectedDate.plusMinutes(
-                            30.minutes.toLong(
-                                DurationUnit.MILLISECONDS
-                            )
-                        ).toMillis()
+                        formattedReminderTime = selectedDate.minusMinutes(30).toMillis()
                     )
                 }
             }
@@ -295,11 +291,7 @@ class ReminderViewModel @Inject constructor(
             "1 hour before" -> {
                 _state.update {
                     it.copy(
-                        formattedReminderTime = selectedDate.plusHours(
-                            1.hours.toLong(
-                                DurationUnit.MILLISECONDS
-                            )
-                        ).toMillis()
+                        formattedReminderTime = selectedDate.minusHours(1).toMillis()
                     )
                 }
             }
@@ -307,11 +299,7 @@ class ReminderViewModel @Inject constructor(
             "6 hours before" -> {
                 _state.update {
                     it.copy(
-                        formattedReminderTime = selectedDate.plusHours(
-                            6.hours.toLong(
-                                DurationUnit.MILLISECONDS
-                            )
-                        ).toMillis()
+                        formattedReminderTime = selectedDate.minusHours(6).toMillis()
                     )
                 }
             }
@@ -319,11 +307,7 @@ class ReminderViewModel @Inject constructor(
             "1 day before" -> {
                 _state.update {
                     it.copy(
-                        formattedReminderTime = selectedDate.plusDays(
-                            1.days.toLong(
-                                DurationUnit.MILLISECONDS
-                            )
-                        ).toMillis()
+                        formattedReminderTime = selectedDate.minusDays(1).toMillis()
                     )
                 }
             }
@@ -419,19 +403,19 @@ private fun String?.toAgendaItemType(): AgendaItemType {
 }
 
 data class ReminderState(
-    var isAlarmSelectionExpanded: Boolean = false,
-    var isTimePickerSelectionExpanded: Boolean = false,
-    var isDatePickerExpanded: Boolean = false,
-    var alarmReminderTimeSelection: String = "",
-    var reminderType: ReminderType = ReminderType.ONE_HOUR_BEFORE,
-    var formattedReminderTime: Long = 3600000,
-    var reminderDescription: String = "Description",
-    var reminderTitleText: String = "New Reminder",
-    var saveFailedMessage: String = "",
-    var agendaItemType: AgendaItemType = AgendaItemType.REMINDER_ITEM,
-    var eventId: String = "",
-    var isEditingEvent: Boolean = true,
-    var isDone: Boolean = false
+    val isAlarmSelectionExpanded: Boolean = false,
+    val isTimePickerSelectionExpanded: Boolean = false,
+    val isDatePickerExpanded: Boolean = false,
+    val alarmReminderTimeSelection: String = "",
+    val reminderType: ReminderType = ReminderType.ONE_HOUR_BEFORE,
+    val formattedReminderTime: Long = 3600000,
+    val reminderDescription: String = "Description",
+    val reminderTitleText: String = "New Reminder",
+    val saveFailedMessage: String = "",
+    val agendaItemType: AgendaItemType = AgendaItemType.REMINDER_ITEM,
+    val eventId: String = "",
+    val isEditingEvent: Boolean = true,
+    val isDone: Boolean = false
 )
 
 data class TimeAndDateState(

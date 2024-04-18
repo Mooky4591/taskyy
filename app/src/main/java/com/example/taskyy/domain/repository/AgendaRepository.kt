@@ -7,7 +7,7 @@ import com.example.taskyy.ui.objects.Reminder
 import com.example.taskyy.ui.objects.Task
 
 interface AgendaRepository {
-    suspend fun logout(): Boolean
+    suspend fun logout(): Result<Boolean, DataError.Network>
     suspend fun getUserName(email: String): String
 
     //Reminder

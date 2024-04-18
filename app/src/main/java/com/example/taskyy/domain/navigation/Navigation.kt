@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import androidx.navigation.navigation
 import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.enums.EditTextScreenType
@@ -102,7 +103,15 @@ fun Nav() {
                 val agendaViewModel = hiltViewModel<AgendaViewModel>()
                 val state = agendaViewModel.state
                 val timeDateState = agendaViewModel.timeDateState
+                ObserveAsEvents(agendaViewModel.events) { agendaEvent ->
+                    when (agendaEvent) {
+                        is AgendaEvent.LogoutSuccessful -> {
+                            navController.navigate(Screen.Login.route)
+                        }
 
+                        else -> {}
+                    }
+                }
                 AgendaScreen(
                     state = state,
                     onEvent = { event ->
@@ -120,7 +129,17 @@ fun Nav() {
                 )
             }
 
-            composable(route = Screen.Reminder.route + "/{dateString}, {agendaItem}, {eventItemId}, {isEditing}") {
+            composable(
+                route = Screen.Reminder.route + "/{dateString}, {agendaItem}, {eventItemId}, {isEditing}",
+                deepLinks =
+                listOf(
+                    navDeepLink {
+                        uriPattern =
+                            "tasky://www.myapp.com/taskScreen?zoneDateTime={zoneDateTime}" +
+                                    "&isEditingMode={isEditingMode}&agendaItemId={agendaItemId}"
+                    },
+                ),
+            ) {
                 val reminderViewModel = hiltViewModel<ReminderViewModel>()
                 val state by reminderViewModel.state.collectAsState()
                 val timeDateState by reminderViewModel.timeAndDateState.collectAsState()

@@ -83,7 +83,7 @@ class AgendaViewModel @Inject constructor(
                 }
             }
             agendaItemList.sortBy { it.timeInMillis }
-            state.copy(listOfAgendaEvents = agendaItemList)
+            state = state.copy(listOfAgendaEvents = agendaItemList.toList())
         }
     }
 
@@ -197,12 +197,17 @@ class AgendaViewModel @Inject constructor(
     private fun logout() {
         viewModelScope.launch {
             state = state.copy(isUserLoggingOut = true)
-            state = state.copy(wasLogoutSuccessful = logoutUseCase.logout())
-            state = state.copy(isUserLoggingOut = false)
+            when (val logoutSuccess = logoutUseCase.logout()) {
+                is Result.Success -> {
+                    state = state.copy(wasLogoutSuccessful = logoutSuccess.data)
+                    eventChannel.send(AgendaEvent.LogoutSuccessful)
+                }
 
-            if (state.wasLogoutSuccessful) {
-                eventChannel.send(AgendaEvent.LogoutSuccessful)
+                is Result.Error -> {
+
+                }
             }
+            state = state.copy(isUserLoggingOut = false)
         }
     }
 
@@ -235,20 +240,20 @@ private fun AgendaEventItem.toReminder(): Reminder {
 }
 
 data class AgendaState(
-    var name: String = "",
-    var initials: String = "",
-    var isMonthExpanded: Boolean = false,
-    var selectedMonth: String = "",
-    var selectedDayList: List<Day> = getDefaultListOfDays(),
-    var isUserDropDownExpanded: Boolean = false,
-    var isUserLoggingOut: Boolean = false,
-    var wasLogoutSuccessful: Boolean = false,
-    var isAddAgendaItemExpanded: Boolean = false,
-    var selectedAgendaDay: Boolean = false,
-    var selectedIndex: Int = 0,
-    var listOfAgendaEvents: List<AgendaEventItem> = listOf(),
-    var isEllipsisMenuExpanded: Boolean = false,
-    var isDoneClicked: Boolean = false
+    val name: String = "",
+    val initials: String = "",
+    val isMonthExpanded: Boolean = false,
+    val selectedMonth: String = "",
+    val selectedDayList: List<Day> = getDefaultListOfDays(),
+    val isUserDropDownExpanded: Boolean = false,
+    val isUserLoggingOut: Boolean = false,
+    val wasLogoutSuccessful: Boolean = false,
+    val isAddAgendaItemExpanded: Boolean = false,
+    val selectedAgendaDay: Boolean = false,
+    val selectedIndex: Int = 0,
+    val listOfAgendaEvents: List<AgendaEventItem> = listOf(),
+    val isEllipsisMenuExpanded: Boolean = false,
+    val isDoneClicked: Boolean = false
 ) : Serializable
 
 data class TimeDateState(

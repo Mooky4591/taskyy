@@ -31,7 +31,7 @@ interface TaskyyApi {
     fun checkTokenIsValid(): retrofit2.Call<ResponseBody>
 
     @GET("/logout")
-    suspend fun logoutUser(): retrofit2.Call<Void>
+    fun logoutUser(): retrofit2.Call<Void>
 
     //@GET("/agenda")
     //fun getAgenda(@Query("key") key: String, @Query("timezone") timeZone: TimeZone, @Query("time") time: Time): retrofit2.Response<AgendaResponse>
