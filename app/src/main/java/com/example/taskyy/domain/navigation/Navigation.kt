@@ -26,11 +26,13 @@ import com.example.taskyy.ui.events.RegisterEvent
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.screens.AgendaScreen
 import com.example.taskyy.ui.screens.EditTextScreen
+import com.example.taskyy.ui.screens.EventScreen
 import com.example.taskyy.ui.screens.LoginScreen
 import com.example.taskyy.ui.screens.RegisterScreen
 import com.example.taskyy.ui.screens.ReminderScreen
 import com.example.taskyy.ui.viewmodels.AgendaViewModel
 import com.example.taskyy.ui.viewmodels.EditTextViewModel
+import com.example.taskyy.ui.viewmodels.EventViewModel
 import com.example.taskyy.ui.viewmodels.LoginViewModel
 import com.example.taskyy.ui.viewmodels.RegisterViewModel
 import com.example.taskyy.ui.viewmodels.ReminderViewModel
@@ -120,11 +122,32 @@ fun Nav() {
                                 when (event.itemType) {
                                     AgendaItemType.REMINDER_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}, ${event.isEditing}")
                                     AgendaItemType.TASK_ITEM -> navController.navigate(Screen.Reminder.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}, ${event.isEditing}")
-                                    AgendaItemType.EVENT_ITEM -> navController.navigate(Screen.Event.route)
+                                    AgendaItemType.EVENT_ITEM -> navController.navigate(Screen.Event.route + "/${timeDateState.dateTime}, ${event.itemType}, ${event.eventItemId}, ${event.isEditing}")
                                 }
                             else -> agendaViewModel.onEvent(event)
                         }
                     },
+                    timeDateState = timeDateState
+                )
+            }
+
+            composable(
+                route = Screen.Event.route + "/{dateString}, {agendaItem}, {eventItemId}, {isEditing}",
+                deepLinks =
+                listOf(
+                    navDeepLink {
+                        uriPattern =
+                            "tasky://www.myapp.com/eventScreen?zoneDateTime={zoneDateTime}" +
+                                    "&isEditingMode={isEditingMode}&agendaItemId={agendaItemId}"
+                    },
+                ),
+            ) {
+                val eventViewModel = hiltViewModel<EventViewModel>()
+                val state by eventViewModel.state.collectAsState()
+                val timeDateState by eventViewModel.timeAndDateState.collectAsState()
+                EventScreen(
+                    state = state,
+                    onEvent = { event -> eventViewModel.onEvent(event) },
                     timeDateState = timeDateState
                 )
             }
@@ -135,7 +158,7 @@ fun Nav() {
                 listOf(
                     navDeepLink {
                         uriPattern =
-                            "tasky://www.myapp.com/taskScreen?zoneDateTime={zoneDateTime}" +
+                            "tasky://www.myapp.com/reminderScreen?zoneDateTime={zoneDateTime}" +
                                     "&isEditingMode={isEditingMode}&agendaItemId={agendaItemId}"
                     },
                 ),
