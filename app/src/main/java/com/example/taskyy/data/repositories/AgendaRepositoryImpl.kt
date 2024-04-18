@@ -2,7 +2,6 @@ package com.example.taskyy.data.repositories
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -19,7 +18,6 @@ import com.example.taskyy.data.local.notifications.NotificationScheduler
 import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
 import com.example.taskyy.data.local.room_entity.agenda_entities.TaskEntity
 import com.example.taskyy.data.local.room_entity.pending_agenda_retry.PendingReminderRetryEntity
-import com.example.taskyy.data.local.room_entity.pending_agenda_retry.PendingTaskRetryEntity
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.data.remote.workers.AgendaItemWorker
@@ -40,6 +38,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
+
 class AgendaRepositoryImpl @Inject constructor(
     private val retrofit: TaskyyApi,
     private val reminderDao: ReminderDao,
@@ -52,16 +51,21 @@ class AgendaRepositoryImpl @Inject constructor(
     private val context: Context
 ): AgendaRepository {
 
-    override suspend fun logout(): Boolean {
+    override suspend fun logout(): Result<Boolean, DataError.Network> {
         return try {
             retrofit.logoutUser()
-            true
+            userPreferences.clearPreferences()
+            notificationScheduler.cancelAllScheduledNotifications()
+            Result.Success(true)
         } catch (e: HttpException) {
-            Log.e("Tag", e.code().toString())
-            false
-        } catch (i: IOException) {
-            Log.e("Tag", i.message.toString())
-            false
+            when (e.code()) {
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> Result.Error(DataError.Network.SERIALIZATION)
+                else -> Result.Error(DataError.Network.UNKNOWN)
+            }
         }
     }
 
@@ -194,6 +198,19 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
+    override suspend fun updateReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local> {
+        val reminderEntity = reminder.toReminderEntity()
+        return try {
+            reminderDao.insertReminder(reminderEntity)
+            updateReminderToApi(reminder)
+            Result.Success(reminder)
+        } catch (e: IOException) {
+            (LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!))
+        } as Result<Reminder, DataError.Local>
+    }
+
+
     //Failed Reminder API calls
     override suspend fun addFailedReminderToRetry(reminder: Reminder): Result<Reminder, DataError.Local> {
         return try {
@@ -211,28 +228,13 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
-    //Failed Task API Calls
-    override suspend fun addFailedTaskToRetry(task: Task): Result<Task, DataError.Local> {
-        return try {
-            pendingTaskRetryDao.insertPendingTask(task.toPendingTaskRetryEntity())
-            Result.Success(task)
-        } catch (e: IOException) {
-            when (e.message) {
-                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
-                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
-                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
-                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
-                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
-                else -> Result.Error(DataError.Local.UNKNOWN)
-            }
-        }
-    }
-
     //Task Functions
+    @RequiresApi(Build.VERSION_CODES.S)
     override suspend fun saveTaskToDB(task: Task): Result<Task, DataError.Local> {
         val taskEntity = task.toTaskEntity()
         return try {
             taskDao.insertTask(taskEntity)
+            notificationScheduler.scheduleNotification(task.toAgendaEventItem())
             saveTaskToApi(task)
             Result.Success(task)
         } catch (e: IOException) {
@@ -253,7 +255,7 @@ class AgendaRepositoryImpl @Inject constructor(
             retrofit.createTask(taskDTO)
             Result.Success(task)
         } catch (e: HttpException) {
-            pendingTaskRetryDao.insertPendingTask(task.toPendingTaskRetryEntity())
+            addFailedTaskToRetry(task)
             when (e.code()) {
                 408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
                 429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
@@ -271,7 +273,7 @@ class AgendaRepositoryImpl @Inject constructor(
             retrofit.updateTask(taskDTO)
             Result.Success(task)
         } catch (e: HttpException) {
-            pendingTaskRetryDao.insertPendingTask(task.toPendingTaskRetryEntity())
+            addFailedTaskToRetry(task)
             when (e.code()) {
                 408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
                 429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
@@ -302,6 +304,60 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getTaskByEventId(eventId: String): Result<Task, DataError.Local> {
+        return try {
+            val taskEntity = taskDao.getTaskByEventId(eventId)
+            Result.Success(taskEntity.transformToTask())
+        } catch (e: IOException) {
+            (LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!))
+        } as Result<Task, DataError.Local>
+    }
+
+    override suspend fun deleteTaskInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local> {
+        return try {
+            taskDao.deleteTask(taskEntity = agendaEventItem.toTaskEntity(false))
+            notificationScheduler.cancelScheduledNotificationAndPendingIntent(agendaEventItem)
+            Result.Success(true)
+        } catch (e: IOException) {
+            (LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!))
+        } as Result<Boolean, DataError.Local>
+    }
+
+    override suspend fun deleteTaskOnApi(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Network> {
+        return try {
+            retrofit.deleteTask(agendaEventItem.eventId)
+            Result.Success(true)
+        } catch (e: HttpException) {
+            addFailedTaskToRetry(agendaEventItem.toTask())
+            when (e.code()) {
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                500 -> Result.Error(DataError.Network.SERVER_ERROR)
+                400 -> Result.Error(DataError.Network.SERIALIZATION)
+                else -> Result.Error(DataError.Network.UNKNOWN)
+            }
+        }
+    }
+
+    //Failed Task API Calls
+    override suspend fun addFailedTaskToRetry(task: Task): Result<Task, DataError.Local> {
+        return try {
+            pendingTaskRetryDao.insertPendingTask(task.toPendingTaskRetryEntity())
+            Result.Success(task)
+        } catch (e: IOException) {
+            when (e.message) {
+                "Permission denied" -> Result.Error(DataError.Local.PERMISSION_DENIED)
+                "File not found" -> Result.Error(DataError.Local.FILE_NOT_FOUND)
+                "Disk full" -> Result.Error(DataError.Local.DISK_FULL)
+                "Input/output error" -> Result.Error(DataError.Local.INPUT_OUTPUT_ERROR)
+                "Connection refused" -> Result.Error(DataError.Local.CONNECTION_REFUSED)
+                else -> Result.Error(DataError.Local.UNKNOWN)
+            }
+        }
+    }
+
+    //Work Manager
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun startWorkManager() {
         val constraints = Constraints.Builder()
@@ -360,149 +416,123 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
-    override suspend fun updateReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local> {
-        val reminderEntity = reminder.toReminderEntity()
-        return try {
-            reminderDao.insertReminder(reminderEntity)
-            updateReminderToApi(reminder)
-            Result.Success(reminder)
-        } catch (e: IOException) {
-            (LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!))
-        } as Result<Reminder, DataError.Local>
+    private fun Reminder.toReminderDto(): ReminderDTO {
+        return ReminderDTO(
+            id = eventId,
+            description = description,
+            title = title,
+            time = timeInMillis,
+            remindAt = alarmType
+        )
     }
 
-    override suspend fun getTaskByEventId(eventId: String): Result<Task, DataError.Local> {
-        return try {
-            val taskEntity = taskDao.getTaskByEventId(eventId)
-            Result.Success(taskEntity.transformToTask())
-        } catch (e: IOException) {
-            (LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!))
-        } as Result<Task, DataError.Local>
+    private fun Reminder.toPendingReminderRetryEntity(): PendingReminderRetryEntity {
+        return PendingReminderRetryEntity(
+            id = eventId,
+            action = agendaAction,
+        )
     }
 
-    override suspend fun deleteTaskInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local> {
-        return try {
-            taskDao.deleteTask(taskEntity = agendaEventItem.toTaskEntity(false))
-            Result.Success(true)
-        } catch (e: IOException) {
-            (LocalDataErrorHelper.determineLocalDataErrorMessage(e.message!!))
-        } as Result<Boolean, DataError.Local>
+    private fun Reminder.toAgendaEventItem(): AgendaEventItem {
+        return AgendaEventItem(
+            title = title,
+            description = description,
+            alarmType = alarmType,
+            eventId = eventId,
+            eventType = eventType,
+            timeInMillis = timeInMillis,
+            agendaAction = agendaAction
+        )
     }
 
-    override suspend fun deleteTaskOnApi(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Network> {
-        return try {
-            retrofit.deleteTask(agendaEventItem.eventId)
-            Result.Success(true)
-        } catch (e: HttpException) {
-            pendingTaskRetryDao.insertPendingTask(
-                agendaEventItem.toPendingRetryEntity(
-                    agendaEventItem.eventType
-                ) as PendingTaskRetryEntity
+    private fun TaskEntity.toAgendaEventItem(): AgendaEventItem {
+        return AgendaEventItem(
+            title = title,
+            description = description,
+            alarmType = remindAt,
+            eventType = eventType,
+            eventId = id,
+            timeInMillis = time,
+            agendaAction = action,
+        )
+    }
+
+    private fun ReminderEntity.toAgendaEventItem(): AgendaEventItem {
+        return AgendaEventItem(
+            title = title,
+            description = description,
+            alarmType = remindAt,
+            eventType = eventType,
+            eventId = id,
+            timeInMillis = time,
+            agendaAction = action,
+        )
+    }
+
+    private fun AgendaEventItem.toReminderEntity(): ReminderEntity {
+        return ReminderEntity(
+            id = eventId,
+            description = description,
+            title = title,
+            remindAt = alarmType,
+            time = timeInMillis,
+            action = agendaAction,
+            eventType = eventType
+        )
+    }
+
+    //Extension Functions
+    private fun List<TaskEntity>.transformToTaskList(): List<Task> {
+        return map { taskEntity ->
+            Task(
+                title = taskEntity.title,
+                description = taskEntity.description,
+                alarmType = taskEntity.remindAt,
+                timeInMillis = taskEntity.time,
+                id = taskEntity.id,
+                isDone = taskEntity.isDone,
+                agendaAction = taskEntity.action,
+                agendaItem = AgendaItemType.TASK_ITEM
             )
-            when (e.code()) {
-                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
-                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
-                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
-                500 -> Result.Error(DataError.Network.SERVER_ERROR)
-                400 -> Result.Error(DataError.Network.SERIALIZATION)
-                else -> Result.Error(DataError.Network.UNKNOWN)
-            }
         }
     }
-}
 
-private fun Reminder.toReminderDto(): ReminderDTO {
-    return ReminderDTO(
-        id = eventId,
-        description = description,
-        title = title,
-        time = timeInMillis,
-        remindAt = alarmType
-    )
-}
+    private fun List<ReminderEntity>.transformToReminderList(): List<Reminder> {
+        return map { reminderEntity ->
+            Reminder(
+                title = reminderEntity.title,
+                description = reminderEntity.description,
+                timeInMillis = reminderEntity.time,
+                alarmType = reminderEntity.remindAt,
+                id = reminderEntity.id,
+                agendaItem = AgendaItemType.REMINDER_ITEM,
+                agendaAction = reminderEntity.action
+            )
+        }
+    }
 
-private fun Reminder.toPendingReminderRetryEntity(): PendingReminderRetryEntity {
-    return PendingReminderRetryEntity(
-        id = eventId,
-        action = agendaAction,
-    )
-}
-
-private fun Reminder.toAgendaEventItem(): AgendaEventItem {
-    return AgendaEventItem(
-        title = title,
-        description = description,
-        alarmType = alarmType,
-        eventId = eventId,
-        eventType = eventType,
-        timeInMillis = timeInMillis,
-        agendaAction = agendaAction
-    )
-}
-
-private fun TaskEntity.toAgendaEventItem(): AgendaEventItem {
-    return AgendaEventItem(
-        title = title,
-        description = description,
-        alarmType = remindAt,
-        eventType = eventType,
-        eventId = id,
-        timeInMillis = time,
-        agendaAction = action,
-    )
-}
-
-private fun ReminderEntity.toAgendaEventItem(): AgendaEventItem {
-    return AgendaEventItem(
-        title = title,
-        description = description,
-        alarmType = remindAt,
-        eventType = eventType,
-        eventId = id,
-        timeInMillis = time,
-        agendaAction = action,
-    )
-}
-
-private fun AgendaEventItem.toReminderEntity(): ReminderEntity {
-    return ReminderEntity(
-        id = eventId,
-        description = description,
-        title = title,
-        remindAt = alarmType,
-        time = timeInMillis,
-        action = agendaAction,
-        eventType = eventType
-    )
-}
-
-//Extension Functions
-private fun List<TaskEntity>.transformToTaskList(): List<Task> {
-    return map { taskEntity ->
-        Task(
-            title = taskEntity.title,
-            description = taskEntity.description,
-            alarmType = taskEntity.remindAt,
-            timeInMillis = taskEntity.time,
-            id = taskEntity.id,
-            isDone = taskEntity.isDone,
-            agendaAction = taskEntity.action,
-            agendaItem = AgendaItemType.TASK_ITEM
+    private fun AgendaEventItem.toTask(): Task {
+        return Task(
+            title = title,
+            description = description,
+            timeInMillis = timeInMillis,
+            alarmType = alarmType,
+            id = eventId,
+            agendaItem = eventType,
+            agendaAction = agendaAction,
+            isDone = false,
         )
     }
 }
 
-fun List<ReminderEntity>.transformToReminderList(): List<Reminder> {
-    return map { reminderEntity ->
-        Reminder(
-            title = reminderEntity.title,
-            description = reminderEntity.description,
-            timeInMillis = reminderEntity.time,
-            alarmType = reminderEntity.remindAt,
-            id = reminderEntity.id,
-            agendaItem = AgendaItemType.REMINDER_ITEM,
-            agendaAction = reminderEntity.action
-        )
-    }
+private fun Task.toAgendaEventItem(): AgendaEventItem {
+    return AgendaEventItem(
+        title,
+        description,
+        alarmType,
+        eventId,
+        timeInMillis,
+        eventType,
+        agendaAction
+    )
 }

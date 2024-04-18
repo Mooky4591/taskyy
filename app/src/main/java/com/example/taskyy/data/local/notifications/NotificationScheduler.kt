@@ -23,6 +23,12 @@ class NotificationScheduler(private val context: Context) {
         }
     }
 
+    fun cancelAllScheduledNotifications() {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
+    }
+
     fun cancelScheduledNotificationAndPendingIntent(agendaItem: AgendaEventItem) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -35,7 +41,7 @@ class NotificationScheduler(private val context: Context) {
         val intent =
             Intent(context, NotificationBroadcastReceiver::class.java)
                 .apply {
-                    putExtra("AGENDA_TYPE", agendaItem.eventType)
+                    putExtra("AGENDA_TYPE", agendaItem.eventType.name)
                     putExtra("NOTIFICATION_ID", notificationID)
                     putExtra("AGENDA_ID", agendaItem.eventId)
                     putExtra("TITLE", agendaItem.title)

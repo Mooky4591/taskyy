@@ -41,10 +41,7 @@ import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -77,7 +74,6 @@ fun ReminderScreen(
     onEvent: (ReminderEvent) -> Unit,
     timeDateState: TimeAndDateState
 ) {
-    CheckForAlarmPermissions()
     Scaffold {
         val formattedTitleDate = remember(timeDateState.dateTime) {
             DateTimeFormatter.ofPattern("dd MMMM yyyy").format(timeDateState.dateTime)
@@ -831,19 +827,15 @@ fun SaveTitle(details: String, onEvent: (EditTextEvent) -> Unit) {
 @Composable
 fun CheckForNotificationPermissions() {
     val context = LocalContext.current
-    var hasNotificationPermission by remember {
+    var hasNotificationPermission =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            mutableStateOf(
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.POST_NOTIFICATIONS,
-                ) == PackageManager.PERMISSION_GRANTED,
-            )
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
         } else {
-            mutableStateOf(true)
+            true
         }
-    }
-
     val permissionLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
@@ -855,38 +847,6 @@ fun CheckForNotificationPermissions() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
         SideEffect {
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-}
-
-//For some reason this permission check doesn't work
-@Composable
-fun CheckForAlarmPermissions() {
-    val context = LocalContext.current
-    var hasAlarmPermission by remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            mutableStateOf(
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.SCHEDULE_EXACT_ALARM,
-                ) == PackageManager.PERMISSION_GRANTED,
-            )
-        } else {
-            mutableStateOf(true)
-        }
-    }
-
-    val alarmPermissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-            onResult = { isGranted ->
-                hasAlarmPermission = isGranted
-                // TODO: Handle permission denial later
-            },
-        )
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasAlarmPermission) {
-        SideEffect {
-            alarmPermissionLauncher.launch(Manifest.permission.SCHEDULE_EXACT_ALARM)
         }
     }
 }

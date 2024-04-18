@@ -18,12 +18,12 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            installSplashScreen().apply {
-                setKeepOnScreenCondition {
-                    viewModel.state.isReady
-                }
+        installSplashScreen().apply {
+            setKeepOnScreenCondition {
+                viewModel.state.isReady
             }
+        }
+        setContent {
             Nav()
         }
 
