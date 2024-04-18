@@ -1,6 +1,11 @@
 package com.example.taskyy.ui.screens
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,11 +40,16 @@ import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import com.example.taskyy.R
 import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.enums.EditTextScreenType
@@ -66,6 +77,7 @@ fun ReminderScreen(
     onEvent: (ReminderEvent) -> Unit,
     timeDateState: TimeAndDateState
 ) {
+    CheckForAlarmPermissions()
     Scaffold {
         val formattedTitleDate = remember(timeDateState.dateTime) {
             DateTimeFormatter.ofPattern("dd MMMM yyyy").format(timeDateState.dateTime)
@@ -816,3 +828,65 @@ fun SaveTitle(details: String, onEvent: (EditTextEvent) -> Unit) {
     )
 }
 
+@Composable
+fun CheckForNotificationPermissions() {
+    val context = LocalContext.current
+    var hasNotificationPermission by remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) == PackageManager.PERMISSION_GRANTED,
+            )
+        } else {
+            mutableStateOf(true)
+        }
+    }
+
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                hasNotificationPermission = isGranted
+                // TODO: Handle permission denial later
+            },
+        )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
+        SideEffect {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+}
+
+//For some reason this permission check doesn't work
+@Composable
+fun CheckForAlarmPermissions() {
+    val context = LocalContext.current
+    var hasAlarmPermission by remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.SCHEDULE_EXACT_ALARM,
+                ) == PackageManager.PERMISSION_GRANTED,
+            )
+        } else {
+            mutableStateOf(true)
+        }
+    }
+
+    val alarmPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                hasAlarmPermission = isGranted
+                // TODO: Handle permission denial later
+            },
+        )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasAlarmPermission) {
+        SideEffect {
+            alarmPermissionLauncher.launch(Manifest.permission.SCHEDULE_EXACT_ALARM)
+        }
+    }
+}

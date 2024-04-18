@@ -12,12 +12,15 @@ interface TaskDao {
     suspend fun insertTask(taskEntity: TaskEntity)
 
     @Query("SELECT * FROM task_table WHERE time BETWEEN :startTime AND :endTime")
-    suspend fun getTasks(startTime: Long, endTime: Long): MutableList<TaskEntity>
+    suspend fun getTasks(startTime: Long, endTime: Long): List<TaskEntity>
 
     @Query("SELECT * FROM task_table WHERE id = :eventID")
     suspend fun getTaskByEventId(eventID: String): TaskEntity
 
     @Delete
     suspend fun deleteTask(taskEntity: TaskEntity)
+
+    @Query("SELECT * FROM TASK_TABLE WHERE time > :currentTime")
+    suspend fun findEntitiesAfterCurrentTime(currentTime: Long): List<TaskEntity>
 
 }

@@ -38,11 +38,9 @@ class LoginViewModel @Inject constructor(
                 }
 
                 is Result.Success -> {
-                    if (userPreferences.getUserFullName("name") != "" && userPreferences.getUserEmail(
-                            "email"
-                        ) != ""
+                    if (userPreferences.getUserFullName() != "" && userPreferences.getUserEmail() != ""
                     ) {
-                        eventChannel.send(LoginEvent.LoginSuccess(userPreferences.getUserEmail("email")))
+                        eventChannel.send(LoginEvent.LoginSuccess(userPreferences.getUserEmail()))
                     }
                 }
             }
@@ -76,7 +74,7 @@ class LoginViewModel @Inject constructor(
                 when (val login = loginUseCase.loginUser(event)) {
                     is Result.Success -> {
                         state = state.copy(isLogginIn = false)
-                        userPreferences.addUserEmail(key = "email", email = state.email)
+                        userPreferences.addUserEmail(email = state.email)
                         eventChannel.send(LoginEvent.LoginSuccess(state.email))
                     }
 

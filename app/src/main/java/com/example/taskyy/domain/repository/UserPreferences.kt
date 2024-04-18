@@ -5,12 +5,12 @@ import com.example.taskyy.domain.objects.AuthenticatedUser
 interface UserPreferences {
     fun saveAuthenticatedUser(user: AuthenticatedUser, key: String)
     fun clearPreferences()
-    fun addUserFullName(fullName: String, key: String)
-    fun getUserFullName(key: String): String
-    fun addUserEmail(email: String, key: String)
-    fun getUserEmail(key: String): String
-    fun addUserId(userId: String, key: String)
-    fun getUserId(key: String): String
-    fun addUserToken(token: String, key: String)
-    fun getUserToken(key: String): String
+    fun addUserFullName(fullName: String)
+    fun getUserFullName(): String
+    fun addUserEmail(email: String)
+    fun getUserEmail(): String
+    fun addUserId(userId: String)
+    fun getUserId(): String
+    fun addUserToken(token: String)
+    fun getUserToken(): String
 }

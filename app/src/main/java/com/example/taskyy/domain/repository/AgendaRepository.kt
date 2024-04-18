@@ -12,12 +12,11 @@ interface AgendaRepository {
 
     //Reminder
     suspend fun saveReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local>
-    suspend fun saveReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network>
     suspend fun updateReminderToApi(reminder: Reminder): Result<Reminder, DataError.Network>
     suspend fun getReminders(
         startDate: Long,
         endDate: Long
-    ): Result<MutableList<Reminder>, DataError.Local>
+    ): Result<List<Reminder>, DataError.Local>
 
     suspend fun getReminderByEventId(eventId: String): Result<Reminder, DataError.Local>
     suspend fun deleteReminderInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local>
@@ -28,12 +27,11 @@ interface AgendaRepository {
 
     //Tasks
     suspend fun saveTaskToDB(task: Task): Result<Task, DataError.Local>
-    suspend fun saveTaskToApi(task: Task): Result<Task, DataError.Network>
     suspend fun updateTaskToApi(task: Task): Result<Task, DataError.Network>
     suspend fun getTasks(
         startDate: Long,
         endDate: Long
-    ): Result<MutableList<Task>, DataError.Local>
+    ): Result<List<Task>, DataError.Local>
 
     suspend fun getTaskByEventId(eventId: String): Result<Task, DataError.Local>
     suspend fun deleteTaskInDb(agendaEventItem: AgendaEventItem): Result<Boolean, DataError.Local>
@@ -44,4 +42,6 @@ interface AgendaRepository {
 
     //WorkManager
     suspend fun startWorkManager()
+    suspend fun getAllAgendaItemsWithFutureNotifications(): Result<List<AgendaEventItem>, DataError.Local>
+    suspend fun updateReminderToDB(reminder: Reminder): Result<Reminder, DataError.Local>
 }

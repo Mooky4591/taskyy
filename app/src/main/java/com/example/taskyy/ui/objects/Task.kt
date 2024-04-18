@@ -24,7 +24,8 @@ class Task(
             description = description,
             id = eventId,
             title = title,
-            remindAt = alarmType
+            remindAt = alarmType,
+            eventType = eventType
         )
     }
 
