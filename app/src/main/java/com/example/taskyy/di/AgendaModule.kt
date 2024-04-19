@@ -1,6 +1,7 @@
 package com.example.taskyy.di
 
 import android.content.Context
+import com.example.taskyy.data.local.data_access_objects.EventDao
 import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
 import com.example.taskyy.data.local.data_access_objects.PendingTaskRetryDao
 import com.example.taskyy.data.local.data_access_objects.ReminderDao
@@ -67,6 +68,12 @@ object AgendaModule {
     @Singleton
     fun provideTaskDao(db: TaskyyDatabase): TaskDao {
         return db.taskDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideEventDao(db: TaskyyDatabase): EventDao {
+        return db.eventDao()
     }
 
     @Provides

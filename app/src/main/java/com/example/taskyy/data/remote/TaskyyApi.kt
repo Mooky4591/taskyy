@@ -6,6 +6,7 @@ import com.example.taskyy.data.local.room_entity.agenda_entities.TaskEntity
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.data.remote.data_transfer_objects.ReminderDTO
 import com.example.taskyy.data.remote.data_transfer_objects.TaskDTO
+import com.example.taskyy.data.remote.response_objects.AgendaResponse
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
 import com.example.taskyy.domain.objects.Login
 import okhttp3.ResponseBody
@@ -39,8 +40,8 @@ interface TaskyyApi {
     @POST("/syncAgenda")
     fun syncAgenda(@Query("key") key: String)
 
-    //@GET("/fullAgenda")
-    //fun getFulLAgenda(@Query("key") key: String): retrofit2.Response<AgendaResponse>
+    @GET("/fullAgenda")
+    fun getFulLAgenda(): AgendaResponse
 
     @Multipart()
     fun createEvent(@Query("key") key: String): retrofit2.Response<EventEntity>

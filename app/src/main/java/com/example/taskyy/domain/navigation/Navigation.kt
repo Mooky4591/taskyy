@@ -143,8 +143,8 @@ fun Nav() {
                 ),
             ) {
                 val eventViewModel = hiltViewModel<EventViewModel>()
-                val state by eventViewModel.state.collectAsState()
-                val timeDateState by eventViewModel.timeAndDateState.collectAsState()
+                val state by eventViewModel.state.collectAsStateWithLifecycle()
+                val timeDateState by eventViewModel.timeAndDateState.collectAsStateWithLifecycle()
                 EventScreen(
                     state = state,
                     onEvent = { event -> eventViewModel.onEvent(event) },

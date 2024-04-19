@@ -70,18 +70,20 @@ fun EventScreen(
                 title = formattedTitleDate,
                 color = Color.White,
                 saveFunction = {
-                    SaveEvent(
-                        saveEvent = { event ->
-                            onEvent(event)
-                        },
-                        updateEvent = { event ->
-                            onEvent(event)
-                        },
-                        title = state.titleText,
-                        description = state.description,
-                        isEventBeingEdited = state.isEditingEvent,
-                        eventId = state.eventId
-                    )
+                    state.eventId?.let { it1 ->
+                        SaveEvent(
+                            saveEvent = { event ->
+                                onEvent(event)
+                            },
+                            updateEvent = { event ->
+                                onEvent(event)
+                            },
+                            title = state.titleText,
+                            description = state.description,
+                            isEventBeingEdited = state.isEditingEvent,
+                            eventId = it1
+                        )
+                    }
                 },
                 onClose = { onEvent(EventScreenEvent.Close) }
             )
@@ -264,19 +266,21 @@ fun EventScreenContent(
             agendaItemType = state.agendaItemType
         )
         RowDivider()
-        SetAlarmTimeRow(
-            isAlarmSelectionExpanded = state.isAlarmSelectionExpanded,
-            alarmTimeSelectionText = state.alarmReminderTimeSelection,
-            toggleAlarmExpanded = { alarmSectionExpanded ->
-                alarmTypeDropDownSelected(
-                    EventScreenEvent.AlarmTypeDropDownSelected(alarmSectionExpanded)
-                )
-            },
-            setAlarmType = {
-                alarmTimeTextSelected(it)
-            },
-            isEventBeingEdited = state.isEditingEvent
-        )
+        state.alarmReminderTimeSelection?.let {
+            SetAlarmTimeRow(
+                isAlarmSelectionExpanded = state.isAlarmSelectionExpanded,
+                alarmTimeSelectionText = it,
+                toggleAlarmExpanded = { alarmSectionExpanded ->
+                    alarmTypeDropDownSelected(
+                        EventScreenEvent.AlarmTypeDropDownSelected(alarmSectionExpanded)
+                    )
+                },
+                setAlarmType = {
+                    alarmTimeTextSelected(it)
+                },
+                isEventBeingEdited = state.isEditingEvent
+            )
+        }
         RowDivider()
         VisitorSection()
     }

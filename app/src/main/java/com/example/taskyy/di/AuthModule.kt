@@ -6,6 +6,9 @@ import android.content.SharedPreferences
 import androidx.room.Room
 import com.example.taskyy.App
 import com.example.taskyy.R
+import com.example.taskyy.data.local.data_access_objects.EventDao
+import com.example.taskyy.data.local.data_access_objects.ReminderDao
+import com.example.taskyy.data.local.data_access_objects.TaskDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_database.TaskyyDatabase
 import com.example.taskyy.data.remote.ApiKeyInterceptor
@@ -38,10 +41,13 @@ object AuthModule {
     @Singleton
     fun provideAuthRepository(
         userDao: UserDao,
+        eventDao: EventDao,
+        reminderDao: ReminderDao,
+        taskDao: TaskDao,
         api: TaskyyApi,
         userPreferences: UserPreferences
     ): AuthRepository {
-        return AuthRepositoryImpl(userDao, api, userPreferences)
+        return AuthRepositoryImpl(userDao, eventDao, taskDao, reminderDao, api, userPreferences)
     }
 
     @Provides

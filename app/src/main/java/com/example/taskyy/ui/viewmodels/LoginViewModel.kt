@@ -44,7 +44,7 @@ class LoginViewModel @Inject constructor(
                     }
                 }
             }
-            state.copy(isReady = true)
+            state = state.copy(isReady = true)
         }
     }
 
@@ -68,14 +68,14 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login(event: Login) {
-        if (loginUseCase.isEmailValid(state.email)) {
+        if (state.email?.let { loginUseCase.isEmailValid(it) } == true) {
             viewModelScope.launch {
                 state = state.copy(isLogginIn = true)
                 when (val login = loginUseCase.loginUser(event)) {
                     is Result.Success -> {
                         state = state.copy(isLogginIn = false)
-                        userPreferences.addUserEmail(email = state.email)
-                        eventChannel.send(LoginEvent.LoginSuccess(state.email))
+                        userPreferences.addUserEmail(email = state.email!!)
+                        eventChannel.send(LoginEvent.LoginSuccess(state.email!!))
                     }
 
                     is Result.Error -> {
@@ -90,14 +90,14 @@ class LoginViewModel @Inject constructor(
 }
 
 data class LoginState(
-    var email: String = "",
-    var password: String = "",
-    var name: String = "",
-    var isLogginIn: Boolean = false,
-    var isEmailValid: Boolean = false,
-    var isPasswordVisible: Boolean = false,
-    var isLoginSuccessful: Boolean = false,
-    var loginErrorMessage: UiText? = null,
-    var isReady: Boolean = false
+    val email: String? = null,
+    val password: String? = null,
+    val name: String = "",
+    val isLogginIn: Boolean = false,
+    val isEmailValid: Boolean = false,
+    val isPasswordVisible: Boolean = false,
+    val isLoginSuccessful: Boolean = false,
+    val loginErrorMessage: UiText? = null,
+    val isReady: Boolean = false
 )
 

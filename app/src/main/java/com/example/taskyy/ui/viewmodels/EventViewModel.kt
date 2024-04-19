@@ -59,22 +59,20 @@ class EventViewModel @Inject constructor(
             }
         }
     }
-
-
 }
 
 data class EventState(
     val isAlarmSelectionExpanded: Boolean = false,
     val isTimePickerSelectionExpanded: Boolean = false,
     val isDatePickerExpanded: Boolean = false,
-    val alarmReminderTimeSelection: String = "",
+    val alarmReminderTimeSelection: String? = null,
     val reminderType: ReminderType = ReminderType.ONE_HOUR_BEFORE,
     val formattedReminderTime: Long = 3600000,
     val description: String = "Description",
     val titleText: String = "New Event",
-    val saveFailedMessage: String = "",
+    val saveFailedMessage: String? = null,
     val agendaItemType: AgendaItemType = AgendaItemType.EVENT_ITEM,
-    val eventId: String = "",
+    val eventId: String? = null,
     val isEditingEvent: Boolean = true,
     val isDone: Boolean = false
 ) : Serializable

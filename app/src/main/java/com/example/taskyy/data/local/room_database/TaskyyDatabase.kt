@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.taskyy.data.local.data_access_objects.EventDao
 import com.example.taskyy.data.local.data_access_objects.PendingEventRetryDao
 import com.example.taskyy.data.local.data_access_objects.PendingReminderRetryDao
 import com.example.taskyy.data.local.data_access_objects.PendingTaskRetryDao
@@ -28,6 +29,7 @@ abstract class TaskyyDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun reminderDao(): ReminderDao
     abstract fun taskDao(): TaskDao
+    abstract fun eventDao(): EventDao
     abstract fun pendingReminderRetryDao(): PendingReminderRetryDao
     abstract fun pendingEventRetryDao(): PendingEventRetryDao
     abstract fun pendingTaskRetryDao(): PendingTaskRetryDao
