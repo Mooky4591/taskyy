@@ -61,6 +61,7 @@ import com.example.taskyy.ui.enums.AgendaItemType
 import com.example.taskyy.ui.enums.EditTextScreenType
 import com.example.taskyy.ui.enums.ReminderType
 import com.example.taskyy.ui.events.EditTextEvent
+import com.example.taskyy.ui.events.EventScreenEvent
 import com.example.taskyy.ui.events.ReminderEvent
 import com.example.taskyy.ui.viewmodels.ReminderState
 import com.example.taskyy.ui.viewmodels.TimeAndDateState
@@ -186,11 +187,7 @@ private fun ReminderScreenContent(
                 ItemBox("#289c74", 30, borderColor = "#289c74")
                 ItemBoxTitle("Task")
             }
-
-            AgendaItemType.EVENT_ITEM -> {
-                ItemBox("#d0ec44", 30, borderColor = "#d0ec44")
-                ItemBoxTitle("Event")
-            }
+            else -> {}
         }
     }
     Column {
@@ -231,7 +228,8 @@ private fun ReminderScreenContent(
                         selectedDate
                     )
                 )
-            }
+            },
+            agendaItemType = state.agendaItemType
         )
         RowDivider()
         SetAlarmTimeRow(
@@ -361,16 +359,21 @@ fun SetAlarmTimeRow(
 
 @Composable
 fun DateSection(
-    datePickerExpanded: (ReminderEvent) -> Unit,
+    datePickerExpanded: (Any) -> Unit,
     dateString: String,
     isDatePickerExpanded: Boolean,
     isEventBeingEdited: Boolean,
+    agendaItemType: AgendaItemType,
     userSelectedDate: (Long) -> Unit
 ) {
     Row(
         modifier = Modifier
             .clickable(enabled = isEventBeingEdited) {
-                datePickerExpanded(ReminderEvent.DatePickerSelcted(!isDatePickerExpanded))
+                if (agendaItemType == AgendaItemType.TASK_ITEM || agendaItemType == AgendaItemType.REMINDER_ITEM) {
+                    datePickerExpanded(ReminderEvent.DatePickerSelcted(!isDatePickerExpanded))
+                } else {
+                    datePickerExpanded(EventScreenEvent.DatePickerSelcted(!isDatePickerExpanded))
+                }
             }
             .height(40.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -394,7 +397,11 @@ fun DateSection(
                 userSelectedDate(it)
             },
             cancelled = { isDatePickerExpanded ->
-                datePickerExpanded(ReminderEvent.DatePickerSelcted(isDatePickerExpanded))
+                if (agendaItemType == AgendaItemType.TASK_ITEM || agendaItemType == AgendaItemType.REMINDER_ITEM) {
+                    datePickerExpanded(ReminderEvent.DatePickerSelcted(isDatePickerExpanded))
+                } else {
+                    datePickerExpanded(EventScreenEvent.DatePickerSelcted(isDatePickerExpanded))
+                }
             },
             isDatePickerExpanded = isDatePickerExpanded
         )
@@ -412,6 +419,7 @@ fun TimeAndDateRow(
     onDateSelected: (Long) -> Unit,
     isDatePickerExpanded: Boolean,
     isTimePickerExpanded: Boolean,
+    agendaItemType: AgendaItemType,
     timeString: String,
 ) {
     Row(
@@ -427,14 +435,17 @@ fun TimeAndDateRow(
             userSelectedTime = { selectedTime ->
                 onTimeSelected(selectedTime)
             },
-            isEventBeingEdited = isEventBeingEdited
+            isEventBeingEdited = isEventBeingEdited,
+            agendaItemType = agendaItemType,
+            toOrFromText = "From"
         )
         DateSection(
             isDatePickerExpanded = isDatePickerExpanded,
             datePickerExpanded = { onDateExpanded(isDatePickerExpanded) },
             userSelectedDate = { dateSelected: Long -> onDateSelected(dateSelected) },
             dateString = dateString,
-            isEventBeingEdited = isEventBeingEdited
+            isEventBeingEdited = isEventBeingEdited,
+            agendaItemType = agendaItemType
         )
     }
 }
@@ -442,22 +453,28 @@ fun TimeAndDateRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeSection(
-    toggleTimePicker: (ReminderEvent) -> Unit,
+    toggleTimePicker: (Any) -> Unit,
     userSelectedTime: (TimePickerState) -> Unit,
+    agendaItemType: AgendaItemType,
     isTimePickerExpanded: Boolean,
     isEventBeingEdited: Boolean,
-    selectedTime: String
+    selectedTime: String,
+    toOrFromText: String
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clickable(enabled = isEventBeingEdited) {
-                toggleTimePicker(ReminderEvent.TimePickerSelected(!isTimePickerExpanded))
+                if (agendaItemType == AgendaItemType.REMINDER_ITEM || agendaItemType == AgendaItemType.TASK_ITEM) {
+                    toggleTimePicker(ReminderEvent.TimePickerSelected(!isTimePickerExpanded))
+                } else {
+                    toggleTimePicker(EventScreenEvent.TimePickerSelected(!isTimePickerExpanded))
+                }
             }
             .height(40.dp)
     ) {
         Text(
-            text = "From",
+            text = toOrFromText,
             modifier = Modifier.padding(end = 40.dp),
             fontSize = 15.sp
         )
@@ -480,7 +497,11 @@ fun TimeSection(
                 userSelectedTime(selectedTime)
             },
             toggle = {
-                toggleTimePicker(ReminderEvent.TimePickerSelected(!it))
+                if (agendaItemType == AgendaItemType.REMINDER_ITEM || agendaItemType == AgendaItemType.TASK_ITEM) {
+                    toggleTimePicker(ReminderEvent.TimePickerSelected(!it))
+                } else {
+                    toggleTimePicker(EventScreenEvent.TimePickerSelected(!it))
+                }
             },
             isTimeSelectionExpanded = isTimePickerExpanded
         )
@@ -591,7 +612,7 @@ fun ItemDescription(
 @Composable
 fun RowDivider() {
     HorizontalDivider(
-        color = Color.LightGray,
+        color = Color(android.graphics.Color.parseColor("#f8f8fa")),
         modifier = Modifier
             .padding(
                 horizontal = 20.dp,
@@ -719,7 +740,7 @@ fun TopBar(
         modifier =
         Modifier
             .fillMaxWidth()
-            .padding(top = 10.dp, bottom = 10.dp),
+            .padding(top = 10.dp, bottom = 10.dp, start = 10.dp, end = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Icon(
@@ -771,7 +792,7 @@ fun SaveReminder(
                                 isDone = null
                             )
                         )
-                    } else {
+                    } else if (agendaItemType == AgendaItemType.TASK_ITEM) {
                         saveEvent(
                             ReminderEvent.SaveReminder(
                                 title = title,
