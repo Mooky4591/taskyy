@@ -41,7 +41,7 @@ interface TaskyyApi {
     fun syncAgenda(@Query("key") key: String)
 
     @GET("/fullAgenda")
-    fun getFulLAgenda(): AgendaResponse
+    suspend fun getFulLAgenda(): AgendaResponse
 
     @Multipart()
     fun createEvent(@Query("key") key: String): retrofit2.Response<EventEntity>

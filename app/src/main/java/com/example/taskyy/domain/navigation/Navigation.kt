@@ -137,8 +137,8 @@ fun Nav() {
                 listOf(
                     navDeepLink {
                         uriPattern =
-                            "tasky://www.myapp.com/eventScreen?zoneDateTime={zoneDateTime}" +
-                                    "&isEditingMode={isEditingMode}&agendaItemId={agendaItemId}"
+                            "tasky://www.myapp.com/eventScreen?dateString={dateString}" +
+                                    "&isEditing={isEditing}&eventItemId={eventItemId}"
                     },
                 ),
             ) {
@@ -158,8 +158,8 @@ fun Nav() {
                 listOf(
                     navDeepLink {
                         uriPattern =
-                            "tasky://www.myapp.com/reminderScreen?zoneDateTime={zoneDateTime}" +
-                                    "&isEditingMode={isEditingMode}&agendaItemId={agendaItemId}"
+                            "tasky://www.myapp.com/reminderScreen?dateString={dateString}" +
+                                    "&isEditing={isEditing}&eventItemId={eventItemId}"
                     },
                 ),
             ) {

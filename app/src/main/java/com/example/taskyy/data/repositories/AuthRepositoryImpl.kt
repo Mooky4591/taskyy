@@ -95,7 +95,6 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun validateToken(): Result<Boolean, DataError.Network> {
         return try {
             retrofit.checkTokenIsValid()
-            getFullAgenda()
             Result.Success(true)
         } catch (e: HttpException) {
             when (e.code()) {
@@ -110,7 +109,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun getFullAgenda() {
+    override suspend fun getFullAgenda() {
         try {
             val agenda = retrofit.getFulLAgenda()
             for (task in agenda.tasks) {
@@ -123,6 +122,7 @@ class AuthRepositoryImpl @Inject constructor(
                 //  eventDao.insertEvent(event.toEventEntity())
             }
         } catch (e: HttpException) {
+            val error = e.code()
         }
     }
 

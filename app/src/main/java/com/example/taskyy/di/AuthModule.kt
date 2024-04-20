@@ -11,8 +11,8 @@ import com.example.taskyy.data.local.data_access_objects.ReminderDao
 import com.example.taskyy.data.local.data_access_objects.TaskDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
 import com.example.taskyy.data.local.room_database.TaskyyDatabase
-import com.example.taskyy.data.remote.ApiKeyInterceptor
 import com.example.taskyy.data.remote.TaskyyApi
+import com.example.taskyy.data.remote.interceptors.ApiKeyInterceptor
 import com.example.taskyy.data.repositories.AuthRepositoryImpl
 import com.example.taskyy.data.repositories.UserPreferencesImpl
 import com.example.taskyy.domain.error.PasswordValidator
@@ -79,9 +79,12 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
+    fun provideOkHttpClient(
+        @ApplicationContext context: Context,
+        userPreferences: UserPreferences
+    ): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(ApiKeyInterceptor(context.getString(R.string.apiKey)))
+            .addInterceptor(ApiKeyInterceptor(context.getString(R.string.apiKey), userPreferences))
             .build()
     }
 

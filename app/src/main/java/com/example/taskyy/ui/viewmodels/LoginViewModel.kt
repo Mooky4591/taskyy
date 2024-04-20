@@ -14,6 +14,7 @@ import com.example.taskyy.domain.usecases.LoginUseCase
 import com.example.taskyy.ui.UiText
 import com.example.taskyy.ui.events.LoginEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -23,7 +24,8 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val userPreferences: UserPreferences,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val applicationScope: CoroutineScope
 ) : ViewModel() {
     var state by mutableStateOf(LoginState())
         private set
@@ -35,16 +37,20 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             when (authRepository.validateToken()) {
                 is Result.Error -> {
+                    state = state.copy(isReady = false)
                 }
 
                 is Result.Success -> {
+                    applicationScope.launch {
+                        authRepository.getFullAgenda()
+                    }.join()
+                    state = state.copy(isReady = false)
                     if (userPreferences.getUserFullName() != "" && userPreferences.getUserEmail() != ""
                     ) {
                         eventChannel.send(LoginEvent.LoginSuccess(userPreferences.getUserEmail()))
                     }
                 }
             }
-            state = state.copy(isReady = true)
         }
     }
 
@@ -68,14 +74,15 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login(event: Login) {
-        if (state.email?.let { loginUseCase.isEmailValid(it) } == true) {
+        if (state.email.let { loginUseCase.isEmailValid(it) }) {
             viewModelScope.launch {
                 state = state.copy(isLogginIn = true)
                 when (val login = loginUseCase.loginUser(event)) {
                     is Result.Success -> {
                         state = state.copy(isLogginIn = false)
-                        userPreferences.addUserEmail(email = state.email!!)
-                        eventChannel.send(LoginEvent.LoginSuccess(state.email!!))
+                        authRepository.getFullAgenda()
+                        userPreferences.addUserEmail(email = state.email)
+                        eventChannel.send(LoginEvent.LoginSuccess(state.email))
                     }
 
                     is Result.Error -> {
@@ -90,14 +97,15 @@ class LoginViewModel @Inject constructor(
 }
 
 data class LoginState(
-    val email: String? = null,
-    val password: String? = null,
+    val email: String = "",
+    val password: String = "",
     val name: String = "",
     val isLogginIn: Boolean = false,
     val isEmailValid: Boolean = false,
     val isPasswordVisible: Boolean = false,
     val isLoginSuccessful: Boolean = false,
     val loginErrorMessage: UiText? = null,
-    val isReady: Boolean = false
+    val isReady: Boolean = true
+
 )
 

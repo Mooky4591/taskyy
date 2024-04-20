@@ -58,42 +58,32 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
                     .fillMaxHeight(.75f)
                     .padding(30.dp)
             ) {
-                state.email?.let {
-                    CreateEmailField(
-                        isEmailValid = state.isEmailValid,
-                        onValueChange = { email -> onEvent(LoginEvent.OnEmailChanged(email)) },
-                        email = it
-                    )
-                }
+                CreateEmailField(
+                    isEmailValid = state.isEmailValid,
+                    onValueChange = { email -> onEvent(LoginEvent.OnEmailChanged(email)) },
+                    email = state.email
+                )
                 Spacer(modifier = Modifier.height(10.dp))
-                state.password?.let {
-                    CreatePasswordField(password = it,
-                        onValueChange = { password -> onEvent(LoginEvent.OnPasswordChanged(password)) },
-                        isPasswordVisible = state.isPasswordVisible,
-                        onClick = { isPasswordVisible ->
-                            onEvent(
-                                LoginEvent.OnTogglePasswordVisibility(
-                                    isPasswordVisible
-                                )
+                CreatePasswordField(password = state.password,
+                    onValueChange = { password -> onEvent(LoginEvent.OnPasswordChanged(password)) },
+                    isPasswordVisible = state.isPasswordVisible,
+                    onClick = { isPasswordVisible ->
+                        onEvent(
+                            LoginEvent.OnTogglePasswordVisibility(
+                                isPasswordVisible
                             )
-                        }
-                    )
-                }
+                        )
+                    }
+                )
                 Spacer(modifier = Modifier.height(10.dp))
-                val loginObject = state.password?.let { state.email?.let { it1 -> Login(it1, it) } }
-                if (loginObject != null) {
-                    TaskyyActionButton(
-                        onClick = {
-                            loginObject?.let { it1 ->
-                                LoginEvent.OnLoginClick(
-                                    it1
-                                )
-                            }?.let { it2 -> onEvent(it2) }
-                        }, text = stringResource(
-                            id = R.string.login
-                        ), login = loginObject
-                    )
-                }
+                val loginObject = Login(state.email, state.password)
+                TaskyyActionButton(
+                    onClick = { onEvent(LoginEvent.OnLoginClick(loginObject)) },
+                    text = stringResource(
+                        id = R.string.login
+                    ),
+                    login = loginObject
+                )
                 Row(
                 ) {
                     CreateBottomText()
