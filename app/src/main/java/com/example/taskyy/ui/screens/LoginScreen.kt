@@ -58,17 +58,32 @@ fun LoginScreen(state: LoginState, onEvent: (LoginEvent) -> Unit) {
                     .fillMaxHeight(.75f)
                     .padding(30.dp)
             ) {
-                CreateEmailField(isEmailValid = state.isEmailValid, onValueChange =  { email -> onEvent(LoginEvent.OnEmailChanged(email)) }, email =  state.email)
+                CreateEmailField(
+                    isEmailValid = state.isEmailValid,
+                    onValueChange = { email -> onEvent(LoginEvent.OnEmailChanged(email)) },
+                    email = state.email
+                )
                 Spacer(modifier = Modifier.height(10.dp))
-                CreatePasswordField(password = state.password, onValueChange = {password -> onEvent(LoginEvent.OnPasswordChanged(password))},
-                    isPasswordVisible =  state.isPasswordVisible,
-                    onClick = {isPasswordVisible -> onEvent(LoginEvent.OnTogglePasswordVisibility(isPasswordVisible))}
+                CreatePasswordField(password = state.password,
+                    onValueChange = { password -> onEvent(LoginEvent.OnPasswordChanged(password)) },
+                    isPasswordVisible = state.isPasswordVisible,
+                    onClick = { isPasswordVisible ->
+                        onEvent(
+                            LoginEvent.OnTogglePasswordVisibility(
+                                isPasswordVisible
+                            )
+                        )
+                    }
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 val loginObject = Login(state.email, state.password)
-                TaskyyActionButton(onClick = {onEvent(LoginEvent.OnLoginClick(loginObject))}, text = stringResource(
-                    id = R.string.login
-                ), login = loginObject)
+                TaskyyActionButton(
+                    onClick = { onEvent(LoginEvent.OnLoginClick(loginObject)) },
+                    text = stringResource(
+                        id = R.string.login
+                    ),
+                    login = loginObject
+                )
                 Row(
                 ) {
                     CreateBottomText()

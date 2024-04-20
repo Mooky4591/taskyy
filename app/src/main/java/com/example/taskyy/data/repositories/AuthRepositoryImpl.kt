@@ -1,22 +1,35 @@
 package com.example.taskyy.data.repositories
 
+import com.example.taskyy.data.local.data_access_objects.EventDao
+import com.example.taskyy.data.local.data_access_objects.ReminderDao
+import com.example.taskyy.data.local.data_access_objects.TaskDao
 import com.example.taskyy.data.local.data_access_objects.UserDao
+import com.example.taskyy.data.local.room_entity.agenda_entities.ReminderEntity
+import com.example.taskyy.data.local.room_entity.agenda_entities.TaskEntity
 import com.example.taskyy.data.local.room_entity.user.UserEntity
 import com.example.taskyy.data.remote.TaskyyApi
 import com.example.taskyy.data.remote.data_transfer_objects.RegisterUserDTO
 import com.example.taskyy.data.remote.response_objects.LoginUserResponse
+import com.example.taskyy.data.remote.response_objects.ReminderResponse
+import com.example.taskyy.data.remote.response_objects.TaskResponse
 import com.example.taskyy.domain.error.DataError
 import com.example.taskyy.domain.error.Result
 import com.example.taskyy.domain.objects.Login
 import com.example.taskyy.domain.objects.User
 import com.example.taskyy.domain.repository.AuthRepository
 import com.example.taskyy.domain.repository.UserPreferences
+import com.example.taskyy.ui.enums.AgendaItemAction
+import com.example.taskyy.ui.enums.AgendaItemType
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
+
 class AuthRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
+    private val eventDao: EventDao,
+    private val taskDao: TaskDao,
+    private val reminderDao: ReminderDao,
     private val retrofit: TaskyyApi,
     private val userPreferences: UserPreferences
 ): AuthRepository {
@@ -96,6 +109,23 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getFullAgenda() {
+        try {
+            val agenda = retrofit.getFulLAgenda()
+            for (task in agenda.tasks) {
+                taskDao.insertTask(task.toTaskEntity())
+            }
+            for (reminder in agenda.reminders) {
+                reminderDao.insertReminder(reminder.toReminderEntity())
+            }
+            for (event in agenda.events) {
+                //  eventDao.insertEvent(event.toEventEntity())
+            }
+        } catch (e: HttpException) {
+            val error = e.code()
+        }
+    }
+
     private fun User.toUserDTO(): RegisterUserDTO {
         return RegisterUserDTO(fullName, email, password)
     }
@@ -107,4 +137,29 @@ class AuthRepositoryImpl @Inject constructor(
     private fun LoginUserResponse.toUserEntity(email: String, userId: String): UserEntity {
         return UserEntity(id = userId, name = fullName, email = email, token = null)
     }
+}
+
+private fun ReminderResponse.toReminderEntity(): ReminderEntity {
+    return ReminderEntity(
+        id = id,
+        description = description,
+        title = title,
+        time = time,
+        remindAt = remindAt,
+        action = AgendaItemAction.CREATE,
+        eventType = AgendaItemType.TASK_ITEM
+    )
+}
+
+private fun TaskResponse.toTaskEntity(): TaskEntity {
+    return TaskEntity(
+        id = id,
+        description = description,
+        title = title,
+        isDone = isDone,
+        time = time,
+        remindAt = remindAt,
+        action = AgendaItemAction.CREATE,
+        eventType = AgendaItemType.TASK_ITEM
+    )
 }

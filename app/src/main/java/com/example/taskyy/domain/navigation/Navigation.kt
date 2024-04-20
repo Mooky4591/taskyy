@@ -137,14 +137,14 @@ fun Nav() {
                 listOf(
                     navDeepLink {
                         uriPattern =
-                            "tasky://www.myapp.com/eventScreen?zoneDateTime={zoneDateTime}" +
-                                    "&isEditingMode={isEditingMode}&agendaItemId={agendaItemId}"
+                            "tasky://www.myapp.com/eventScreen?dateString={dateString}" +
+                                    "&isEditing={isEditing}&eventItemId={eventItemId}"
                     },
                 ),
             ) {
                 val eventViewModel = hiltViewModel<EventViewModel>()
-                val state by eventViewModel.state.collectAsState()
-                val timeDateState by eventViewModel.timeAndDateState.collectAsState()
+                val state by eventViewModel.state.collectAsStateWithLifecycle()
+                val timeDateState by eventViewModel.timeAndDateState.collectAsStateWithLifecycle()
                 EventScreen(
                     state = state,
                     onEvent = { event -> eventViewModel.onEvent(event) },
@@ -158,8 +158,8 @@ fun Nav() {
                 listOf(
                     navDeepLink {
                         uriPattern =
-                            "tasky://www.myapp.com/reminderScreen?zoneDateTime={zoneDateTime}" +
-                                    "&isEditingMode={isEditingMode}&agendaItemId={agendaItemId}"
+                            "tasky://www.myapp.com/reminderScreen?dateString={dateString}" +
+                                    "&isEditing={isEditing}&eventItemId={eventItemId}"
                     },
                 ),
             ) {

@@ -11,4 +11,5 @@ interface AuthRepository {
     fun validatePassword(password: String): Boolean
     suspend fun login(login: Login): Result<User, DataError.Network>
     suspend fun validateToken(): Result<Boolean, DataError.Network>
+    suspend fun getFullAgenda()
 }

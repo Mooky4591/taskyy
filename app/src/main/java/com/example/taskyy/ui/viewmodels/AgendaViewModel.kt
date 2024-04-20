@@ -61,7 +61,7 @@ class AgendaViewModel @Inject constructor(
     private fun checkForExistingAgendaItems(dateTime: LocalDateTime) {
         viewModelScope.launch {
             val agendaItemList: MutableList<AgendaEventItem> =
-                state.listOfAgendaEvents.toMutableList()
+                emptyList<AgendaEventItem>().toMutableList()
             val reminderList = checkForRemindersUseCase.checkForReminders(dateTime)
             val taskList = checkForTasksUseCase.checkForTasks(dateTime)
             when (reminderList) {
